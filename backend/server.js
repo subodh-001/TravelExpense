@@ -24,6 +24,18 @@ if (!fs.existsSync(USERS_DB_FILE)) fs.writeFileSync(USERS_DB_FILE, JSON.stringif
 
 // Serve local uploads statically
 app.use('/uploads', express.static(UPLOADS_DIR));
+
+// Explicit route for APK download
+app.get('/app-release.apk', (req, res) => {
+  const apkPath = path.join(__dirname, '../web/app-release.apk');
+  if (fs.existsSync(apkPath)) {
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    return res.download(apkPath, 'TravelExpense.apk');
+  } else {
+    return res.status(404).send('APK file not found');
+  }
+});
+
 // Serve static web app if accessed directly
 app.use(express.static(path.join(__dirname, '../web')));
 
