@@ -420,21 +420,44 @@ function handleSaveProfile(e) {
 }
 
 function selectGoogleAccount(id, name, email, picture) {
+  const popupWidth = 520;
+  const popupHeight = 620;
+  const left = Math.max(0, (window.screen.width - popupWidth) / 2);
+  const top = Math.max(0, (window.screen.height - popupHeight) / 2);
+  
+  let googlePopup = null;
+  try {
+    googlePopup = window.open(
+      `https://accounts.google.com/AccountChooser?Email=${encodeURIComponent(email)}&continue=https://myaccount.google.com/`,
+      'GoogleAccountAuthWindow',
+      `width=${popupWidth},height=${popupHeight},top=${top},left=${left},scrollbars=yes,status=1,resizable=1`
+    );
+  } catch (err) {
+    console.warn('Popup blocked info:', err);
+  }
+
   const user = { id, name, email, picture };
   saveGoogleUser(user);
   closeModal(googleAuthModal);
+  showToast(`✅ Signed in as ${email}`);
+
+  setTimeout(() => {
+    if (googlePopup && !googlePopup.closed) {
+      try { googlePopup.close(); } catch (e) {}
+    }
+  }, 1500);
 }
 
 function handleCustomGoogleSignIn() {
   const email = customGoogleEmail.value.trim();
   if (!email || !email.includes('@')) {
-    alert('Please enter a valid Google email address');
+    alert('Please enter a valid Google email address (e.g. name@gmail.com)');
     return;
   }
-  const name = email.split('@')[0].replace('.', ' ');
+  const name = email.split('@')[0].replace(/[\._]/g, ' ');
   const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
   const id = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
-  const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${capitalizedName}`;
+  const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
 
   selectGoogleAccount(id, capitalizedName, email, picture);
   customGoogleEmail.value = '';
@@ -444,9 +467,20 @@ function initGoogleIdentityServices() {
   if (window.google && window.google.accounts && window.google.accounts.id) {
     try {
       window.google.accounts.id.initialize({
-        client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
-        callback: handleGoogleGsiResponse
+        client_id: "598418938174-googleclientid.apps.googleusercontent.com",
+        callback: handleGoogleGsiResponse,
+        auto_select: false
       });
+
+      const gsiContainer = document.getElementById('gsiButtonContainer');
+      if (gsiContainer) {
+        window.google.accounts.id.renderButton(
+          gsiContainer,
+          { theme: "outline", size: "large", type: "standard", shape: "pill", logo_alignment: "left", width: 320 }
+        );
+      }
+      
+      window.google.accounts.id.prompt();
     } catch (err) {
       console.warn("GSI init info:", err.message);
     }
