@@ -1279,6 +1279,9 @@ body {
     margin: 0;
     max-height: 90vh;
     animation: slideUp 0.25s ease-out;
+  }
+}
+
 /* Shared View Notice Banner */
 .shared-notice-banner {
   background: rgba(59, 130, 246, 0.15);
