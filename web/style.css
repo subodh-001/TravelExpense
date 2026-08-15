@@ -391,39 +391,40 @@ body {
 
 /* Table Section */
 .table-container {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  backdrop-filter: blur(12px);
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-glow);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.06) !important;
 }
 
 .table-header {
   padding: 18px 24px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #e2e8f0 !important;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(15, 23, 42, 0.4);
+  background: #f8fafc !important;
 }
 .table-header h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a !important;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 .table-header h3 i {
-  color: var(--accent-success);
+  color: #10b981 !important;
 }
 .badge {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--accent-primary);
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border: 1px solid #bfdbfe !important;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .table-wrapper {
@@ -434,38 +435,41 @@ body {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  background: #ffffff !important;
 }
 
 .excel-table th {
-  background: rgba(15, 23, 42, 0.8);
+  background: #f1f5f9 !important;
   padding: 14px 18px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700 !important;
+  color: #334155 !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 2px solid #cbd5e1 !important;
 }
 .excel-table td {
   padding: 14px 18px;
   font-size: 0.9rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: var(--text-main);
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  font-weight: 500;
 }
 .excel-table tbody tr {
   transition: var(--transition-fast);
 }
-.excel-table tbody tr:hover {
-  background: var(--bg-card-hover);
+.excel-table tbody tr:hover td {
+  background: #f8fafc !important;
 }
 
 .col-numeric {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 .col-total {
-  font-weight: 700;
-  color: var(--accent-success);
+  font-weight: 700 !important;
+  color: #2563eb !important;
 }
 .col-actions {
   text-align: center;
@@ -475,24 +479,27 @@ body {
 /* Empty Table State */
 .empty-row td {
   padding: 40px 20px !important;
+  background: #ffffff !important;
 }
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  color: var(--text-muted);
+  color: #64748b !important;
 }
 .empty-state i {
   font-size: 2.5rem;
-  color: var(--text-dim);
+  color: #94a3b8 !important;
 }
 
 /* Summary Row */
 .summary-row td {
-  background: rgba(15, 23, 42, 0.9) !important;
-  border-top: 2px solid var(--border-color);
-  font-weight: 700;
+  background: #f8fafc !important;
+  border-top: 2px solid #cbd5e1 !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  font-size: 0.95rem !important;
 }
 
 /* Receipt Badge Tag */

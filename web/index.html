@@ -17,7 +17,7 @@
   <!-- Favicon & Logo -->
   <link rel="icon" type="image/png" href="logo.png" />
   
-  <link rel="stylesheet" href="style.css?v=google_auth_gate_v6" />
+  <link rel="stylesheet" href="style.css?v=excel_table_pure_white_v7" />
 </head>
 <body>
 
@@ -415,25 +415,27 @@
         <button class="close-btn" id="closeGoogleAuthModalBtn"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <div class="modal-body">
-        <div class="google-accounts-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
-          <div class="account-item" onclick="selectGoogleAccount('google_subodh', 'Subodh Kumar', 'subodh.travels@gmail.com', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh')">
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh" alt="Subodh" class="account-avatar" />
-            <div class="account-details">
-              <h4>Subodh Kumar</h4>
-              <p>subodh.travels@gmail.com</p>
+      <div class="modal-body" style="background: #ffffff !important;">
+        <div class="google-accounts-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+          <div class="account-item" onclick="selectGoogleAccount('google_subodh', 'Subodh Kumar', 'subodh.travels@gmail.com', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh')" style="background: #f8fafc !important; border: 1px solid #cbd5e1 !important; padding: 14px 16px; border-radius: 12px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s ease;">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh" alt="Subodh" class="account-avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #2563eb;" />
+            <div class="account-details" style="flex: 1;">
+              <h4 style="font-size: 0.98rem; font-weight: 700; color: #0f172a !important; margin: 0;">Subodh Kumar</h4>
+              <p style="font-size: 0.82rem; color: #475569 !important; font-weight: 500; margin: 3px 0 0 0;">subodh.travels@gmail.com</p>
             </div>
-            <i class="fa-solid fa-chevron-right"></i>
+            <i class="fa-solid fa-chevron-right" style="color: #2563eb; font-size: 1.1rem;"></i>
           </div>
         </div>
 
         <div class="custom-google-signin-form">
-          <p class="divider-text"><span>Or sign in with custom Google Email</span></p>
-          <div class="form-group" style="margin-bottom:12px;">
-            <label style="font-size:0.8rem; color:var(--text-muted); margin-bottom:6px; display:block;"><i class="fa-solid fa-envelope"></i> Google Email Address</label>
-            <input type="email" id="customGoogleEmail" placeholder="Enter Google email (e.g. name@gmail.com)" required />
+          <div class="divider-text" style="text-align: center; position: relative; margin: 20px 0;">
+            <span style="background: #ffffff !important; color: #475569 !important; padding: 4px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-weight: 600; font-size: 0.8rem; position: relative; z-index: 1;">Or sign in with custom Google Email</span>
           </div>
-          <button class="btn btn-primary btn-block" id="customGoogleSignInBtn">
+          <div class="form-group" style="margin-bottom:14px;">
+            <label style="font-size:0.85rem; color:#475569 !important; margin-bottom:6px; display:block; font-weight: 600;"><i class="fa-solid fa-envelope"></i> Google Email Address</label>
+            <input type="email" id="customGoogleEmail" placeholder="Enter Google email (e.g. name@gmail.com)" required style="background: #f8fafc !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; font-weight: 600;" />
+          </div>
+          <button class="btn btn-primary btn-block" id="customGoogleSignInBtn" style="width: 100%; justify-content: center; padding: 12px;">
             <i class="fa-brands fa-google"></i> Sign In with Google
           </button>
         </div>
