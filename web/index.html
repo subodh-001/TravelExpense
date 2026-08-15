@@ -17,7 +17,7 @@
   <!-- Favicon & Logo -->
   <link rel="icon" type="image/png" href="logo.png" />
   
-  <link rel="stylesheet" href="style.css?v=saas_clean_v3_inter" />
+  <link rel="stylesheet" href="style.css?v=all_white_modals_v4" />
 </head>
 <body>
 
@@ -453,25 +453,25 @@
       </div>
 
       <div class="modal-body">
-        <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 14px; border-radius: 12px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
-          <i class="fa-solid fa-shield-halved" style="font-size: 1.5rem; color: #60a5fa;"></i>
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 14px; border-radius: 12px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+          <i class="fa-solid fa-shield-halved" style="font-size: 1.5rem; color: #2563eb;"></i>
           <div>
-            <h4 style="font-size: 0.95rem; color: #fff; margin-bottom: 2px;">Read-Only View Security</h4>
-            <p style="font-size: 0.8rem; color: var(--text-muted);">Anyone opening this link can view your travel expense log and receipts, but CANNOT edit or delete your entries.</p>
+            <h4 style="font-size: 0.95rem; color: #1e40af; margin-bottom: 2px;">Read-Only View Security</h4>
+            <p style="font-size: 0.8rem; color: #475569;">Anyone opening this link can view your travel expense log and receipts, but CANNOT edit or delete your entries.</p>
           </div>
         </div>
 
         <div class="form-group" style="margin-bottom: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+            <label style="font-size: 0.85rem; color: #64748b; margin: 0;">
               <i class="fa-solid fa-link"></i> Shareable Web & Mobile Link
             </label>
-            <span id="shareMonthBadge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; font-weight: 600;">
+            <span id="shareMonthBadge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; font-weight: 600;">
               <i class="fa-solid fa-calendar-check"></i> Target Month: August 2026
             </span>
           </div>
           <div style="display: flex; gap: 8px;">
-            <input type="text" id="shareUrlInput" class="form-control" readonly style="font-family: monospace; font-size: 0.85rem;" />
+            <input type="text" id="shareUrlInput" class="form-control" readonly style="font-family: monospace; font-size: 0.85rem; background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1;" />
             <button class="btn btn-primary" id="copyShareUrlBtn" style="white-space: nowrap;">
               <i class="fa-solid fa-copy"></i> Copy Link
             </button>
@@ -479,7 +479,7 @@
         </div>
       </div>
 
-      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-top: 1px solid #e2e8f0;">
         <a id="openShareUrlLink" href="#" target="_blank" class="btn btn-secondary btn-sm">
           <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Link in New Tab
         </a>
@@ -504,7 +504,7 @@
           <!-- Profile Photo Upload Box -->
           <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; text-align: center;">
             <div style="position: relative; margin-bottom: 12px;">
-              <img id="profilePhotoPreview" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh" alt="Profile Preview" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); box-shadow: 0 4px 15px rgba(0,0,0,0.3);" />
+              <img id="profilePhotoPreview" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh" alt="Profile Preview" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb; box-shadow: 0 4px 15px rgba(0,0,0,0.1);" />
               <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('profilePhotoInput').click()" style="position: absolute; bottom: 0; right: -5px; border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" title="Upload Photo">
                 <i class="fa-solid fa-camera" style="font-size: 0.85rem;"></i>
               </button>
@@ -513,25 +513,25 @@
             <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('profilePhotoInput').click()">
               <i class="fa-solid fa-upload"></i> Upload Photo (Cloudinary)
             </button>
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;" id="profilePhotoStatus">PNG or JPG, max 5MB (Stores in Cloudinary)</p>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 6px;" id="profilePhotoStatus">PNG or JPG, max 5MB (Stores in Cloudinary)</p>
           </div>
 
           <div class="form-group" style="margin-bottom: 14px;">
-            <label style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; display: block;">
+            <label style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px; display: block;">
               <i class="fa-solid fa-user"></i> Full Display Name
             </label>
-            <input type="text" id="profileNameInput" class="form-control" placeholder="Enter full name" required />
+            <input type="text" id="profileNameInput" class="form-control" placeholder="Enter full name" required style="background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1;" />
           </div>
 
           <div class="form-group" style="margin-bottom: 16px;">
-            <label style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; display: block;">
-              <i class="fa-solid fa-lock"></i> Google Email Address <span style="font-size:0.75rem; color:var(--text-muted);">(Logged-In Identity)</span>
+            <label style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px; display: block;">
+              <i class="fa-solid fa-lock"></i> Google Email Address <span style="font-size:0.75rem; color:#64748b;">(Logged-In Identity)</span>
             </label>
-            <input type="email" id="profileEmailInput" class="form-control" readonly style="opacity: 0.7; cursor: not-allowed; background: rgba(255,255,255,0.05);" title="Email is fixed to your logged-in Google account" />
+            <input type="email" id="profileEmailInput" class="form-control" readonly style="cursor: not-allowed; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" title="Email is fixed to your logged-in Google account" />
           </div>
         </div>
 
-        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
           <button type="button" class="btn btn-secondary" id="cancelEditProfileBtn">Cancel</button>
           <button type="submit" class="btn btn-primary" id="saveProfileBtn">
             <i class="fa-solid fa-check"></i> Save Profile
@@ -543,17 +543,17 @@
 
   <!-- CUSTOM GLASSMORPHISM CONFIRMATION MODAL -->
   <div class="modal-overlay" id="confirmModal" style="z-index: 9999;">
-    <div class="modal-card modal-sm" style="max-width: 440px; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); text-align: center;">
+    <div class="modal-card modal-sm" style="max-width: 440px; border: 1px solid #fecaca; background: #ffffff; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15); text-align: center;">
       <div style="padding: 24px 20px 10px 20px;">
-        <div id="confirmModalIconContainer" style="width: 64px; height: 64px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+        <div id="confirmModalIconContainer" style="width: 64px; height: 64px; border-radius: 50%; background: #fef2f2; border: 1px solid #fecaca; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
           <i id="confirmModalIcon" class="fa-solid fa-trash-can" style="font-size: 1.8rem; color: #ef4444;"></i>
         </div>
-        <h3 id="confirmModalTitle" style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 8px;">Confirm Delete</h3>
-        <p id="confirmModalMessage" style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px;">Are you sure you want to delete this travel expense entry? This action cannot be undone.</p>
+        <h3 id="confirmModalTitle" style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 8px;">Confirm Delete</h3>
+        <p id="confirmModalMessage" style="font-size: 0.9rem; color: #64748b; line-height: 1.5; margin-bottom: 24px;">Are you sure you want to delete this travel expense entry? This action cannot be undone.</p>
         
         <div style="display: flex; gap: 12px; justify-content: center;">
           <button type="button" class="btn btn-secondary" id="confirmModalCancelBtn" style="flex: 1; padding: 10px 16px; border-radius: 10px; font-weight: 600;">Cancel</button>
-          <button type="button" class="btn btn-danger" id="confirmModalActionBtn" style="flex: 1; padding: 10px 16px; border-radius: 10px; font-weight: 600; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none;">
+          <button type="button" class="btn btn-danger" id="confirmModalActionBtn" style="flex: 1; padding: 10px 16px; border-radius: 10px; font-weight: 600; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; color: #ffffff;">
             <i class="fa-solid fa-trash"></i> Delete Entry
           </button>
         </div>
