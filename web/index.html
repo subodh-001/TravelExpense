@@ -17,7 +17,7 @@
   <!-- Favicon & Logo -->
   <link rel="icon" type="image/png" href="logo.png" />
   
-  <link rel="stylesheet" href="style.css?v=landing_welcome_auth_v11" />
+  <link rel="stylesheet" href="style.css?v=sign_out_redirect_v12" />
 </head>
 <body>
 
@@ -229,6 +229,11 @@
             <span>Sign in with Google</span>
           </button>
         </div>
+
+        <!-- Direct Header Sign Out Button -->
+        <button type="button" class="btn btn-secondary btn-sm" id="headerSignOutBtn" onclick="performSignOut()" style="background: #ffffff; border: 1px solid #cbd5e1; color: #dc2626; font-weight: 700; display: none; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+        </button>
 
         <!-- Add Expense Button (Desktop) -->
         <button class="btn btn-primary desktop-only" id="openAddModalBtn">
