@@ -1,39 +1,39 @@
-/* ==================== VAULTA LUXURY FINTECH THEME ====================
-   60% Dominant Base  : OLED Midnight Navy (#050814) with Liquid Blue Aura
-   30% Complement     : Metallic Frosted Blue Cards (rgba(14, 22, 40, 0.88))
-   10% Accent CTA     : Electric Cyan & Luminous Blue (#3b82f6 / #38bdf8)
-======================================================================= */
+/* ==================== CLEAN ROYAL WHITE 60-30-10 THEME ====================
+   60% Dominant Base  : Crisp Minimalist Slate White Canvas (#F8FAFC)
+   30% Complement     : Pure White Cards & Containers (#FFFFFF)
+   10% Accent CTA     : Luminous Royal Blue (#2563EB) & Ice Accents
+============================================================================= */
 :root {
   /* 60% DOMINANT CANVAS BASE */
-  --bg-dark: #050814;
+  --bg-dark: #f8fafc;
   
-  /* 30% SECONDARY SURFACES */
-  --bg-card: rgba(14, 22, 40, 0.88);
-  --bg-card-hover: rgba(22, 34, 60, 0.95);
-  --border-color: rgba(59, 130, 246, 0.22);
-  --border-focus: #3b82f6;
+  /* 30% SECONDARY COMPLEMENT SURFACES */
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --border-color: #e2e8f0;
+  --border-focus: #2563eb;
 
   /* TYPOGRAPHY CONTRAST */
-  --text-main: #ffffff;
-  --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
 
   /* 10% ACCENT ACTION POPS */
-  --accent-primary: #3b82f6;
-  --accent-primary-hover: #2563eb;
-  --accent-cyan: #38bdf8;
-  --accent-gold: #facc15;
-  --accent-success: #10b981;
-  --accent-warning: #f59e0b;
-  --accent-danger: #ef4444;
-  --accent-purple: #8b5cf6;
+  --accent-primary: #2563eb;
+  --accent-primary-hover: #1d4ed8;
+  --accent-cyan: #0284c7;
+  --accent-gold: #d97706;
+  --accent-success: #16a34a;
+  --accent-warning: #ea580c;
+  --accent-danger: #dc2626;
+  --accent-purple: #7c3aed;
 
-  --shadow-glow: 0 10px 35px 0 rgba(59, 130, 246, 0.4);
-  --shadow-card: 0 12px 32px 0 rgba(0, 0, 0, 0.45);
-  --radius-lg: 20px;
+  --shadow-glow: 0 10px 30px -5px rgba(37, 99, 235, 0.25);
+  --shadow-card: 0 4px 20px -2px rgba(59, 130, 246, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  --radius-lg: 18px;
   --radius-md: 12px;
   --radius-sm: 8px;
-  --transition-fast: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -46,8 +46,8 @@
 body {
   background-color: var(--bg-dark);
   background-image: 
-    radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.38) 0%, rgba(30, 58, 138, 0.18) 35%, rgba(5, 8, 20, 0) 70%),
-    radial-gradient(circle at 90% 20%, rgba(56, 189, 248, 0.15) 0%, rgba(5, 8, 20, 0) 50%);
+    radial-gradient(circle at 50% 0%, rgba(224, 231, 255, 0.65) 0%, rgba(248, 250, 252, 0) 60%),
+    radial-gradient(circle at 100% 30%, rgba(224, 242, 254, 0.55) 0%, rgba(248, 250, 252, 0) 50%);
   color: var(--text-main);
   min-height: 100vh;
   position: relative;
@@ -65,27 +65,25 @@ body {
   opacity: 0.45;
 }
 .shape-1 {
-  width: 650px;
-  height: 650px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, rgba(30, 58, 138, 0.15) 100%);
-  top: -200px;
-  right: -150px;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(199, 210, 254, 0.5) 0%, rgba(224, 231, 255, 0.2) 100%);
+  top: -150px;
+  right: -100px;
 }
 .shape-2 {
-  width: 700px;
-  height: 700px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(5, 8, 20, 0) 100%);
-  bottom: -250px;
-  left: -150px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(186, 230, 253, 0.4) 0%, rgba(248, 250, 252, 0) 100%);
+  bottom: -200px;
+  left: -120px;
 }
 
 /* App Header */
 .app-header {
-  background: rgba(10, 16, 32, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-color);
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -290,14 +288,15 @@ body {
   border: 1px solid var(--border-color);
   padding: 14px 20px;
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
 .search-box {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--border-color);
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
   padding: 8px 16px;
   border-radius: var(--radius-md);
   flex: 1;
@@ -310,10 +309,13 @@ body {
 .search-box input {
   background: transparent;
   border: none;
-  color: var(--text-main);
+  color: #0f172a;
   outline: none;
   width: 100%;
   font-size: 0.9rem;
+}
+.search-box input::placeholder {
+  color: #94a3b8;
 }
 
 .filter-controls {
@@ -331,9 +333,9 @@ body {
   color: var(--text-muted);
 }
 .date-filter input {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
   padding: 6px 12px;
   border-radius: var(--radius-md);
   outline: none;
@@ -354,24 +356,25 @@ body {
   transition: var(--transition-fast);
 }
 .btn-primary {
-  background: linear-gradient(135deg, #00e5ff 0%, #00b4d8 100%);
-  color: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  font-weight: 700;
-  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.5);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, #38bdf8 0%, #00e5ff 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(0, 229, 255, 0.7);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
 }
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-main);
-  border: 1px solid var(--border-color);
+  background: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
 }
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: #e2e8f0;
+  color: #0f172a;
 }
 .btn-sm {
   padding: 6px 12px;
@@ -815,17 +818,15 @@ body {
 
 /* User Welcome Banner */
 .user-welcome-banner {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.45) 0%, rgba(30, 58, 138, 0.6) 50%, rgba(10, 16, 32, 0.95) 100%);
-  border: 1px solid rgba(147, 197, 253, 0.35);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: var(--radius-lg);
   padding: 20px 24px;
   margin-bottom: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  box-shadow: var(--shadow-card);
   flex-wrap: wrap;
   gap: 14px;
 }
@@ -1254,10 +1255,15 @@ body {
   opacity: 1 !important;
 }
 
-/* Month Selector Dropdown Options Styling */
-#monthFilter option {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
+/* Month & Status Selector Dropdown Options Styling */
+#monthFilter, #statusFilter, .user-select {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+}
+#monthFilter option, #statusFilter option, .user-select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
   padding: 10px 14px;
   font-size: 0.9rem;
   font-weight: 500;
@@ -1265,7 +1271,8 @@ body {
 #monthFilter option:hover,
 #monthFilter option:focus,
 #monthFilter option:active,
-#monthFilter option:checked {
+#monthFilter option:checked,
+#statusFilter option:checked {
   background-color: #2563eb !important;
   color: #ffffff !important;
 }
