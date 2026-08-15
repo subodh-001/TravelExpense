@@ -17,7 +17,7 @@
   <!-- Favicon & Logo -->
   <link rel="icon" type="image/png" href="logo.png" />
   
-  <link rel="stylesheet" href="style.css?v=crisp_3view_flow_v15" />
+  <link rel="stylesheet" href="style.css?v=dashboard_home_title_v16" />
 </head>
 <body>
 
@@ -319,6 +319,11 @@
           </button>
         </div>
 
+        <!-- Landing Page View Button -->
+        <button type="button" class="btn btn-secondary btn-sm" onclick="switchAppPage('landing')" title="View Public Landing Page" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-globe"></i> Landing Page
+        </button>
+
         <!-- Direct Header Sign Out Button -->
         <button type="button" class="btn btn-secondary btn-sm" id="headerSignOutBtn" onclick="performSignOut()" style="background: #ffffff; border: 1px solid #cbd5e1; color: #dc2626; font-weight: 700; display: none; align-items: center; gap: 6px;">
           <i class="fa-solid fa-right-from-bracket"></i> Sign Out
@@ -334,6 +339,14 @@
 
   <!-- Main Application Container -->
   <main class="main-container">
+
+    <!-- Dashboard Home Page Title Bar -->
+    <div class="home-page-title-bar">
+      <div class="home-title-text">
+        <h2><i class="fa-solid fa-house-chimney"></i> Personal Travel Expense Home</h2>
+        <p>Logged in workspace • Real-time Cloudinary Receipt Vault & Excel Matrix</p>
+      </div>
+    </div>
 
     <!-- Active User Banner -->
     <section class="user-welcome-banner" id="userWelcomeBanner">
