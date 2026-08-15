@@ -151,15 +151,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set default date input to today
   expDateInput.value = new Date().toISOString().split('T')[0];
 
-  // If user is not signed in and not viewing a share link, show mandatory Full-Screen Auth Page
+  // If user is not signed in and not viewing a share link, show Enterprise Landing Page
+  const landingPage = document.getElementById('landingPage');
   const fullAuthPage = document.getElementById('fullAuthPage');
   if (!state.currentGoogleUser && !state.sharedMode) {
-    if (fullAuthPage) fullAuthPage.classList.remove('hidden');
-    openModal(googleAuthModal);
-    if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'none';
-  } else {
+    if (landingPage) landingPage.classList.remove('hidden');
     if (fullAuthPage) fullAuthPage.classList.add('hidden');
-    if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
+  } else {
+    if (landingPage) landingPage.classList.add('hidden');
+    if (fullAuthPage) fullAuthPage.classList.add('hidden');
   }
 
   // Render Logged In Google User Profile UI
@@ -323,7 +323,9 @@ function saveGoogleUser(user) {
     body: JSON.stringify(user)
   }).catch(err => console.warn('Backend profile sync note:', err));
 
+  const landingPage = document.getElementById('landingPage');
   const fullAuthPage = document.getElementById('fullAuthPage');
+  if (landingPage) landingPage.classList.add('hidden');
   if (fullAuthPage) fullAuthPage.classList.add('hidden');
   if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
   closeModal(googleAuthModal);
@@ -1774,4 +1776,14 @@ async function handleFullPageSignUp(e) {
     showToast(`🎉 Account Created (${email})`);
     saveGoogleUser(user);
   }
+}
+
+function openAuthScreen(mode = 'signin') {
+  const landingPage = document.getElementById('landingPage');
+  const fullAuthPage = document.getElementById('fullAuthPage');
+
+  if (landingPage) landingPage.classList.add('hidden');
+  if (fullAuthPage) fullAuthPage.classList.remove('hidden');
+
+  toggleAuthPageView(mode);
 }
