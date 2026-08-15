@@ -1,33 +1,33 @@
 /* ==================== 60-30-10 UI COLOR PALETTE ====================
-   60% Dominant Canvas  : Deep Midnight Slate (#090d16)
-   30% Surface Layers   : Glassmorphic Cards & Containers (rgba(17, 24, 39, 0.88))
-   10% Accent Callouts  : Royal Indigo (#4f46e5) & Gold (#fbbf24) Pop
+   60% Dominant Canvas  : Deep Sapphire Slate (#0a0f24)
+   30% Surface Layers   : Rich Glassmorphic Indigo Containers (rgba(18, 28, 56, 0.92))
+   10% Accent Action    : Electric Royal Indigo Gradient (#4361ee -> #3a86ff -> #4cc9f0)
 ===================================================================== */
 :root {
   /* 60% DOMINANT CANVAS BASE */
-  --bg-dark: #080c16;
+  --bg-dark: #0a0f24;
   
   /* 30% SECONDARY SURFACES */
-  --bg-card: rgba(17, 24, 39, 0.88);
-  --bg-card-hover: rgba(30, 41, 62, 0.95);
-  --border-color: rgba(99, 102, 241, 0.2);
-  --border-focus: #6366f1;
+  --bg-card: rgba(18, 28, 56, 0.92);
+  --bg-card-hover: rgba(30, 45, 85, 0.95);
+  --border-color: rgba(67, 97, 238, 0.35);
+  --border-focus: #4361ee;
 
   /* TYPOGRAPHY CONTRAST */
-  --text-main: #f9fafb;
-  --text-muted: #9ca3af;
-  --text-dim: #6b7280;
+  --text-main: #ffffff;
+  --text-muted: #a0aec0;
+  --text-dim: #64748b;
 
   /* 10% ACCENT ACTION POPS */
-  --accent-primary: #4f46e5;
-  --accent-primary-hover: #4338ca;
-  --accent-gold: #fbbf24;
+  --accent-primary: #4361ee;
+  --accent-primary-hover: #3b82f6;
+  --accent-gold: #ffb703;
   --accent-success: #10b981;
   --accent-warning: #f59e0b;
-  --accent-danger: #ef4444;
-  --accent-purple: #8b5cf6;
+  --accent-danger: #ff0054;
+  --accent-purple: #7209b7;
 
-  --shadow-glow: 0 10px 35px 0 rgba(79, 70, 229, 0.35);
+  --shadow-glow: 0 10px 35px 0 rgba(67, 97, 238, 0.45);
   --radius-lg: 16px;
   --radius-md: 10px;
   --radius-sm: 6px;
@@ -57,19 +57,19 @@ body {
   filter: blur(120px);
   z-index: -1;
   pointer-events: none;
-  opacity: 0.35;
+  opacity: 0.45;
 }
 .shape-1 {
   width: 550px;
   height: 550px;
-  background: radial-gradient(circle, rgba(79, 70, 229, 0.4) 0%, rgba(139, 92, 246, 0.15) 100%);
+  background: radial-gradient(circle, rgba(67, 97, 238, 0.5) 0%, rgba(114, 9, 183, 0.2) 100%);
   top: -150px;
   right: -100px;
 }
 .shape-2 {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, rgba(16, 185, 129, 0.15) 100%);
+  background: radial-gradient(circle, rgba(76, 201, 240, 0.35) 0%, rgba(16, 185, 129, 0.2) 100%);
   bottom: -200px;
   left: -120px;
 }
