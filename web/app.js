@@ -159,7 +159,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Event Listeners
   googleAuthBtn.addEventListener('click', () => openModal(googleAuthModal));
-  switchUserBtn.addEventListener('click', () => openModal(googleAuthModal));
+  switchUserBtn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to sign out?')) {
+      localStorage.removeItem('google_user');
+      location.reload();
+    }
+  });
   closeGoogleAuthModalBtn.addEventListener('click', () => closeModal(googleAuthModal));
   
   if (customGoogleSignInBtn) {
