@@ -889,8 +889,8 @@ body {
 /* View Toggle Buttons */
 .view-toggle-group {
   display: inline-flex;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--border-color);
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
   border-radius: var(--radius-md);
   padding: 3px;
   gap: 4px;
@@ -898,8 +898,8 @@ body {
 .view-toggle-btn {
   background: transparent;
   border: none;
-  color: var(--text-muted);
-  padding: 6px 12px;
+  color: #475569;
+  padding: 6px 14px;
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
   font-weight: 600;
@@ -909,9 +909,14 @@ body {
   align-items: center;
   gap: 6px;
 }
+.view-toggle-btn:hover {
+  color: #0f172a;
+}
 .view-toggle-btn.active {
-  background: var(--accent-primary);
+  background: #2563eb;
   color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
 /* Mobile Section Header */
