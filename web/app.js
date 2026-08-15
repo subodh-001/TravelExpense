@@ -151,6 +151,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set default date input to today
   expDateInput.value = new Date().toISOString().split('T')[0];
 
+  // If user is not signed in and not viewing a share link, show mandatory Google Auth modal gate
+  if (!state.currentGoogleUser && !state.sharedMode) {
+    openModal(googleAuthModal);
+    if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'none';
+  } else {
+    if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
+  }
+
   // Render Logged In Google User Profile UI
   updateUserProfileUI();
 
@@ -158,7 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initGoogleIdentityServices();
 
   // Event Listeners
-  googleAuthBtn.addEventListener('click', () => openModal(googleAuthModal));
+  googleAuthBtn.addEventListener('click', () => {
+    if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
+    openModal(googleAuthModal);
+  });
   switchUserBtn.addEventListener('click', () => {
     showConfirmModal({
       title: 'Sign Out Confirmation',
@@ -309,6 +320,8 @@ function saveGoogleUser(user) {
     body: JSON.stringify(user)
   }).catch(err => console.warn('Backend profile sync note:', err));
 
+  if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
+  closeModal(googleAuthModal);
   updateUserProfileUI();
   loadExpenses();
 }
@@ -529,10 +542,10 @@ function populateMonthSelector() {
     const isCurrent = m === CURRENT_YEAR_MONTH;
     const label = `${monthName}${isCurrent ? ' (Current)' : ''}`;
     
-    html += `<option value="${m}" style="background-color: #0f172a; color: #ffffff;" ${state.selectedMonth === m ? 'selected' : ''}>📅 ${label}</option>`;
+    html += `<option value="${m}" style="background-color: #ffffff; color: #0f172a; font-weight: 600;" ${state.selectedMonth === m ? 'selected' : ''}>📅 ${label}</option>`;
   });
 
-  html += `<option value="ALL" style="background-color: #0f172a; color: #ffffff;" ${state.selectedMonth === 'ALL' ? 'selected' : ''}>🌐 All Months (Historical)</option>`;
+  html += `<option value="ALL" style="background-color: #ffffff; color: #0f172a; font-weight: 600;" ${state.selectedMonth === 'ALL' ? 'selected' : ''}>🌐 All Months (Historical)</option>`;
   monthFilter.innerHTML = html;
 }
 
