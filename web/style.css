@@ -1,38 +1,39 @@
-/* ==================== EXACT 60-30-10 UI COLOR PALETTE ====================
-   60% Dominant Base  : Royal Cobalt Blue Canvas (#3B5DE7)
-   30% Complement     : Crisp Clean Ice White Cards (#FFFFFF / #F0F4FF)
-   10% Accent CTA     : Glowing Neon Cyan Aqua (#00E5FF / #38BDF8)
-=========================================================================== */
+/* ==================== VAULTA LUXURY FINTECH THEME ====================
+   60% Dominant Base  : OLED Midnight Navy (#050814) with Liquid Blue Aura
+   30% Complement     : Metallic Frosted Blue Cards (rgba(14, 22, 40, 0.88))
+   10% Accent CTA     : Electric Cyan & Luminous Blue (#3b82f6 / #38bdf8)
+======================================================================= */
 :root {
   /* 60% DOMINANT CANVAS BASE */
-  --bg-dark: #3b5de7;
+  --bg-dark: #050814;
   
-  /* 30% SECONDARY COMPLEMENT SURFACES */
-  --bg-card: #ffffff;
-  --bg-card-hover: #f5f8ff;
-  --border-color: #dbe4ff;
-  --border-focus: #3b5de7;
+  /* 30% SECONDARY SURFACES */
+  --bg-card: rgba(14, 22, 40, 0.88);
+  --bg-card-hover: rgba(22, 34, 60, 0.95);
+  --border-color: rgba(59, 130, 246, 0.22);
+  --border-focus: #3b82f6;
 
   /* TYPOGRAPHY CONTRAST */
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --text-dim: #94a3b8;
+  --text-main: #ffffff;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
 
   /* 10% ACCENT ACTION POPS */
-  --accent-primary: #00e5ff;
-  --accent-primary-hover: #00b4d8;
-  --accent-gold: #ffb703;
+  --accent-primary: #3b82f6;
+  --accent-primary-hover: #2563eb;
+  --accent-cyan: #38bdf8;
+  --accent-gold: #facc15;
   --accent-success: #10b981;
   --accent-warning: #f59e0b;
   --accent-danger: #ef4444;
-  --accent-purple: #7209b7;
+  --accent-purple: #8b5cf6;
 
-  --shadow-glow: 0 10px 35px 0 rgba(0, 229, 255, 0.45);
-  --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(47, 82, 223, 0.08);
-  --radius-lg: 18px;
+  --shadow-glow: 0 10px 35px 0 rgba(59, 130, 246, 0.4);
+  --shadow-card: 0 12px 32px 0 rgba(0, 0, 0, 0.45);
+  --radius-lg: 20px;
   --radius-md: 12px;
   --radius-sm: 8px;
-  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -44,7 +45,9 @@
 
 body {
   background-color: var(--bg-dark);
-  background-image: radial-gradient(circle at 50% 0%, #4667f3 0%, #2f4fd4 100%);
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.38) 0%, rgba(30, 58, 138, 0.18) 35%, rgba(5, 8, 20, 0) 70%),
+    radial-gradient(circle at 90% 20%, rgba(56, 189, 248, 0.15) 0%, rgba(5, 8, 20, 0) 50%);
   color: var(--text-main);
   min-height: 100vh;
   position: relative;
@@ -59,30 +62,30 @@ body {
   filter: blur(120px);
   z-index: -1;
   pointer-events: none;
-  opacity: 0.35;
+  opacity: 0.45;
 }
 .shape-1 {
-  width: 550px;
-  height: 550px;
-  background: radial-gradient(circle, rgba(0, 229, 255, 0.4) 0%, rgba(59, 130, 246, 0.15) 100%);
-  top: -150px;
-  right: -100px;
+  width: 650px;
+  height: 650px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, rgba(30, 58, 138, 0.15) 100%);
+  top: -200px;
+  right: -150px;
 }
 .shape-2 {
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(0, 229, 255, 0.15) 100%);
-  bottom: -200px;
-  left: -120px;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(5, 8, 20, 0) 100%);
+  bottom: -250px;
+  left: -150px;
 }
 
 /* App Header */
 .app-header {
-  background: #ffffff;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid #dbe4ff;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: rgba(10, 16, 32, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -812,15 +815,17 @@ body {
 
 /* User Welcome Banner */
 .user-welcome-banner {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
-  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.45) 0%, rgba(30, 58, 138, 0.6) 50%, rgba(10, 16, 32, 0.95) 100%);
+  border: 1px solid rgba(147, 197, 253, 0.35);
   border-radius: var(--radius-lg);
-  padding: 16px 20px;
+  padding: 20px 24px;
   margin-bottom: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.25);
   flex-wrap: wrap;
   gap: 14px;
 }
