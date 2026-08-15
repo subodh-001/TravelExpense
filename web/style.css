@@ -1295,9 +1295,241 @@ body {
   font-size: 0.9rem;
   font-weight: 500;
 }
-#monthFilter option:hover,
-#monthFilter option:focus,
-#monthFilter option:active,
+/* ==================== FULL-SCREEN DUAL-PANEL AUTH PAGE ==================== */
+.full-auth-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  display: flex;
+  background: #ffffff;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+.full-auth-page.hidden {
+  display: none !important;
+}
+
+.auth-panel-left {
+  flex: 1;
+  max-width: 50%;
+  padding: 48px 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #ffffff;
+  overflow-y: auto;
+}
+
+.auth-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.auth-logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+.auth-logo-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.auth-logo-title span {
+  color: #6366f1;
+}
+
+.auth-form-card {
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.auth-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+.auth-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin-bottom: 32px;
+}
+
+.auth-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.auth-field-group label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #334155;
+}
+.auth-field-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  outline: none;
+}
+.auth-field-group input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.auth-flex-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.auth-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #475569;
+  cursor: pointer;
+}
+.auth-link {
+  font-size: 0.88rem;
+  color: #6366f1;
+  font-weight: 600;
+  text-decoration: none;
+}
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-btn-primary {
+  width: 100%;
+  padding: 13px;
+  background: #6366f1;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+.auth-btn-primary:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.auth-btn-google {
+  width: 100%;
+  padding: 12px;
+  margin-top: 14px;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+.auth-btn-google:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+.google-icon-sm {
+  width: 20px;
+  height: 20px;
+}
+
+.auth-btn-secondary {
+  padding: 10px 16px;
+  background: #f1f5f9;
+  color: #6366f1;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-switch-text {
+  text-align: center;
+  margin-top: 28px;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+.auth-switch-text a {
+  color: #6366f1;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* RIGHT PANEL - PURPLE HERO BANNER */
+.auth-panel-right {
+  flex: 1;
+  max-width: 50%;
+  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #4f46e5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: #ffffff;
+}
+
+.auth-hero-content {
+  max-width: 440px;
+  text-align: center;
+}
+.auth-hero-graphic {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto 32px;
+}
+.hero-svg-illustration {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.2));
+}
+
+.hero-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #ffffff;
+}
+.hero-subtitle {
+  font-size: 0.98rem;
+  color: #e0e7ff;
+  line-height: 1.6;
+}
+
+/* Responsive auth panel */
+@media (max-width: 900px) {
+  .full-auth-page {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .auth-panel-left {
+    max-width: 100%;
+    padding: 32px 24px;
+  }
+  .auth-panel-right {
+    display: none;
+  }
+}
 #monthFilter option:checked,
 #statusFilter option:checked {
   background-color: #2563eb !important;

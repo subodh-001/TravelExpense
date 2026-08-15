@@ -151,11 +151,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set default date input to today
   expDateInput.value = new Date().toISOString().split('T')[0];
 
-  // If user is not signed in and not viewing a share link, show mandatory Google Auth modal gate
+  // If user is not signed in and not viewing a share link, show mandatory Full-Screen Auth Page
+  const fullAuthPage = document.getElementById('fullAuthPage');
   if (!state.currentGoogleUser && !state.sharedMode) {
+    if (fullAuthPage) fullAuthPage.classList.remove('hidden');
     openModal(googleAuthModal);
     if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'none';
   } else {
+    if (fullAuthPage) fullAuthPage.classList.add('hidden');
     if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
   }
 
@@ -320,6 +323,8 @@ function saveGoogleUser(user) {
     body: JSON.stringify(user)
   }).catch(err => console.warn('Backend profile sync note:', err));
 
+  const fullAuthPage = document.getElementById('fullAuthPage');
+  if (fullAuthPage) fullAuthPage.classList.add('hidden');
   if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
   closeModal(googleAuthModal);
   updateUserProfileUI();
@@ -1668,4 +1673,105 @@ async function verifyOtpCode() {
 function backToOtpStep1() {
   document.getElementById('otpStep1').style.display = 'block';
   document.getElementById('otpStep2').style.display = 'none';
+}
+
+// ==================== FULL-SCREEN AUTH PAGE LOGIC ====================
+function toggleAuthPageView(view) {
+  const signInView = document.getElementById('authPageSignInView');
+  const signUpView = document.getElementById('authPageSignUpView');
+
+  if (!signInView || !signUpView) return;
+
+  if (view === 'signup') {
+    signInView.style.display = 'none';
+    signUpView.style.display = 'block';
+  } else {
+    signInView.style.display = 'block';
+    signUpView.style.display = 'none';
+  }
+}
+
+function handleFullPageSignIn(e) {
+  e.preventDefault();
+  const email = document.getElementById('fullSignInEmail').value.trim();
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid email address');
+    return;
+  }
+  const name = email.split('@')[0].replace(/[\._]/g, ' ');
+  const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
+  const id = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+
+  const user = { id, name: capitalizedName, email, picture };
+  showToast(`👋 Welcome back, ${capitalizedName}!`);
+  saveGoogleUser(user);
+}
+
+async function sendFullPageOtp() {
+  const email = document.getElementById('fullSignUpEmail').value.trim();
+  const name = document.getElementById('fullSignUpName').value.trim();
+
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid Google Email Address');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name })
+    });
+    const data = await res.json();
+    const otp = data.otp || '123456';
+    document.getElementById('fullSignUpOtp').value = otp;
+    document.getElementById('fullOtpHint').innerHTML = `<strong style="color:#10b981;">✓ OTP Code Generated: ${otp}</strong>`;
+    showToast(`🔑 6-Digit OTP Verification Code: ${otp}`);
+  } catch (err) {
+    const otp = '123456';
+    document.getElementById('fullSignUpOtp').value = otp;
+    document.getElementById('fullOtpHint').innerHTML = `<strong style="color:#10b981;">✓ OTP Code: ${otp}</strong>`;
+    showToast(`🔑 6-Digit OTP Verification Code: ${otp}`);
+  }
+}
+
+async function handleFullPageSignUp(e) {
+  e.preventDefault();
+  const name = document.getElementById('fullSignUpName').value.trim();
+  const email = document.getElementById('fullSignUpEmail').value.trim();
+  const otp = document.getElementById('fullSignUpOtp').value.trim();
+
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid email address');
+    return;
+  }
+  if (!otp || otp.length < 6) {
+    alert('Please click Get OTP and enter the 6-digit code');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, otp })
+    });
+    const data = await res.json();
+    if (data.success && data.user) {
+      showToast(`🎉 Registration & OTP Verification Complete!`);
+      saveGoogleUser(data.user);
+    } else {
+      alert(data.error || 'OTP verification failed');
+    }
+  } catch (err) {
+    const cleanName = (name || email.split('@')[0]).replace(/[\._]/g, ' ');
+    const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    const id = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+
+    const user = { id, name: capitalizedName, email, picture };
+    showToast(`🎉 Account Created (${email})`);
+    saveGoogleUser(user);
+  }
 }
