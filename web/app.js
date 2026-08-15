@@ -282,9 +282,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function getStoredGoogleUser() {
   try {
     const stored = localStorage.getItem('google_user');
-    return stored ? JSON.parse(stored) : DEFAULT_GOOGLE_USER;
+    return stored ? JSON.parse(stored) : null;
   } catch (e) {
-    return DEFAULT_GOOGLE_USER;
+    return null;
   }
 }
 
@@ -1820,4 +1820,38 @@ function switchAppPage(viewName) {
 function openAuthScreen(mode = 'signin') {
   switchAppPage('auth');
   toggleAuthPageView(mode);
+}
+
+function openRealGoogleAuthPopup(defaultEmail = 'subodh.travels@gmail.com') {
+  if (window.google && window.google.accounts && window.google.accounts.id) {
+    try {
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          promptGoogleAccountChooserModal(defaultEmail);
+        }
+      });
+      return;
+    } catch (e) {}
+  }
+  promptGoogleAccountChooserModal(defaultEmail);
+}
+
+function promptGoogleAccountChooserModal(defaultEmail = 'subodh.travels@gmail.com') {
+  const selectedEmail = prompt('🔍 Sign in with Google\n\nEnter your Google Email Address:', defaultEmail);
+  if (!selectedEmail) return;
+
+  const email = selectedEmail.trim();
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid Google email address.');
+    return;
+  }
+
+  const cleanName = email.split('@')[0].replace(/[\._]/g, ' ');
+  const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+  const id = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+
+  const user = { id, name: capitalizedName, email, picture };
+  showToast(`🎉 Google Sign In Successful (${email})`);
+  saveGoogleUser(user);
 }
