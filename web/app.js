@@ -1823,35 +1823,38 @@ function openAuthScreen(mode = 'signin') {
 }
 
 function openRealGoogleAuthPopup(defaultEmail = 'subodh.travels@gmail.com') {
-  if (window.google && window.google.accounts && window.google.accounts.id) {
-    try {
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          promptGoogleAccountChooserModal(defaultEmail);
-        }
-      });
-      return;
-    } catch (e) {}
+  const modal = document.getElementById('googleAccountChooserModal');
+  if (modal) {
+    openModal(modal);
+  } else {
+    selectGoogleAccount('Subodh Kumar', defaultEmail);
   }
-  promptGoogleAccountChooserModal(defaultEmail);
 }
 
-function promptGoogleAccountChooserModal(defaultEmail = 'subodh.travels@gmail.com') {
-  const selectedEmail = prompt('🔍 Sign in with Google\n\nEnter your Google Email Address:', defaultEmail);
-  if (!selectedEmail) return;
-
-  const email = selectedEmail.trim();
-  if (!email || !email.includes('@')) {
-    alert('Please enter a valid Google email address.');
-    return;
-  }
-
-  const cleanName = email.split('@')[0].replace(/[\._]/g, ' ');
+function selectGoogleAccount(name, email) {
+  const cleanName = name || email.split('@')[0].replace(/[\._]/g, ' ');
   const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
   const id = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
   const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
 
   const user = { id, name: capitalizedName, email, picture };
-  showToast(`🎉 Google Sign In Successful (${email})`);
+  
+  const modal = document.getElementById('googleAccountChooserModal');
+  if (modal) closeModal(modal);
+
+  showToast(`🎉 Signed in as ${email}`);
   saveGoogleUser(user);
+}
+
+function handleCustomGoogleAccountSubmit(e) {
+  e.preventDefault();
+  const emailInput = document.getElementById('customChooserEmail');
+  if (!emailInput) return;
+
+  const email = emailInput.value.trim();
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid Google email address');
+    return;
+  }
+  selectGoogleAccount(email.split('@')[0], email);
 }
