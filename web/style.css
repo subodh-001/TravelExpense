@@ -1,36 +1,37 @@
-/* ==================== 60-30-10 UI COLOR PALETTE ====================
-   60% Dominant Canvas  : Deep Sapphire Slate (#0a0f24)
-   30% Surface Layers   : Rich Glassmorphic Indigo Containers (rgba(18, 28, 56, 0.92))
-   10% Accent Action    : Electric Royal Indigo Gradient (#4361ee -> #3a86ff -> #4cc9f0)
-===================================================================== */
+/* ==================== EXACT 60-30-10 UI COLOR PALETTE ====================
+   60% Dominant Base  : Royal Cobalt Blue Canvas (#3B5DE7)
+   30% Complement     : Crisp Clean Ice White Cards (#FFFFFF / #F0F4FF)
+   10% Accent CTA     : Glowing Neon Cyan Aqua (#00E5FF / #38BDF8)
+=========================================================================== */
 :root {
   /* 60% DOMINANT CANVAS BASE */
-  --bg-dark: #0a0f24;
+  --bg-dark: #3b5de7;
   
-  /* 30% SECONDARY SURFACES */
-  --bg-card: rgba(18, 28, 56, 0.92);
-  --bg-card-hover: rgba(30, 45, 85, 0.95);
-  --border-color: rgba(67, 97, 238, 0.35);
-  --border-focus: #4361ee;
+  /* 30% SECONDARY COMPLEMENT SURFACES */
+  --bg-card: #ffffff;
+  --bg-card-hover: #f5f8ff;
+  --border-color: #dbe4ff;
+  --border-focus: #3b5de7;
 
   /* TYPOGRAPHY CONTRAST */
-  --text-main: #ffffff;
-  --text-muted: #a0aec0;
-  --text-dim: #64748b;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
 
   /* 10% ACCENT ACTION POPS */
-  --accent-primary: #4361ee;
-  --accent-primary-hover: #3b82f6;
+  --accent-primary: #00e5ff;
+  --accent-primary-hover: #00b4d8;
   --accent-gold: #ffb703;
   --accent-success: #10b981;
   --accent-warning: #f59e0b;
-  --accent-danger: #ff0054;
+  --accent-danger: #ef4444;
   --accent-purple: #7209b7;
 
-  --shadow-glow: 0 10px 35px 0 rgba(67, 97, 238, 0.45);
-  --radius-lg: 16px;
-  --radius-md: 10px;
-  --radius-sm: 6px;
+  --shadow-glow: 0 10px 35px 0 rgba(0, 229, 255, 0.45);
+  --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(47, 82, 223, 0.08);
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
   --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -43,6 +44,7 @@
 
 body {
   background-color: var(--bg-dark);
+  background-image: radial-gradient(circle at 50% 0%, #4667f3 0%, #2f4fd4 100%);
   color: var(--text-main);
   min-height: 100vh;
   position: relative;
@@ -57,29 +59,30 @@ body {
   filter: blur(120px);
   z-index: -1;
   pointer-events: none;
-  opacity: 0.45;
+  opacity: 0.35;
 }
 .shape-1 {
   width: 550px;
   height: 550px;
-  background: radial-gradient(circle, rgba(67, 97, 238, 0.5) 0%, rgba(114, 9, 183, 0.2) 100%);
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.4) 0%, rgba(59, 130, 246, 0.15) 100%);
   top: -150px;
   right: -100px;
 }
 .shape-2 {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(76, 201, 240, 0.35) 0%, rgba(16, 185, 129, 0.2) 100%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(0, 229, 255, 0.15) 100%);
   bottom: -200px;
   left: -120px;
 }
 
 /* App Header */
 .app-header {
-  background: rgba(15, 23, 42, 0.85);
+  background: #ffffff;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #dbe4ff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -348,15 +351,16 @@ body {
   transition: var(--transition-fast);
 }
 .btn-primary {
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-  color: #ffffff;
-  border: 1px solid rgba(165, 180, 252, 0.35);
-  box-shadow: 0 4px 18px rgba(79, 70, 229, 0.4);
+  background: linear-gradient(135deg, #00e5ff 0%, #00b4d8 100%);
+  color: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.5);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #38bdf8 0%, #00e5ff 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 22px rgba(79, 70, 229, 0.6);
+  box-shadow: 0 6px 25px rgba(0, 229, 255, 0.7);
 }
 .btn-secondary {
   background: rgba(255, 255, 255, 0.08);
