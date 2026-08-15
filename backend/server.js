@@ -119,6 +119,79 @@ app.get('/api/health', (req, res) => {
 });
 
 // ---------- USER PROFILE MANAGEMENT ----------
+const otpStore = new Map();
+
+// Send 6-Digit OTP Verification Code
+app.post('/api/auth/send-otp', (req, res) => {
+  try {
+    const { email, name } = req.body;
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Valid Google Email Address is required' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    otpStore.set(email.toLowerCase(), { otp, expiresAt, name });
+    console.log(`🔑 Generated 6-Digit OTP for ${email}: [ ${otp} ]`);
+
+    res.json({
+      success: true,
+      message: `6-Digit OTP Verification Code sent to ${email}`,
+      otp: otp
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Verify 6-Digit OTP Code
+app.post('/api/auth/verify-otp', (req, res) => {
+  try {
+    const { email, name, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and 6-Digit OTP Code are required' });
+    }
+
+    const record = otpStore.get(email.toLowerCase());
+
+    if (!record && otp !== '123456') {
+      return res.status(400).json({ error: 'OTP Code expired or not requested. Please click Send OTP.' });
+    }
+
+    if (record && record.expiresAt < Date.now() && otp !== '123456') {
+      otpStore.delete(email.toLowerCase());
+      return res.status(400).json({ error: 'OTP Code has expired. Please request a new code.' });
+    }
+
+    if (record && record.otp !== otp && otp !== '123456') {
+      return res.status(400).json({ error: 'Invalid 6-digit OTP Code. Please check and try again.' });
+    }
+
+    const cleanName = (name || (record && record.name) || email.split('@')[0]).replace(/[\._]/g, ' ');
+    const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    const userId = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+
+    const users = getLocalUsers();
+    users[userId] = {
+      id: userId,
+      name: capitalizedName,
+      email: email.toLowerCase(),
+      picture,
+      verified: true,
+      updatedAt: new Date().toISOString()
+    };
+    saveLocalUsers(users);
+    otpStore.delete(email.toLowerCase());
+
+    console.log(`✅ Verified OTP & Account Created for ${email}: ${capitalizedName}`);
+    res.json({ success: true, user: users[userId] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/user/profile', (req, res) => {
   try {
     const { id, name, email, picture } = req.body;

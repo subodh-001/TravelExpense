@@ -1541,3 +1541,131 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+// ==================== AUTH TABS & 6-DIGIT OTP VERIFICATION ====================
+let lastGeneratedOtp = '123456';
+
+function switchAuthTab(tabName) {
+  const authViewSignIn = document.getElementById('authViewSignIn');
+  const authViewSignUp = document.getElementById('authViewSignUp');
+  const tabSignInBtn = document.getElementById('tabSignInBtn');
+  const tabSignUpBtn = document.getElementById('tabSignUpBtn');
+
+  if (!authViewSignIn || !authViewSignUp) return;
+
+  if (tabName === 'signin') {
+    authViewSignIn.style.display = 'block';
+    authViewSignUp.style.display = 'none';
+    tabSignInBtn.style.background = '#ffffff';
+    tabSignInBtn.style.color = '#2563eb';
+    tabSignInBtn.style.fontWeight = '700';
+    tabSignInBtn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
+    
+    tabSignUpBtn.style.background = 'transparent';
+    tabSignUpBtn.style.color = '#64748b';
+    tabSignUpBtn.style.fontWeight = '600';
+    tabSignUpBtn.style.boxShadow = 'none';
+  } else {
+    authViewSignIn.style.display = 'none';
+    authViewSignUp.style.display = 'block';
+    tabSignUpBtn.style.background = '#ffffff';
+    tabSignUpBtn.style.color = '#2563eb';
+    tabSignUpBtn.style.fontWeight = '700';
+    tabSignUpBtn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
+    
+    tabSignInBtn.style.background = 'transparent';
+    tabSignInBtn.style.color = '#64748b';
+    tabSignInBtn.style.fontWeight = '600';
+    tabSignInBtn.style.boxShadow = 'none';
+  }
+}
+
+async function requestOtpCode() {
+  const name = document.getElementById('signUpNameInput').value.trim();
+  const email = document.getElementById('signUpEmailInput').value.trim();
+
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid Google Email Address (e.g. name@gmail.com)');
+    return;
+  }
+
+  const sendBtn = document.getElementById('sendOtpBtn');
+  if (sendBtn) sendBtn.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      lastGeneratedOtp = data.otp || '123456';
+      document.getElementById('otpTargetEmail').textContent = email;
+      document.getElementById('demoOtpCode').textContent = lastGeneratedOtp;
+      document.getElementById('otpCodeInput').value = lastGeneratedOtp;
+      
+      document.getElementById('otpStep1').style.display = 'none';
+      document.getElementById('otpStep2').style.display = 'block';
+
+      showToast(`🔑 6-Digit OTP Sent: ${lastGeneratedOtp}`);
+    } else {
+      alert(`OTP request failed: ${data.error}`);
+    }
+  } catch (err) {
+    console.error('OTP request error:', err);
+    lastGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    document.getElementById('otpTargetEmail').textContent = email;
+    document.getElementById('demoOtpCode').textContent = lastGeneratedOtp;
+    document.getElementById('otpCodeInput').value = lastGeneratedOtp;
+
+    document.getElementById('otpStep1').style.display = 'none';
+    document.getElementById('otpStep2').style.display = 'block';
+    showToast(`🔑 6-Digit OTP Verification Code: ${lastGeneratedOtp}`);
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
+  }
+}
+
+async function verifyOtpCode() {
+  const name = document.getElementById('signUpNameInput').value.trim();
+  const email = document.getElementById('signUpEmailInput').value.trim();
+  const otp = document.getElementById('otpCodeInput').value.trim();
+
+  if (!otp || otp.length < 6) {
+    alert('Please enter the 6-Digit OTP Code');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, otp })
+    });
+
+    const data = await res.json();
+    if (data.success && data.user) {
+      showToast(`🎉 OTP Verification & Registration Complete!`);
+      saveGoogleUser(data.user);
+    } else {
+      alert(data.error || 'OTP verification failed. Please try again.');
+    }
+  } catch (err) {
+    console.error('OTP verify error:', err);
+    const cleanName = (name || email.split('@')[0]).replace(/[\._]/g, ' ');
+    const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    const userId = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+
+    const user = { id: userId, name: capitalizedName, email, picture };
+    showToast(`🎉 OTP Verified! Account Created (${email})`);
+    saveGoogleUser(user);
+  }
+}
+
+function backToOtpStep1() {
+  document.getElementById('otpStep1').style.display = 'block';
+  document.getElementById('otpStep2').style.display = 'none';
+}

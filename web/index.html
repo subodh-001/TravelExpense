@@ -17,7 +17,7 @@
   <!-- Favicon & Logo -->
   <link rel="icon" type="image/png" href="logo.png" />
   
-  <link rel="stylesheet" href="style.css?v=real_google_popup_v8" />
+  <link rel="stylesheet" href="style.css?v=otp_register_v9" />
 </head>
 <body>
 
@@ -397,6 +397,7 @@
   </div>
 
   <!-- GOOGLE AUTH / ACCOUNT SELECTOR MODAL -->
+  <!-- GOOGLE OAUTH & OTP AUTHENTICATION MODAL -->
   <div class="modal-overlay" id="googleAuthModal">
     <div class="modal-card modal-md">
       <div class="modal-header">
@@ -408,39 +409,99 @@
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
           <div>
-            <h3>Sign in with Google</h3>
-            <p class="modal-subtitle">Select or enter your Google account</p>
+            <h3 id="authModalHeaderTitle">Google Sign In / Register</h3>
+            <p class="modal-subtitle" id="authModalHeaderSub">Login or create account with OTP verification</p>
           </div>
         </div>
         <button class="close-btn" id="closeGoogleAuthModalBtn"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <div class="modal-body" style="background: #ffffff !important;">
-        <!-- Official Google Identity Services Button Container -->
-        <div id="gsiButtonContainer" style="display:flex; justify-content:center; margin-bottom:16px;"></div>
+      <!-- Auth Navigation Tabs: Sign In vs Sign Up -->
+      <div style="display: flex; background: #f1f5f9; padding: 4px; border-bottom: 1px solid #e2e8f0;">
+        <button type="button" id="tabSignInBtn" onclick="switchAuthTab('signin')" style="flex: 1; padding: 10px; border: none; background: #ffffff; color: #2563eb; font-weight: 700; font-size: 0.9rem; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="fa-solid fa-right-to-bracket"></i> 1-Click Sign In
+        </button>
+        <button type="button" id="tabSignUpBtn" onclick="switchAuthTab('signup')" style="flex: 1; padding: 10px; border: none; background: transparent; color: #64748b; font-weight: 600; font-size: 0.9rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="fa-solid fa-user-plus"></i> Sign Up with OTP
+        </button>
+      </div>
 
-        <div class="google-accounts-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
-          <div class="account-item" onclick="selectGoogleAccount('google_subodh', 'Subodh Kumar', 'subodh.travels@gmail.com', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh')" style="background: #f8fafc !important; border: 1px solid #cbd5e1 !important; padding: 14px 16px; border-radius: 12px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s ease;">
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh" alt="Subodh" class="account-avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #2563eb;" />
-            <div class="account-details" style="flex: 1;">
-              <h4 style="font-size: 0.98rem; font-weight: 700; color: #0f172a !important; margin: 0;">Subodh Kumar</h4>
-              <p style="font-size: 0.82rem; color: #475569 !important; font-weight: 500; margin: 3px 0 0 0;">subodh.travels@gmail.com</p>
+      <div class="modal-body" style="background: #ffffff !important;">
+        <!-- TAB 1: SIGN IN VIEW -->
+        <div id="authViewSignIn">
+          <!-- Official Google Identity Services Button Container -->
+          <div id="gsiButtonContainer" style="display:flex; justify-content:center; margin-bottom:16px;"></div>
+
+          <div class="google-accounts-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+            <div class="account-item" onclick="selectGoogleAccount('google_subodh', 'Subodh Kumar', 'subodh.travels@gmail.com', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh')" style="background: #f8fafc !important; border: 1px solid #cbd5e1 !important; padding: 14px 16px; border-radius: 12px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s ease;">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh" alt="Subodh" class="account-avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #2563eb;" />
+              <div class="account-details" style="flex: 1;">
+                <h4 style="font-size: 0.98rem; font-weight: 700; color: #0f172a !important; margin: 0;">Subodh Kumar</h4>
+                <p style="font-size: 0.82rem; color: #475569 !important; font-weight: 500; margin: 3px 0 0 0;">subodh.travels@gmail.com</p>
+              </div>
+              <i class="fa-solid fa-chevron-right" style="color: #2563eb; font-size: 1.1rem;"></i>
             </div>
-            <i class="fa-solid fa-chevron-right" style="color: #2563eb; font-size: 1.1rem;"></i>
+          </div>
+
+          <div class="custom-google-signin-form">
+            <div class="divider-text" style="text-align: center; position: relative; margin: 20px 0;">
+              <span style="background: #ffffff !important; color: #475569 !important; padding: 4px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-weight: 600; font-size: 0.8rem; position: relative; z-index: 1;">Or sign in with custom Google Email</span>
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:0.85rem; color:#475569 !important; margin-bottom:6px; display:block; font-weight: 600;"><i class="fa-solid fa-envelope"></i> Google Email Address</label>
+              <input type="email" id="customGoogleEmail" placeholder="Enter Google email (e.g. name@gmail.com)" required style="background: #f8fafc !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; font-weight: 600;" />
+            </div>
+            <button class="btn btn-primary btn-block" id="customGoogleSignInBtn" style="width: 100%; justify-content: center; padding: 12px;">
+              <i class="fa-brands fa-google"></i> Sign In with Google
+            </button>
           </div>
         </div>
 
-        <div class="custom-google-signin-form">
-          <div class="divider-text" style="text-align: center; position: relative; margin: 20px 0;">
-            <span style="background: #ffffff !important; color: #475569 !important; padding: 4px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-weight: 600; font-size: 0.8rem; position: relative; z-index: 1;">Or sign in with custom Google Email</span>
+        <!-- TAB 2: SIGN UP WITH OTP VIEW -->
+        <div id="authViewSignUp" style="display: none;">
+          <!-- STEP 1: ENTER NAME & EMAIL -->
+          <div id="otpStep1">
+            <div class="form-group" style="margin-bottom: 14px;">
+              <label style="font-size: 0.85rem; color: #475569; font-weight: 600;"><i class="fa-solid fa-user"></i> Full Display Name</label>
+              <input type="text" id="signUpNameInput" placeholder="e.g. Subodh Kumar" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 600;" />
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label style="font-size: 0.85rem; color: #475569; font-weight: 600;"><i class="fa-solid fa-envelope"></i> Google Email Address</label>
+              <input type="email" id="signUpEmailInput" placeholder="e.g. subodh.travels@gmail.com" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 600;" />
+            </div>
+            <button type="button" class="btn btn-primary" id="sendOtpBtn" onclick="requestOtpCode()" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700;">
+              <i class="fa-solid fa-paper-plane"></i> Send 6-Digit OTP Verification Code
+            </button>
           </div>
-          <div class="form-group" style="margin-bottom:14px;">
-            <label style="font-size:0.85rem; color:#475569 !important; margin-bottom:6px; display:block; font-weight: 600;"><i class="fa-solid fa-envelope"></i> Google Email Address</label>
-            <input type="email" id="customGoogleEmail" placeholder="Enter Google email (e.g. name@gmail.com)" required style="background: #f8fafc !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; font-weight: 600;" />
+
+          <!-- STEP 2: ENTER & VERIFY 6-DIGIT OTP -->
+          <div id="otpStep2" style="display: none;">
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 14px; border-radius: 12px; margin-bottom: 16px; text-align: center;">
+              <i class="fa-solid fa-shield-halved" style="font-size: 1.6rem; color: #2563eb; margin-bottom: 6px;"></i>
+              <h4 style="font-size: 0.95rem; color: #1e40af; font-weight: 700; margin-bottom: 4px;">Enter 6-Digit OTP Verification Code</h4>
+              <p style="font-size: 0.82rem; color: #475569; margin: 0;">Code sent to <strong id="otpTargetEmail" style="color: #2563eb;">subodh@gmail.com</strong></p>
+              <div id="demoOtpBanner" style="margin-top: 8px; background: #fef3c7; border: 1px solid #fde68a; padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; color: #92400e; font-weight: 700;">
+                🔑 Verification Code: <span id="demoOtpCode" style="font-size: 1rem; color: #d97706; letter-spacing: 2px;">123456</span>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px; text-align: center;">
+              <label style="font-size: 0.85rem; color: #475569; font-weight: 600; margin-bottom: 8px; display: block;">6-Digit Security Code</label>
+              <input type="text" id="otpCodeInput" maxlength="6" placeholder="123456" style="background: #f8fafc; border: 2px solid #2563eb; color: #0f172a; font-weight: 800; font-size: 1.4rem; letter-spacing: 6px; text-align: center; width: 220px; margin: 0 auto;" />
+            </div>
+
+            <button type="button" class="btn btn-primary" id="verifyOtpBtn" onclick="verifyOtpCode()" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+              <i class="fa-solid fa-circle-check"></i> Verify OTP & Complete Registration
+            </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="backToOtpStep1()">
+                <i class="fa-solid fa-arrow-left"></i> Change Email
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="requestOtpCode()">
+                <i class="fa-solid fa-rotate-right"></i> Resend OTP
+              </button>
+            </div>
           </div>
-          <button class="btn btn-primary btn-block" id="customGoogleSignInBtn" style="width: 100%; justify-content: center; padding: 12px;">
-            <i class="fa-brands fa-google"></i> Sign In with Google
-          </button>
         </div>
       </div>
     </div>
