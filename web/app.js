@@ -160,10 +160,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // Event Listeners
   googleAuthBtn.addEventListener('click', () => openModal(googleAuthModal));
   switchUserBtn.addEventListener('click', () => {
-    if (confirm('Are you sure you want to sign out?')) {
-      localStorage.removeItem('google_user');
-      location.reload();
-    }
+    showConfirmModal({
+      title: 'Sign Out Confirmation',
+      message: 'Are you sure you want to sign out of your Google account?',
+      iconClass: 'fa-right-from-bracket',
+      btnText: 'Sign Out',
+      onConfirm: () => {
+        localStorage.removeItem('google_user');
+        location.reload();
+      }
+    });
   });
   closeGoogleAuthModalBtn.addEventListener('click', () => closeModal(googleAuthModal));
   
@@ -1132,27 +1138,73 @@ function exitSharedView() {
   window.location.href = window.location.pathname;
 }
 
-// ==================== DELETE EXPENSE ====================
-async function deleteExpense(expenseId) {
-  if (!confirm('Are you sure you want to delete this travel expense entry?')) {
-    return;
-  }
+// ==================== CUSTOM GLASSMORPHISM CONFIRM MODAL ====================
+const confirmModal = document.getElementById('confirmModal');
+const confirmModalTitle = document.getElementById('confirmModalTitle');
+const confirmModalMessage = document.getElementById('confirmModalMessage');
+const confirmModalIcon = document.getElementById('confirmModalIcon');
+const confirmModalCancelBtn = document.getElementById('confirmModalCancelBtn');
+const confirmModalActionBtn = document.getElementById('confirmModalActionBtn');
 
-  try {
-    const res = await fetchWithAuth(`${API_BASE_URL}/expenses/${expenseId}`, {
-      method: 'DELETE'
-    });
+let pendingConfirmAction = null;
 
-    const data = await res.json();
-    if (data.success) {
-      loadExpenses();
-    } else {
-      alert(`Error deleting: ${data.error}`);
+if (confirmModalCancelBtn) {
+  confirmModalCancelBtn.addEventListener('click', () => {
+    closeModal(confirmModal);
+    pendingConfirmAction = null;
+  });
+}
+
+if (confirmModalActionBtn) {
+  confirmModalActionBtn.addEventListener('click', () => {
+    closeModal(confirmModal);
+    if (typeof pendingConfirmAction === 'function') {
+      pendingConfirmAction();
     }
-  } catch (err) {
-    console.error('Error deleting expense:', err);
-    alert('Failed to delete expense entry.');
+    pendingConfirmAction = null;
+  });
+}
+
+function showConfirmModal({ title, message, iconClass = 'fa-trash-can', btnText = 'Delete Entry', onConfirm }) {
+  if (confirmModalTitle) confirmModalTitle.textContent = title;
+  if (confirmModalMessage) confirmModalMessage.textContent = message;
+  if (confirmModalIcon) confirmModalIcon.className = `fa-solid ${iconClass}`;
+  if (confirmModalActionBtn) {
+    confirmModalActionBtn.innerHTML = `<i class="fa-solid ${iconClass}"></i> ${btnText}`;
   }
+  pendingConfirmAction = onConfirm;
+  openModal(confirmModal);
+}
+
+// ==================== DELETE EXPENSE ====================
+function deleteExpense(expenseId) {
+  const exp = state.expenses.find(e => e.id === expenseId);
+  const locName = exp ? exp.location : 'this travel expense';
+  
+  showConfirmModal({
+    title: 'Delete Expense Entry?',
+    message: `Are you sure you want to delete "${escapeHtml(locName)}"? This action cannot be undone.`,
+    iconClass: 'fa-trash-can',
+    btnText: 'Delete Entry',
+    onConfirm: async () => {
+      try {
+        const res = await fetchWithAuth(`${API_BASE_URL}/expenses/${expenseId}`, {
+          method: 'DELETE'
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast('🗑️ Travel expense entry deleted');
+          loadExpenses();
+        } else {
+          alert(`Error deleting: ${data.error}`);
+        }
+      } catch (err) {
+        console.error('Error deleting expense:', err);
+        alert('Failed to delete expense entry.');
+      }
+    }
+  });
 }
 
 // ==================== RECEIPT VAULT MANAGEMENT ====================
@@ -1355,29 +1407,35 @@ async function uploadMultipleReceiptFiles(filesList) {
   }
 }
 
-async function deleteReceiptByIndex(expenseId, index) {
-  if (!confirm('Delete this receipt file?')) return;
+function deleteReceiptByIndex(expenseId, index) {
+  showConfirmModal({
+    title: 'Delete Receipt Bill?',
+    message: 'Are you sure you want to remove this receipt file from the vault?',
+    iconClass: 'fa-paperclip',
+    btnText: 'Remove Receipt',
+    onConfirm: async () => {
+      try {
+        const res = await fetchWithAuth(`${API_BASE_URL}/expenses/${expenseId}/receipts/index/${index}`, {
+          method: 'DELETE'
+        });
 
-  try {
-    const res = await fetchWithAuth(`${API_BASE_URL}/expenses/${expenseId}/receipts/index/${index}`, {
-      method: 'DELETE'
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      await loadExpenses();
-      const updatedExp = state.expenses.find(e => e.id === expenseId);
-      if (updatedExp) {
-        state.selectedExpenseForReceipts = updatedExp;
-        renderReceiptsGallery(updatedExp);
+        const data = await res.json();
+        if (data.success) {
+          showToast('🗑️ Receipt removed');
+          await loadExpenses();
+          const updatedExp = state.expenses.find(e => e.id === expenseId);
+          if (updatedExp) {
+            state.selectedExpenseForReceipts = updatedExp;
+            renderReceiptsGallery(updatedExp);
+          }
+        } else {
+          alert(`Delete failed: ${data.error}`);
+        }
+      } catch (err) {
+        console.error('Error deleting receipt:', err);
       }
-    } else {
-      alert(`Delete failed: ${data.error}`);
     }
-  } catch (err) {
-    console.error('Error deleting receipt:', err);
-    alert('Failed to delete receipt.');
-  }
+  });
 }
 
 // ==================== MOBILE BOTTOM NAVIGATION ====================

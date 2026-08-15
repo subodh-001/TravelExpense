@@ -541,6 +541,26 @@
     </div>
   </div>
 
+  <!-- CUSTOM GLASSMORPHISM CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="confirmModal" style="z-index: 9999;">
+    <div class="modal-card modal-sm" style="max-width: 440px; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); text-align: center;">
+      <div style="padding: 24px 20px 10px 20px;">
+        <div id="confirmModalIconContainer" style="width: 64px; height: 64px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+          <i id="confirmModalIcon" class="fa-solid fa-trash-can" style="font-size: 1.8rem; color: #ef4444;"></i>
+        </div>
+        <h3 id="confirmModalTitle" style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 8px;">Confirm Delete</h3>
+        <p id="confirmModalMessage" style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px;">Are you sure you want to delete this travel expense entry? This action cannot be undone.</p>
+        
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <button type="button" class="btn btn-secondary" id="confirmModalCancelBtn" style="flex: 1; padding: 10px 16px; border-radius: 10px; font-weight: 600;">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmModalActionBtn" style="flex: 1; padding: 10px 16px; border-radius: 10px; font-weight: 600; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none;">
+            <i class="fa-solid fa-trash"></i> Delete Entry
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- JavaScript App Engine -->
   <script src="app.js"></script>
 </body>
