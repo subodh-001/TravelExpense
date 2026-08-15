@@ -1,0 +1,15 @@
+{
+  "name": "monthly-travel-expense-tracker",
+  "version": "1.0.0",
+  "description": "Monthly Travel Expense Tracker - Mobile App, Web Dashboard, Node.js API & Firebase Storage",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev:backend": "node backend/server.js",
+    "install:backend": "cd backend && npm install",
+    "postinstall": "cd backend && npm install"
+  },
+  "keywords": ["expense-tracker", "firebase", "express", "flutter", "web"],
+  "author": "Subodh",
+  "license": "ISC"
+}
