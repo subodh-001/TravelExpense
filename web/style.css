@@ -1295,14 +1295,30 @@ body {
   font-size: 0.9rem;
   font-weight: 500;
 }
+/* Strict Logo Size Rules to prevent raw image expansion */
+img.landing-logo-img, img.auth-logo-img, .landing-logo img, .auth-brand-logo img {
+  width: 36px !important;
+  height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  object-fit: contain !important;
+  display: inline-block !important;
+}
+
+/* Page View Layout Rules */
+.app-page-view {
+  width: 100%;
+  min-height: 100vh;
+}
+.app-page-view.hidden {
+  display: none !important;
+}
+
 /* ==================== FULL-SCREEN DUAL-PANEL AUTH PAGE ==================== */
 .full-auth-page {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   background: #ffffff;
   overflow: hidden;
@@ -1532,14 +1548,10 @@ body {
 }
 /* ==================== ENTERPRISE SAAS MASTERPIECE LANDING PAGE ==================== */
 .landing-page {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9998;
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
   background: #ffffff;
-  overflow-y: auto;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   scroll-behavior: smooth;
 }

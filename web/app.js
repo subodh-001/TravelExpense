@@ -151,15 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set default date input to today
   expDateInput.value = new Date().toISOString().split('T')[0];
 
-  // If user is not signed in and not viewing a share link, show Enterprise Landing Page
-  const landingPage = document.getElementById('landingPage');
-  const fullAuthPage = document.getElementById('fullAuthPage');
+  // 3-Page Flow Sequence Controller
   if (!state.currentGoogleUser && !state.sharedMode) {
-    if (landingPage) landingPage.classList.remove('hidden');
-    if (fullAuthPage) fullAuthPage.classList.add('hidden');
+    switchAppPage('landing');
   } else {
-    if (landingPage) landingPage.classList.add('hidden');
-    if (fullAuthPage) fullAuthPage.classList.add('hidden');
+    switchAppPage('dashboard');
   }
 
   // Render Logged In Google User Profile UI
@@ -314,10 +310,7 @@ function saveGoogleUser(user) {
     body: JSON.stringify(user)
   }).catch(err => console.warn('Backend profile sync note:', err));
 
-  const landingPage = document.getElementById('landingPage');
-  const fullAuthPage = document.getElementById('fullAuthPage');
-  if (landingPage) landingPage.classList.add('hidden');
-  if (fullAuthPage) fullAuthPage.classList.add('hidden');
+  switchAppPage('dashboard');
   if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
   closeModal(googleAuthModal);
   updateUserProfileUI();
@@ -334,10 +327,7 @@ function performSignOut() {
       localStorage.removeItem('google_user');
       state.currentGoogleUser = null;
 
-      const landingPage = document.getElementById('landingPage');
-      const fullAuthPage = document.getElementById('fullAuthPage');
-      if (landingPage) landingPage.classList.remove('hidden');
-      if (fullAuthPage) fullAuthPage.classList.add('hidden');
+      switchAppPage('landing');
 
       showToast('👋 Signed out successfully');
       updateUserProfileUI();
@@ -1808,12 +1798,26 @@ async function handleFullPageSignUp(e) {
   }
 }
 
-function openAuthScreen(mode = 'signin') {
+function switchAppPage(viewName) {
   const landingPage = document.getElementById('landingPage');
   const fullAuthPage = document.getElementById('fullAuthPage');
+  const appDashboard = document.getElementById('appDashboard');
 
   if (landingPage) landingPage.classList.add('hidden');
-  if (fullAuthPage) fullAuthPage.classList.remove('hidden');
+  if (fullAuthPage) fullAuthPage.classList.add('hidden');
+  if (appDashboard) appDashboard.classList.add('hidden');
 
+  if (viewName === 'landing' && landingPage) {
+    landingPage.classList.remove('hidden');
+  } else if (viewName === 'auth' && fullAuthPage) {
+    fullAuthPage.classList.remove('hidden');
+  } else if (viewName === 'dashboard' && appDashboard) {
+    appDashboard.classList.remove('hidden');
+  }
+  window.scrollTo(0, 0);
+}
+
+function openAuthScreen(mode = 'signin') {
+  switchAppPage('auth');
   toggleAuthPageView(mode);
 }
