@@ -17,12 +17,13 @@
   <!-- Favicon & Logo -->
   <link rel="icon" type="image/png" href="logo.png" />
   
-  <link rel="stylesheet" href="style.css?v=sign_out_redirect_v12" />
+  <link rel="stylesheet" href="style.css?v=masterpiece_landing_v13" />
 </head>
 <body>
 
-  <!-- ENTERPRISE SAAS LANDING & WELCOME PAGE -->
+  <!-- ENTERPRISE SAAS MASTERPIECE LANDING PAGE -->
   <div id="landingPage" class="landing-page">
+    <!-- Navbar -->
     <nav class="landing-nav">
       <div class="landing-nav-container">
         <div class="landing-logo">
@@ -31,6 +32,7 @@
         </div>
         <div class="landing-nav-links">
           <a href="#features">Features</a>
+          <a href="#preview">Live Matrix</a>
           <a href="/app-release.apk" class="nav-apk-btn"><i class="fa-brands fa-android"></i> Download APK</a>
           <button type="button" class="landing-btn-outline" onclick="openAuthScreen('signin')">Sign In</button>
           <button type="button" class="landing-btn-primary" onclick="openAuthScreen('signup')">Get Started Free →</button>
@@ -38,13 +40,22 @@
       </div>
     </nav>
 
-    <!-- HERO SECTION -->
+    <!-- HERO BANNER -->
     <header class="landing-hero">
+      <div class="hero-bg-glow"></div>
       <div class="landing-hero-container">
-        <div class="hero-badge"><i class="fa-solid fa-bolt"></i> Travel Expense Tracker v3.2</div>
-        <h1 class="hero-main-title">Effortless Monthly Travel Expense & Reimbursement Tracker</h1>
-        <p class="hero-main-desc">Log local transport (Metro, Local Train, Auto, Rapido), capture receipts directly to Cloudinary, and generate monthly Excel reimbursement logs in seconds.</p>
+        <div class="hero-badge">
+          <span class="pulse-dot"></span> ✨ #1 Travel Reimbursement & Expense Tracker for Professionals
+        </div>
         
+        <h1 class="hero-main-title">
+          Master Your Travel Expenses & <span class="gradient-text">Reimbursements</span> in Seconds
+        </h1>
+        
+        <p class="hero-main-desc">
+          Effortlessly log local transport (Metro, Train, Auto, Rapido, Cab), upload bills directly to Cloudinary Vault, and export audit-ready Excel reimbursement matrices.
+        </p>
+
         <div class="hero-cta-buttons">
           <button type="button" class="hero-btn-main" onclick="openAuthScreen('signup')">
             Get Started Free <i class="fa-solid fa-arrow-right"></i>
@@ -59,29 +70,105 @@
             Sign in with Google
           </button>
         </div>
+
+        <!-- STATS HIGHLIGHT BAR -->
+        <div class="landing-stats-bar">
+          <div class="stat-item">
+            <h4>₹1.2M+</h4>
+            <p>Travel Expenses Tracked</p>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <h4>100%</h4>
+            <p>Cloud Receipt Retention</p>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <h4>3 Sec</h4>
+            <p>Express Entry Logging</p>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <h4>500+</h4>
+            <p>Corporate Professionals</p>
+          </div>
+        </div>
       </div>
     </header>
 
-    <!-- FEATURES GRID -->
-    <section class="landing-features" id="features">
-      <div class="landing-features-container">
-        <div class="feature-card">
-          <div class="feature-icon"><i class="fa-solid fa-train-subway"></i></div>
-          <h3>Local Transport Matrix</h3>
-          <p>Breakdown daily costs by Metro, Local Train, Auto/Rapido, and Cab with automated monthly sum totals.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-          <h3>Cloudinary Receipt Vault</h3>
-          <p>Drag and drop image receipts directly to cloud storage. Attach bills to any travel expense entry.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon"><i class="fa-solid fa-file-excel"></i></div>
-          <h3>Excel Reimbursement Logs</h3>
-          <p>Export clean monthly reimbursement reports to CSV and view live Excel matrix tables with historical filter.</p>
+    <!-- LIVE DASHBOARD PREVIEW MOCKUP -->
+    <section class="landing-preview" id="preview">
+      <div class="landing-preview-container">
+        <div class="preview-glass-frame">
+          <div class="frame-bar">
+            <span class="frame-dot dot-red"></span>
+            <span class="frame-dot dot-yellow"></span>
+            <span class="frame-dot dot-green"></span>
+            <span class="frame-title">TravelExpense.io — Live Excel Matrix Dashboard</span>
+          </div>
+          <div class="preview-content-mock">
+            <div class="mock-stats-grid">
+              <div class="mock-kpi"><span class="kpi-icon">🚇</span><div><h5>Metro Transport</h5><h4>₹85.00</h4></div></div>
+              <div class="mock-kpi"><span class="kpi-icon">🚆</span><div><h5>Local Train</h5><h4>₹15.00</h4></div></div>
+              <div class="mock-kpi"><span class="kpi-icon">🛺</span><div><h5>Auto / Rapido</h5><h4>₹500.00</h4></div></div>
+              <div class="mock-kpi kpi-total"><span class="kpi-icon">💳</span><div><h5>Grand Total</h5><h4>₹640.00</h4></div></div>
+            </div>
+            <div class="mock-table">
+              <div class="mock-row header-row"><span>Date</span><span>Location</span><span>Transport Breakdown</span><span>Total</span><span>Receipts</span><span>Status</span></div>
+              <div class="mock-row"><span>2026-08-15</span><span>Mumbai Central</span><span>Auto ₹250</span><span>₹250</span><span>📎 1 Bill</span><span class="status-settled">✓ Settled</span></div>
+              <div class="mock-row"><span>2026-08-15</span><span>One Degree</span><span>Metro ₹60 + Local ₹15 + Auto ₹250</span><span>₹365</span><span>📎 1 Bill</span><span class="status-pending">⏳ Pending</span></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
+
+    <!-- 4 CORE FEATURES GRID -->
+    <section class="landing-features" id="features">
+      <div class="landing-features-container">
+        <div class="feature-card">
+          <div class="feature-icon-gradient icon-blue"><i class="fa-solid fa-train-subway"></i></div>
+          <h3>Local Transport Breakdown</h3>
+          <p>Separate daily travel costs into Metro, Local Train, Auto/Rapido, and Cab with automated sum calculations.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-gradient icon-purple"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+          <h3>Cloudinary Receipt Vault</h3>
+          <p>Drag and drop image receipts directly to cloud storage. Attach bills to any entry with 1-click zoom preview.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-gradient icon-green"><i class="fa-solid fa-file-excel"></i></div>
+          <h3>Excel Reimbursement Matrix</h3>
+          <p>Generate clean monthly reimbursement reports and export audit-ready CSV logs for corporate finance approval.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-gradient icon-orange"><i class="fa-solid fa-shield-halved"></i></div>
+          <h3>Google OAuth & 6-Digit OTP</h3>
+          <p>Secure multi-device data sync. Log in from any laptop or phone to instantly load your personal travel records.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANDROID APK DOWNLOAD SECTION -->
+    <section class="landing-apk-banner">
+      <div class="apk-banner-container">
+        <div class="apk-text-content">
+          <span class="apk-badge"><i class="fa-brands fa-android"></i> Android Native App</span>
+          <h2>Take TravelExpense.io Anywhere</h2>
+          <p>Download our official Android APK app for mobile tracking on the go.</p>
+          <a href="/app-release.apk" download class="apk-download-btn">
+            <i class="fa-brands fa-android"></i> Download Android APK (TravelExpense.apk)
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="landing-footer">
+      <div class="footer-container">
+        <p>© 2026 TravelExpense.io — All rights reserved. Enterprise Travel & Reimbursement System.</p>
+      </div>
+    </footer>
   </div>
 
   <!-- FULL-SCREEN MODERN DUAL-PANEL AUTHENTICATION PAGE -->
