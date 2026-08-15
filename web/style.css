@@ -838,32 +838,33 @@ body {
   height: 32px;
 }
 
-/* User Welcome Banner */
+/* User Welcome Banner - Ultra Premium Glass Card */
 .user-welcome-banner {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-lg);
-  padding: 20px 24px;
-  margin-bottom: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.06);
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 16px;
 }
 .user-profile-info {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 18px;
 }
 .user-avatar-lg {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  border: 2px solid var(--accent-primary);
+  border: 3px solid #6366f1;
   background: #1e293b;
   object-fit: cover;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
 }
 .user-name-wrapper {
   display: flex;
@@ -872,12 +873,33 @@ body {
   flex-wrap: wrap;
 }
 .user-name-wrapper h2 {
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #0f172a;
 }
 .user-badge-tag {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--accent-primary);
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.user-email {
+  font-size: 0.88rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-top: 2px;
+}
+.user-banner-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
   border: 1px solid rgba(59, 130, 246, 0.3);
   padding: 2px 8px;
   border-radius: 12px;
