@@ -103,9 +103,9 @@ class Receipt {
 
 // ==================== API SERVICE ====================
 class ApiService {
-  // Replace baseUrl with your active server IP/Domain e.g., 'http://10.0.2.2:3000/api' or production URL
-  static const String baseUrl = 'http://localhost:3000/api';
-  static const String userId = 'user_123';
+  // Production URL (Render - Live)
+  static const String baseUrl = 'https://travelexpense-52gp.onrender.com/api';
+  static const String userId = 'google_subodh';
 
   static Future<List<Expense>> getExpenses() async {
     final response = await http.get(
