@@ -143,19 +143,29 @@ const crypto = require('crypto');
 // ---------- USER AUTHENTICATION & PROFILE MANAGEMENT ----------
 const otpStore = new Map();
 
-// Register User Account (Name + Email + Password)
+// Helper to check user by email
+const findUserByEmail = (email) => {
+  if (!email) return null;
+  const cleanEmail = email.toLowerCase().trim();
+  const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const users = getLocalUsers();
+  if (users[userId]) return users[userId];
+  for (const key in users) {
+    if (users[key] && users[key].email && users[key].email.toLowerCase().trim() === cleanEmail) {
+      return users[key];
+    }
+  }
+  return null;
+};
+
 // Check if email already registered
 app.post('/api/auth/check-email', (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.json({ exists: false });
-    const cleanEmail = email.toLowerCase().trim();
-    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
-    const users = getLocalUsers();
-    const exists = !!(users[userId] && users[userId].passwordHash);
-    res.json({ exists });
+    const user = findUserByEmail(email);
+    res.json({ exists: !!user, hasPassword: !!(user && user.passwordHash) });
   } catch (err) {
-    res.json({ exists: false });
+    res.json({ exists: false, hasPassword: false });
   }
 });
 
@@ -171,9 +181,9 @@ app.post('/api/auth/register', (req, res) => {
 
     const cleanEmail = email.toLowerCase().trim();
     const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
-    const users = getLocalUsers();
+    const existingUser = findUserByEmail(cleanEmail);
 
-    if (users[userId] && users[userId].passwordHash) {
+    if (existingUser && existingUser.passwordHash) {
       return res.status(400).json({ error: 'An account with this email already exists. Please Sign In.' });
     }
 
