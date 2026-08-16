@@ -1069,6 +1069,68 @@ async function handleSaveExpense(e) {
   }
 }
 
+// Elegant Custom Alert Modal System (replaces ugly browser alerts)
+function customAlert(titleOrMsg, message = '') {
+  const modal = document.getElementById('customAlertModal');
+  if (!modal) {
+    showToast(titleOrMsg + (message ? ': ' + message : ''));
+    return;
+  }
+
+  let title = 'Notice';
+  let bodyMsg = String(titleOrMsg || '');
+  let iconClass = 'fa-circle-info';
+  let iconColor = '#000000';
+  let iconBg = '#f4f4f7';
+
+  if (message) {
+    title = String(titleOrMsg);
+    bodyMsg = String(message);
+  } else {
+    const text = bodyMsg.toLowerCase();
+    if (text.includes('password')) {
+      title = 'Password Notice';
+      iconClass = 'fa-key';
+      iconColor = '#000000';
+      iconBg = '#f4f4f7';
+    } else if (text.includes('error') || text.includes('failed') || text.includes('invalid') || text.includes('cannot') || text.includes('offline') || text.includes('incorrect') || text.includes('no password')) {
+      title = 'Authentication Notice';
+      iconClass = 'fa-circle-exclamation';
+      iconColor = '#ef4444';
+      iconBg = '#fef2f2';
+    } else if (text.includes('success') || text.includes('welcome') || text.includes('created') || text.includes('saved')) {
+      title = 'Success';
+      iconClass = 'fa-circle-check';
+      iconColor = '#10b981';
+      iconBg = '#ecfdf5';
+    }
+  }
+
+  const iconEl = document.getElementById('customAlertIcon');
+  const iconContainer = document.getElementById('customAlertIconContainer');
+  const titleEl = document.getElementById('customAlertTitle');
+  const msgEl = document.getElementById('customAlertMessage');
+
+  if (iconEl) iconEl.className = `fa-solid ${iconClass}`;
+  if (iconEl) iconEl.style.color = iconColor;
+  if (iconContainer) iconContainer.style.background = iconBg;
+  if (titleEl) titleEl.textContent = title;
+  if (msgEl) msgEl.textContent = bodyMsg;
+
+  openModal(modal);
+
+  const okBtn = document.getElementById('customAlertOkBtn');
+  if (okBtn) {
+    setTimeout(() => okBtn.focus(), 50);
+    okBtn.onclick = () => closeModal(modal);
+  }
+}
+
+// Override native window.alert globally
+window.alert = function(msg) {
+  customAlert(msg);
+};
+
 // Toast notification helper
 function showToast(message) {
   let toast = document.getElementById('appToast');

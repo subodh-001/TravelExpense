@@ -190,9 +190,11 @@ app.post('/api/auth/register', (req, res) => {
     const cleanName = (name || cleanEmail.split('@')[0]).replace(/[\._]/g, ' ');
     const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
     const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
-    const picture = users[userId]?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+    const users = getLocalUsers();
+    const picture = (existingUser && existingUser.picture) || users[userId]?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
 
     users[userId] = {
+      ...(existingUser || {}),
       id: userId,
       name: capitalizedName,
       email: cleanEmail,
