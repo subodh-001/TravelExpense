@@ -151,8 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set default date input to today
   expDateInput.value = new Date().toISOString().split('T')[0];
 
-  // On page refresh: Default to top of Home Landing page unless opening a shared view link
-  if (state.sharedMode) {
+  // On page refresh: Stay on Dashboard if user is logged in or in shared mode; otherwise show Landing page
+  if (state.sharedMode || state.currentGoogleUser) {
     switchAppPage('dashboard', false);
   } else {
     switchAppPage('landing', false);
@@ -2269,6 +2269,8 @@ function switchAppPage(viewName, pushToHistory = true) {
 window.addEventListener('popstate', (e) => {
   if (e.state && e.state.page) {
     switchAppPage(e.state.page, false);
+  } else if (state.currentGoogleUser) {
+    switchAppPage('dashboard', false);
   } else {
     switchAppPage('landing', false);
   }
