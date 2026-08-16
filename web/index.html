@@ -26,9 +26,9 @@
     <!-- Navbar -->
     <nav class="landing-nav">
       <div class="landing-nav-container">
-        <div class="landing-logo">
-          <img src="logo.png" alt="Logo" class="landing-logo-img" style="width:36px; height:36px; max-width:36px; max-height:36px; object-fit:contain;" />
-          <span>TravelExpense<span>.io</span></span>
+        <div class="landing-logo" onclick="switchAppPage('landing')" style="cursor: pointer;">
+          <img src="logo.png" alt="Logo" class="landing-logo-img" style="width:36px; height:36px; max-width:36px; max-height:36px; object-fit:contain; background: transparent;" />
+          <span>TravelExpense</span>
         </div>
         <div class="landing-nav-links">
           <a href="#features">Features</a>
@@ -60,7 +60,7 @@
           <button type="button" class="hero-btn-main" onclick="openAuthScreen('signup')">
             Get Started Free <i class="fa-solid fa-arrow-right"></i>
           </button>
-          <button type="button" class="hero-btn-google" onclick="openRealGoogleAuthPopup('subodh.travels@gmail.com')">
+          <button type="button" class="hero-btn-google" onclick="openRealGoogleAuthPopup()">
             <svg class="google-icon-sm" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -104,7 +104,7 @@
             <span class="frame-dot dot-red"></span>
             <span class="frame-dot dot-yellow"></span>
             <span class="frame-dot dot-green"></span>
-            <span class="frame-title">TravelExpense.io — Live Excel Matrix Dashboard</span>
+            <span class="frame-title">TravelExpense — Live Excel Matrix Dashboard</span>
           </div>
           <div class="preview-content-mock">
             <div class="mock-stats-grid">
@@ -154,7 +154,7 @@
       <div class="apk-banner-container">
         <div class="apk-text-content">
           <span class="apk-badge"><i class="fa-brands fa-android"></i> Android Native App</span>
-          <h2>Take TravelExpense.io Anywhere</h2>
+          <h2>Take TravelExpense Anywhere</h2>
           <p>Download our official Android APK app for mobile tracking on the go.</p>
           <a href="/app-release.apk" download class="apk-download-btn">
             <i class="fa-brands fa-android"></i> Download Android APK (TravelExpense.apk)
@@ -163,118 +163,254 @@
       </div>
     </section>
 
-    <!-- FOOTER -->
+    <!-- REDESIGNED APPLE-STYLE FOOTER -->
     <footer class="landing-footer">
       <div class="footer-container">
-        <p>© 2026 TravelExpense.io — All rights reserved. Enterprise Travel & Reimbursement System.</p>
+        <div class="footer-grid">
+          <!-- Col 1: Brand -->
+          <div class="footer-col brand-col">
+            <div class="footer-logo" onclick="switchAppPage('landing')" style="cursor: pointer; display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+              <img src="logo.png" alt="Logo" style="width:32px; height:32px; object-fit:contain; background: transparent;" />
+              <span style="font-size: 1.3rem; font-weight: 800; color: #000000;">TravelExpense</span>
+            </div>
+            <p class="footer-desc" style="font-size: 0.88rem; color: #6e6e73; line-height: 1.5; margin-bottom: 14px;">Enterprise local transport log & Cloudinary receipt vault. Simplifies daily travel expense logging for corporate reimbursement.</p>
+            <div class="footer-badge" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: linear-gradient(135deg, #ffc3d0 0%, #e3d5fa 50%, #cbddf9 100%); border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: #000000;">
+              <span class="pulse-dot"></span> Certified Logistics Tracker
+            </div>
+          </div>
+
+          <!-- Col 2: Product -->
+          <div class="footer-col">
+            <h4>Product</h4>
+            <ul>
+              <li><a href="#preview" onclick="switchAppPage('landing')">Live Matrix Dashboard</a></li>
+              <li><a href="#features" onclick="switchAppPage('landing')">OTP Security</a></li>
+              <li><a href="#preview" onclick="switchAppPage('landing')">Cloud Receipt Vault</a></li>
+              <li><a href="/app-release.apk" download>Android APK App</a></li>
+            </ul>
+          </div>
+
+          <!-- Col 3: Transport Modes -->
+          <div class="footer-col">
+            <h4>Features</h4>
+            <ul>
+              <li><a href="#" onclick="switchAppPage('landing'); return false;">Metro & Local Train</a></li>
+              <li><a href="#" onclick="switchAppPage('landing'); return false;">Auto & Rapido Expenses</a></li>
+              <li><a href="#" onclick="switchAppPage('landing'); return false;">Cloudinary Uploads</a></li>
+              <li><a href="#" onclick="switchAppPage('landing'); return false;">Monthly Excel Matrix</a></li>
+            </ul>
+          </div>
+
+          <!-- Col 4: Quick Action -->
+          <div class="footer-col">
+            <h4>Get Started</h4>
+            <p style="font-size: 0.85rem; color: #6e6e73; margin-bottom: 14px;">Start logging your travel expenses in seconds.</p>
+            <button type="button" class="landing-btn-primary" onclick="openAuthScreen('signup')" style="width: 100%; text-align: center;">Get Started Free →</button>
+          </div>
+        </div>
+
+        <div class="footer-bottom-bar" style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e5ea;">
+          <p style="font-size: 0.85rem; color: #8e8e93; margin: 0;">© 2026 TravelExpense — All rights reserved. Enterprise Travel & Reimbursement System.</p>
+          <button type="button" class="back-to-top-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" style="background: #000000; color: #ffffff; border: none; padding: 8px 18px; border-radius: 20px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
+            ↑ Back to Top
+          </button>
+        </div>
       </div>
     </footer>
   </div>
 
-  <!-- FULL-SCREEN MODERN DUAL-PANEL AUTHENTICATION PAGE -->
+  <!-- FULL-SCREEN AUTH PAGE -->
   <div id="fullAuthPage" class="full-auth-page">
-    <div class="auth-panel-left">
-      <div class="auth-brand-logo">
-        <img src="logo.png" alt="Logo" class="auth-logo-img" style="width:36px; height:36px; max-width:36px; max-height:36px; object-fit:contain;" />
-        <span class="auth-logo-title">TravelExpense<span>.io</span></span>
+    <div class="auth-center-wrapper">
+
+      <!-- Logo -->
+      <div class="auth-brand-logo" onclick="switchAppPage('landing')" style="cursor: pointer;">
+        <img src="logo.png" alt="Logo" class="auth-logo-img" style="background: transparent;" />
+        <span class="auth-logo-title">TravelExpense</span>
       </div>
 
-      <div class="auth-form-card">
-        <!-- SIGN IN FORM VIEW -->
-        <div id="authPageSignInView">
+      <!-- Auth Card -->
+      <div class="auth-card">
+
+        <!-- ===== SIGN IN VIEW ===== -->
+        <div id="authPageSignInView" style="display:none;">
           <h2 class="auth-title">Welcome back</h2>
-          <p class="auth-subtitle">Please enter your details to sign in to your account</p>
+          <p class="auth-subtitle">
+            Don't have an account?
+            <a href="#" class="auth-link" onclick="toggleAuthPageView('signup'); return false;">Sign up</a>
+          </p>
+
+          <!-- Google OTP Button -->
+          <button type="button" class="auth-btn-google" onclick="startGoogleOtpFlow()">
+            <svg class="google-icon-sm" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            Sign in with Google
+          </button>
+
+          <div class="auth-divider"><span>or sign in with password</span></div>
 
           <form id="fullSignInForm" onsubmit="handleFullPageSignIn(event)">
             <div class="auth-field-group">
-              <label><i class="fa-solid fa-envelope"></i> Email address / Google Email</label>
-              <input type="email" id="fullSignInEmail" placeholder="subodh.travels@gmail.com" required />
+              <input type="email" id="fullSignInEmail" placeholder="Email address" required autocomplete="email" />
+              <p class="auth-field-error" id="signInEmailError" style="display:none;">Email required</p>
             </div>
-
-            <div class="auth-field-group" style="margin-top: 16px;">
-              <label><i class="fa-solid fa-lock"></i> Verification Code / Password</label>
-              <input type="password" id="fullSignInPassword" placeholder="Enter password or code" required />
+            <div class="auth-field-group auth-password-group" style="margin-top:12px;">
+              <input type="password" id="fullSignInPassword" placeholder="Password" required autocomplete="current-password" />
+              <button type="button" class="auth-eye-btn" onclick="togglePasswordVisibility('fullSignInPassword', this)" tabindex="-1">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+              <p class="auth-field-error" id="signInPasswordError" style="display:none;">Password required</p>
             </div>
-
-            <div class="auth-flex-row" style="margin-top: 14px; margin-bottom: 20px;">
+            <div style="margin-top:8px; margin-bottom:16px;">
               <label class="auth-checkbox-label">
                 <input type="checkbox" checked /> Remember for 30 days
               </label>
-              <a href="#" onclick="toggleAuthPageView('signup'); return false;" class="auth-link">Send 6-Digit OTP</a>
             </div>
-
-            <button type="submit" class="auth-btn-primary">
-              Sign in
-            </button>
-
-            <button type="button" class="auth-btn-google" onclick="openRealGoogleAuthPopup(document.getElementById('fullSignInEmail').value || 'subodh.travels@gmail.com')">
-              <svg class="google-icon-sm" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-              Sign in with Google
-            </button>
+            <button type="submit" class="auth-btn-dark">Sign in</button>
           </form>
 
-          <p class="auth-switch-text">
-            Don't have an account? <a href="#" onclick="toggleAuthPageView('signup'); return false;">Sign up</a>
-          </p>
+          <p class="auth-terms">By signing in, you accept our <a href="#" class="auth-link">terms of service</a> and <a href="#" class="auth-link">privacy policy</a></p>
         </div>
 
-        <!-- SIGN UP / REGISTER FORM VIEW -->
-        <div id="authPageSignUpView" style="display: none;">
-          <h2 class="auth-title">Create an account</h2>
-          <p class="auth-subtitle">Register with your Google Email & 6-Digit OTP</p>
+        <!-- ===== SIGN UP VIEW ===== -->
+        <div id="authPageSignUpView">
+          <h2 class="auth-title">Create a free account</h2>
+          <p class="auth-subtitle">
+            Already have an account?
+            <a href="#" class="auth-link" onclick="toggleAuthPageView('signin'); return false;">Sign in</a>
+          </p>
 
-          <form id="fullSignUpForm" onsubmit="handleFullPageSignUp(event)">
-            <div class="auth-field-group">
-              <label><i class="fa-solid fa-user"></i> Full Display Name</label>
-              <input type="text" id="fullSignUpName" placeholder="Subodh Kumar" required />
-            </div>
+          <!-- Google OTP Button -->
+          <button type="button" class="auth-btn-google" onclick="startGoogleOtpFlow()">
+            <svg class="google-icon-sm" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            Sign up with Google
+          </button>
 
-            <div class="auth-field-group" style="margin-top: 14px;">
-              <label><i class="fa-solid fa-envelope"></i> Google Email Address</label>
-              <input type="email" id="fullSignUpEmail" placeholder="subodh.travels@gmail.com" required />
-            </div>
+          <div class="auth-divider"><span>or create account with password</span></div>
 
-            <div class="auth-field-group" style="margin-top: 14px;" id="fullOtpInputGroup">
-              <label><i class="fa-solid fa-shield-halved"></i> 6-Digit Verification Code</label>
-              <div style="display: flex; gap: 8px;">
-                <input type="text" id="fullSignUpOtp" maxlength="6" placeholder="123456" style="flex: 1; letter-spacing: 4px; font-weight: 700;" />
-                <button type="button" class="auth-btn-secondary" onclick="sendFullPageOtp()">Get OTP</button>
+          <!-- Step 1: Fill Details -->
+          <div id="signUpStep1">
+            <form id="fullSignUpForm" onsubmit="handleSignUpStep1(event)">
+              <div class="auth-field-group">
+                <input type="text" id="fullSignUpName" placeholder="Your name (optional)" autocomplete="name" />
               </div>
-              <p style="font-size: 0.78rem; color: #64748b; margin-top: 4px;" id="fullOtpHint">Click "Get OTP" to receive verification code</p>
-            </div>
+              <div class="auth-field-group" style="margin-top:12px;">
+                <input type="email" id="fullSignUpEmail" placeholder="Email address" required autocomplete="email" />
+                <p class="auth-field-error" id="signUpEmailError" style="display:none;">Email required</p>
+              </div>
+              <div class="auth-field-group auth-password-group" style="margin-top:12px;">
+                <input type="password" id="fullSignUpOtp" placeholder="Password (min 6 chars)" required autocomplete="new-password" />
+                <button type="button" class="auth-eye-btn" onclick="togglePasswordVisibility('fullSignUpOtp', this)" tabindex="-1">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+                <p class="auth-field-error" id="signUpPasswordError" style="display:none;">Password required</p>
+              </div>
+              <button type="submit" class="auth-btn-dark" style="margin-top:16px;" id="sendSignUpOtpBtn">
+                <span>Continue</span>
+              </button>
+            </form>
+          </div>
 
-            <button type="submit" class="auth-btn-primary" style="margin-top: 20px;">
-              Verify OTP & Sign up
+          <!-- Step 2: Verify OTP -->
+          <div id="signUpStep2" style="display:none;">
+            <button type="button" class="auth-back-btn" onclick="backToSignUpStep1()">
+              <i class="fa-solid fa-arrow-left"></i> Back
             </button>
-          </form>
+            <p style="font-size:0.9rem; color:#1c1c1e; margin-bottom:6px;">A 6-digit code was sent to</p>
+            <p style="font-weight:700; color:#000; font-size:0.95rem; margin-bottom:20px;" id="signUpOtpTargetEmail"></p>
+            <div class="auth-field-group" style="text-align:center;">
+              <input type="text" id="signUpOtpCode" maxlength="6" placeholder="000000"
+                style="font-size:2rem; font-weight:900; letter-spacing:10px; text-align:center; width:100%; padding:16px 12px; border:2px solid #e5e5ea; border-radius:14px; outline:none;"
+                oninput="this.value=this.value.replace(/\D/g,''); if(this.value.length===6) verifySignUpOtp();" />
+              <p class="auth-field-error" id="signUpOtpError" style="display:none; margin-top:8px;"></p>
+            </div>
+            <button type="button" class="auth-btn-dark" style="margin-top:16px;" onclick="verifySignUpOtp()">
+              <span id="verifySignUpOtpBtnText">Verify & Create Account</span>
+            </button>
+            <p style="text-align:center; font-size:0.82rem; color:#6e6e73; margin-top:12px;">
+              Didn't receive it? <a href="#" class="auth-link" onclick="resendSignUpOtp(); return false;">Resend code</a>
+            </p>
+          </div>
 
-          <p class="auth-switch-text">
-            Already have an account? <a href="#" onclick="toggleAuthPageView('signin'); return false;">Sign in</a>
+          <p class="auth-terms">By signing up, you accept our <a href="#" class="auth-link">terms of service</a> and <a href="#" class="auth-link">privacy policy</a></p>
+        </div>
+
+
+        <!-- ===== GOOGLE OTP FLOW - Step 1: Enter Email ===== -->
+        <div id="googleOtpStep1" style="display:none;">
+          <button type="button" class="auth-back-btn" onclick="cancelGoogleOtpFlow()">
+            <i class="fa-solid fa-arrow-left"></i> Back
+          </button>
+          <h2 class="auth-title">Sign in with Google</h2>
+          <p class="auth-subtitle">Enter your email address to receive a verification code</p>
+          <div class="auth-field-group" style="margin-top:20px;">
+            <input type="email" id="googleOtpEmail" placeholder="Enter your Gmail address" autocomplete="email" />
+            <p class="auth-field-error" id="googleOtpEmailError" style="display:none;"></p>
+          </div>
+          <div id="googleOtpStep1Hint" style="font-size:0.82rem; color:#6e6e73; margin-top:8px;"></div>
+          <button type="button" class="auth-btn-dark" style="margin-top:16px;" onclick="sendGoogleOtp()">
+            <span id="sendOtpBtnText">Send Verification Code</span>
+          </button>
+        </div>
+
+        <!-- ===== GOOGLE OTP FLOW - Step 2: Enter OTP ===== -->
+        <div id="googleOtpStep2" style="display:none;">
+          <button type="button" class="auth-back-btn" onclick="showGoogleOtpStep(1)">
+            <i class="fa-solid fa-arrow-left"></i> Back
+          </button>
+          <h2 class="auth-title">Check your email</h2>
+          <p class="auth-subtitle">We sent a 6-digit code to <strong id="googleOtpTargetEmail"></strong></p>
+          <div class="auth-field-group" style="margin-top:20px; text-align:center;">
+            <input type="text" id="googleOtpCode" maxlength="6" placeholder="000000"
+              style="font-size:2rem; font-weight:900; letter-spacing:10px; text-align:center; width:100%; padding:16px 12px; border:2px solid #e5e5ea; border-radius:14px; outline:none;"
+              oninput="this.value=this.value.replace(/\D/g,''); if(this.value.length===6) verifyGoogleOtp();" />
+            <p class="auth-field-error" id="googleOtpCodeError" style="display:none; margin-top:8px;"></p>
+          </div>
+          <div id="googleOtpStep2Hint" style="font-size:0.82rem; color:#6e6e73; margin-top:10px; text-align:center;"></div>
+          <button type="button" class="auth-btn-dark" style="margin-top:16px;" onclick="verifyGoogleOtp()">
+            <span id="verifyOtpBtnText">Verify Code</span>
+          </button>
+          <p style="text-align:center; font-size:0.82rem; color:#6e6e73; margin-top:12px;">
+            Didn't receive it? <a href="#" class="auth-link" onclick="sendGoogleOtp(true); return false;">Resend code</a>
           </p>
         </div>
-      </div>
-    </div>
 
-    <!-- RIGHT PANEL: PURPLE HERO ILLUSTRATION BANNER -->
-    <div class="auth-panel-right">
-      <div class="auth-hero-content">
-        <div class="auth-hero-graphic">
-          <svg viewBox="0 0 500 400" class="hero-svg-illustration">
-            <rect x="50" y="40" width="400" height="280" rx="20" fill="#ffffff" opacity="0.95" />
-            <circle cx="250" cy="160" r="60" fill="#6366f1" />
-            <path d="M230 160 L245 175 L275 145" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-            <path d="M120 240 L380 240" stroke="#cbd5e1" stroke-width="4" stroke-dasharray="8 8" />
-            <circle cx="120" cy="240" r="10" fill="#8b5cf6" />
-            <circle cx="380" cy="240" r="10" fill="#3b82f6" />
-          </svg>
+        <!-- ===== GOOGLE OTP FLOW - Step 3: Setup Account (new users only) ===== -->
+        <div id="googleOtpStep3" style="display:none;">
+          <h2 class="auth-title">Set up your account</h2>
+          <p class="auth-subtitle">Almost there! Set a display name and password to complete setup.</p>
+          <form id="googleSetupForm" onsubmit="completeGoogleSetup(event)">
+            <div class="auth-field-group" style="margin-top:16px;">
+              <input type="text" id="setupName" placeholder="Your display name" autocomplete="name" />
+              <p class="auth-field-error" id="setupNameError" style="display:none;"></p>
+            </div>
+            <div class="auth-field-group auth-password-group" style="margin-top:12px;">
+              <input type="password" id="setupPassword" placeholder="Set a password (min 6 chars)" autocomplete="new-password" />
+              <button type="button" class="auth-eye-btn" onclick="togglePasswordVisibility('setupPassword', this)" tabindex="-1">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+              <p class="auth-field-error" id="setupPasswordError" style="display:none;"></p>
+            </div>
+            <div class="auth-field-group auth-password-group" style="margin-top:12px;">
+              <input type="password" id="setupConfirmPassword" placeholder="Confirm your password" autocomplete="new-password" />
+              <button type="button" class="auth-eye-btn" onclick="togglePasswordVisibility('setupConfirmPassword', this)" tabindex="-1">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+              <p class="auth-field-error" id="setupConfirmError" style="display:none;"></p>
+            </div>
+            <button type="submit" class="auth-btn-dark" style="margin-top:20px;">Complete Setup</button>
+          </form>
         </div>
-        <h3 class="hero-title">Monthly Travel Expense Tracker</h3>
-        <p class="hero-subtitle">Track receipts, calculate local transport reimbursements, and sync data seamlessly across all your devices.</p>
+
       </div>
     </div>
   </div>
@@ -288,12 +424,12 @@
     <!-- App Header -->
     <header class="app-header">
     <div class="header-container">
-      <div class="brand">
-        <div class="brand-icon" style="background: none; border: none; padding: 0; width: 42px; height: 42px;">
-          <img src="logo.png" alt="TravelExpense Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5));" />
+      <div class="brand" onclick="switchAppPage('landing')" style="cursor: pointer;">
+        <div class="brand-icon" style="background: none; border: none; padding: 0; width: 40px; height: 40px;">
+          <img src="logo.png" alt="TravelExpense Logo" style="width: 100%; height: 100%; object-fit: contain; background: transparent;" />
         </div>
         <div class="brand-text">
-          <h1>TravelExpense<span>.io</span></h1>
+          <h1>TravelExpense</h1>
           <p class="subtitle">Mobile Expense Log & Receipt Vault</p>
         </div>
       </div>
@@ -352,17 +488,17 @@
     <section class="user-welcome-banner" id="userWelcomeBanner">
       <div class="user-profile-info">
         <div class="user-avatar-wrapper" id="userAvatarWrapper" title="Click to Change Photo & Edit Profile" style="position: relative; cursor: pointer;">
-          <img id="userAvatarImg" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh" alt="User Avatar" class="user-avatar-lg" />
+          <img id="userAvatarImg" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Traveler" alt="User Avatar" class="user-avatar-lg" />
           <div class="avatar-edit-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;">
             <i class="fa-solid fa-camera" style="color: #fff; font-size: 1.1rem;"></i>
           </div>
         </div>
         <div>
           <div class="user-name-wrapper">
-            <h2 id="userNameDisplay">Subodh Kumar</h2>
+            <h2 id="userNameDisplay">Traveler</h2>
             <span class="user-badge-tag" id="userAuthTag"><i class="fa-brands fa-google"></i> Google Verified</span>
           </div>
-          <p class="user-email" id="userEmailDisplay">subodh.travels@gmail.com</p>
+          <p class="user-email" id="userEmailDisplay">user@example.com</p>
         </div>
       </div>
 
@@ -439,7 +575,7 @@
 
       <div class="filter-controls">
         <div class="month-filter" style="display: flex; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px; gap: 6px;">
-          <i class="fa-solid fa-calendar-days" style="color: #2563eb;"></i>
+          <i class="fa-solid fa-calendar-days" style="color: #000000;"></i>
           <select id="monthFilter" style="background: transparent; border: none; color: #0f172a; font-size: 0.85rem; font-weight: 600; cursor: pointer; outline: none;">
             <!-- Dynamically populated months -->
           </select>
@@ -694,7 +830,7 @@
 
       <!-- Auth Navigation Tabs: Sign In vs Sign Up -->
       <div style="display: flex; background: #f1f5f9; padding: 4px; border-bottom: 1px solid #e2e8f0;">
-        <button type="button" id="tabSignInBtn" onclick="switchAuthTab('signin')" style="flex: 1; padding: 10px; border: none; background: #ffffff; color: #2563eb; font-weight: 700; font-size: 0.9rem; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <button type="button" id="tabSignInBtn" onclick="switchAuthTab('signin')" style="flex: 1; padding: 10px; border: none; background: #ffffff; color: #000000; font-weight: 700; font-size: 0.9rem; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; gap: 8px;">
           <i class="fa-solid fa-right-to-bracket"></i> 1-Click Sign In
         </button>
         <button type="button" id="tabSignUpBtn" onclick="switchAuthTab('signup')" style="flex: 1; padding: 10px; border: none; background: transparent; color: #64748b; font-weight: 600; font-size: 0.9rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -708,21 +844,7 @@
           <!-- Official Google Identity Services Button Container -->
           <div id="gsiButtonContainer" style="display:flex; justify-content:center; margin-bottom:16px;"></div>
 
-          <div class="google-accounts-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
-            <div class="account-item" onclick="selectGoogleAccount('google_subodh', 'Subodh Kumar', 'subodh.travels@gmail.com', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh')" style="background: #f8fafc !important; border: 1px solid #cbd5e1 !important; padding: 14px 16px; border-radius: 12px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s ease;">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh" alt="Subodh" class="account-avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #2563eb;" />
-              <div class="account-details" style="flex: 1;">
-                <h4 style="font-size: 0.98rem; font-weight: 700; color: #0f172a !important; margin: 0;">Subodh Kumar</h4>
-                <p style="font-size: 0.82rem; color: #475569 !important; font-weight: 500; margin: 3px 0 0 0;">subodh.travels@gmail.com</p>
-              </div>
-              <i class="fa-solid fa-chevron-right" style="color: #2563eb; font-size: 1.1rem;"></i>
-            </div>
-          </div>
-
           <div class="custom-google-signin-form">
-            <div class="divider-text" style="text-align: center; position: relative; margin: 20px 0;">
-              <span style="background: #ffffff !important; color: #475569 !important; padding: 4px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-weight: 600; font-size: 0.8rem; position: relative; z-index: 1;">Or sign in with custom Google Email</span>
-            </div>
             <div class="form-group" style="margin-bottom:14px;">
               <label style="font-size:0.85rem; color:#475569 !important; margin-bottom:6px; display:block; font-weight: 600;"><i class="fa-solid fa-envelope"></i> Google Email Address</label>
               <input type="email" id="customGoogleEmail" placeholder="Enter Google email (e.g. name@gmail.com)" required style="background: #f8fafc !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; font-weight: 600;" />
@@ -739,11 +861,11 @@
           <div id="otpStep1">
             <div class="form-group" style="margin-bottom: 14px;">
               <label style="font-size: 0.85rem; color: #475569; font-weight: 600;"><i class="fa-solid fa-user"></i> Full Display Name</label>
-              <input type="text" id="signUpNameInput" placeholder="e.g. Subodh Kumar" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 600;" />
+              <input type="text" id="signUpNameInput" placeholder="e.g. Alex Morgan" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 600;" />
             </div>
             <div class="form-group" style="margin-bottom: 16px;">
               <label style="font-size: 0.85rem; color: #475569; font-weight: 600;"><i class="fa-solid fa-envelope"></i> Google Email Address</label>
-              <input type="email" id="signUpEmailInput" placeholder="e.g. subodh.travels@gmail.com" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 600;" />
+              <input type="email" id="signUpEmailInput" placeholder="e.g. alex@gmail.com" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 600;" />
             </div>
             <button type="button" class="btn btn-primary" id="sendOtpBtn" onclick="requestOtpCode()" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700;">
               <i class="fa-solid fa-paper-plane"></i> Send 6-Digit OTP Verification Code
@@ -753,9 +875,9 @@
           <!-- STEP 2: ENTER & VERIFY 6-DIGIT OTP -->
           <div id="otpStep2" style="display: none;">
             <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 14px; border-radius: 12px; margin-bottom: 16px; text-align: center;">
-              <i class="fa-solid fa-shield-halved" style="font-size: 1.6rem; color: #2563eb; margin-bottom: 6px;"></i>
+              <i class="fa-solid fa-shield-halved" style="font-size: 1.6rem; color: #000000; margin-bottom: 6px;"></i>
               <h4 style="font-size: 0.95rem; color: #1e40af; font-weight: 700; margin-bottom: 4px;">Enter 6-Digit OTP Verification Code</h4>
-              <p style="font-size: 0.82rem; color: #475569; margin: 0;">Code sent to <strong id="otpTargetEmail" style="color: #2563eb;">subodh@gmail.com</strong></p>
+              <p style="font-size: 0.82rem; color: #475569; margin: 0;">Code sent to <strong id="otpTargetEmail" style="color: #000000;">user@gmail.com</strong></p>
               <div id="demoOtpBanner" style="margin-top: 8px; background: #fef3c7; border: 1px solid #fde68a; padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; color: #92400e; font-weight: 700;">
                 🔑 Verification Code: <span id="demoOtpCode" style="font-size: 1rem; color: #d97706; letter-spacing: 2px;">123456</span>
               </div>
@@ -796,7 +918,7 @@
 
       <div class="modal-body">
         <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 14px; border-radius: 12px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
-          <i class="fa-solid fa-shield-halved" style="font-size: 1.5rem; color: #2563eb;"></i>
+          <i class="fa-solid fa-shield-halved" style="font-size: 1.5rem; color: #000000;"></i>
           <div>
             <h4 style="font-size: 0.95rem; color: #1e40af; margin-bottom: 2px;">Read-Only View Security</h4>
             <p style="font-size: 0.8rem; color: #475569;">Anyone opening this link can view your travel expense log and receipts, but CANNOT edit or delete your entries.</p>
@@ -808,7 +930,7 @@
             <label style="font-size: 0.85rem; color: #64748b; margin: 0;">
               <i class="fa-solid fa-link"></i> Shareable Web & Mobile Link
             </label>
-            <span id="shareMonthBadge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; font-weight: 600;">
+            <span id="shareMonthBadge" style="background: linear-gradient(135deg, #ffc3d0 0%, #e3d5fa 50%, #cbddf9 100%); color: #000000; border: 1px solid rgba(255,255,255,0.8); border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; font-weight: 600;">
               <i class="fa-solid fa-calendar-check"></i> Target Month: August 2026
             </span>
           </div>
@@ -846,7 +968,7 @@
           <!-- Profile Photo Upload Box -->
           <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; text-align: center;">
             <div style="position: relative; margin-bottom: 12px;">
-              <img id="profilePhotoPreview" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh" alt="Profile Preview" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb; box-shadow: 0 4px 15px rgba(0,0,0,0.1);" />
+              <img id="profilePhotoPreview" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh" alt="Profile Preview" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid #000000; box-shadow: 0 4px 15px rgba(0,0,0,0.1);" />
               <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('profilePhotoInput').click()" style="position: absolute; bottom: 0; right: -5px; border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" title="Upload Photo">
                 <i class="fa-solid fa-camera" style="font-size: 0.85rem;"></i>
               </button>
@@ -923,29 +1045,8 @@
       </div>
 
       <div class="google-chooser-body">
-        <!-- Account Card 1 -->
-        <div class="google-account-option" onclick="selectGoogleAccount('Subodh Kumar', 'subodh.travels@gmail.com')">
-          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh" alt="Subodh" class="google-account-avatar" />
-          <div class="google-account-details">
-            <h4>Subodh Kumar <span class="badge-default">Default</span></h4>
-            <p>subodh.travels@gmail.com</p>
-          </div>
-          <i class="fa-solid fa-angle-right account-arrow"></i>
-        </div>
-
-        <!-- Account Card 2 -->
-        <div class="google-account-option" onclick="selectGoogleAccount('Subodh Dev', 'subodh.dev@gmail.com')">
-          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=SubodhDev" alt="Subodh Dev" class="google-account-avatar" />
-          <div class="google-account-details">
-            <h4>Subodh Dev</h4>
-            <p>subodh.dev@gmail.com</p>
-          </div>
-          <i class="fa-solid fa-angle-right account-arrow"></i>
-        </div>
-
-        <div class="google-chooser-divider">
-          <span>OR USE ANOTHER ACCOUNT</span>
-        </div>
+        <!-- Dynamic Saved Accounts Container (Populated if user previously logged in) -->
+        <div id="savedAccountsContainer"></div>
 
         <!-- Custom Account Entry Form -->
         <form onsubmit="handleCustomGoogleAccountSubmit(event)" class="custom-account-form">

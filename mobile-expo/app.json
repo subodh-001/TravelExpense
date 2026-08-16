@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Travel Expense Log",
+    "slug": "travel-expense-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
+    }
+  }
+}

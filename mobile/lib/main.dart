@@ -1,6 +1,6 @@
 // ============================================================
 // COMPLETE FLUTTER APP - main.dart
-// Monthly Travel Expense Tracker
+// Monthly Travel Expense Tracker (Apple Liquid Glass UI)
 // ============================================================
 
 import 'package:flutter/material.dart';
@@ -19,8 +19,10 @@ class ExpenseTrackerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFFAFAFC),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF3B82F6),
+          seedColor: Colors.black,
+          primary: Colors.black,
           brightness: Brightness.light,
         ),
       ),
@@ -103,77 +105,115 @@ class Receipt {
 
 // ==================== API SERVICE ====================
 class ApiService {
-  // Production URL (Render - Live)
-  static const String baseUrl = 'https://travelexpense-52gp.onrender.com/api';
-  static const String userId = 'google_subodh';
+  // Preset Endpoints
+  static const String RENDER_URL = 'https://travelexpense-52gp.onrender.com/api';
+  static const String EMULATOR_URL = 'http://10.0.2.2:3000/api';
+  static const String LOCALHOST_URL = 'http://localhost:3000/api';
+
+  // Active Base URL & User ID
+  static String baseUrl = RENDER_URL;
+  static String userId = 'google_subodh';
+  static const Duration timeoutDuration = Duration(seconds: 12);
 
   static Future<List<Expense>> getExpenses() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/expenses'),
-      headers: {'user-id': userId},
-    );
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/expenses'),
+            headers: {'user-id': userId},
+          )
+          .timeout(timeoutDuration);
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return (data['expenses'] as List)
-          .map((e) => Expense.fromJson(e))
-          .toList();
-    } else {
-      throw Exception('Failed to load expenses (${response.statusCode})');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return (data['expenses'] as List)
+            .map((e) => Expense.fromJson(e))
+            .toList();
+      } else {
+        throw Exception('Server returned ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception(_formatError(e));
     }
   }
 
   static Future<Expense> createExpense(Expense expense) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/expenses'),
-      headers: {
-        'Content-Type': 'application/json',
-        'user-id': userId,
-      },
-      body: json.encode({
-        'date': expense.date,
-        'location': expense.location,
-        'entries': expense.entries.map((e) => e.toJson()).toList(),
-      }),
-    );
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/expenses'),
+            headers: {
+              'Content-Type': 'application/json',
+              'user-id': userId,
+            },
+            body: json.encode({
+              'date': expense.date,
+              'location': expense.location,
+              'entries': expense.entries.map((e) => e.toJson()).toList(),
+            }),
+          )
+          .timeout(timeoutDuration);
 
-    if (response.statusCode == 201) {
-      final data = json.decode(response.body);
-      return Expense.fromJson(data['data']);
-    } else {
-      throw Exception('Failed to create expense');
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        return Expense.fromJson(data['data']);
+      } else {
+        throw Exception('Server returned ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception(_formatError(e));
     }
   }
 
   static Future<Receipt> uploadReceipt(String expenseId, File file) async {
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$baseUrl/expenses/$expenseId/receipts'),
-    );
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/expenses/$expenseId/receipts'),
+      );
 
-    request.headers['user-id'] = userId;
-    request.files.add(await http.MultipartFile.fromPath('receipt', file.path));
+      request.headers['user-id'] = userId;
+      request.files.add(await http.MultipartFile.fromPath('receipt', file.path));
 
-    final response = await request.send();
-    final responseBody = await response.stream.bytesToString();
-    final data = json.decode(responseBody);
+      final streamedResponse = await request.send().timeout(timeoutDuration);
+      final responseBody = await streamedResponse.stream.bytesToString();
+      final data = json.decode(responseBody);
 
-    if (response.statusCode == 200) {
-      return Receipt.fromJson(data['receipt']);
-    } else {
-      throw Exception(data['error'] ?? 'Failed to upload receipt');
+      if (streamedResponse.statusCode == 200) {
+        return Receipt.fromJson(data['receipt']);
+      } else {
+        throw Exception(data['error'] ?? 'Failed to upload receipt');
+      }
+    } catch (e) {
+      throw Exception(_formatError(e));
     }
   }
 
   static Future<void> deleteExpense(String expenseId) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/expenses/$expenseId'),
-      headers: {'user-id': userId},
-    );
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$baseUrl/expenses/$expenseId'),
+            headers: {'user-id': userId},
+          )
+          .timeout(timeoutDuration);
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete expense');
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete expense');
+      }
+    } catch (e) {
+      throw Exception(_formatError(e));
     }
+  }
+
+  static String _formatError(dynamic e) {
+    String msg = e.toString();
+    if (msg.contains('TimeoutException')) {
+      return 'Server timeout ($baseUrl). If using local server, switch endpoint to Emulator (10.0.2.2) or local IP.';
+    } else if (msg.contains('SocketException') || msg.contains('Connection refused')) {
+      return 'Cannot reach $baseUrl. Make sure server is running via ./start.sh or select correct server mode.';
+    }
+    return msg.replaceAll('Exception: ', '');
   }
 }
 
@@ -188,6 +228,9 @@ class ExpenseListScreen extends StatefulWidget {
 class _ExpenseListScreenState extends State<ExpenseListScreen> {
   List<Expense> _expenses = [];
   bool _loading = true;
+  String? _errorMessage;
+
+  static const Color appleGrayCard = Color(0xFFF4F4F7);
 
   @override
   void initState() {
@@ -196,7 +239,10 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   }
 
   Future<void> _loadExpenses() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
     try {
       final expenses = await ApiService.getExpenses();
       setState(() {
@@ -204,126 +250,348 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         _loading = false;
       });
     } catch (e) {
-      setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Note: $e')),
-      );
+      setState(() {
+        _loading = false;
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+      });
     }
+  }
+
+  void _showServerSettings() {
+    final customIpController = TextEditingController(
+      text: ApiService.baseUrl.contains('http') &&
+              !ApiService.baseUrl.contains('onrender.com') &&
+              !ApiService.baseUrl.contains('10.0.2.2') &&
+              !ApiService.baseUrl.contains('localhost')
+          ? ApiService.baseUrl
+          : '',
+    );
+    final userIdController = TextEditingController(text: ApiService.userId);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                top: 20,
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '⚙️ Backend Server Settings',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('Select Backend Endpoint:',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      tileColor: ApiService.baseUrl == ApiService.RENDER_URL
+                          ? appleGrayCard
+                          : Colors.grey.shade100,
+                      leading: Icon(Icons.cloud_done,
+                          color: ApiService.baseUrl == ApiService.RENDER_URL
+                              ? Colors.black
+                              : Colors.grey),
+                      title: const Text('Render Live Server'),
+                      subtitle: Text(ApiService.RENDER_URL, style: const TextStyle(fontSize: 12)),
+                      trailing: ApiService.baseUrl == ApiService.RENDER_URL
+                          ? const Icon(Icons.check_circle, color: Colors.black)
+                          : null,
+                      onTap: () {
+                        setState(() => ApiService.baseUrl = ApiService.RENDER_URL);
+                        setModalState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      tileColor: ApiService.baseUrl == ApiService.EMULATOR_URL
+                          ? appleGrayCard
+                          : Colors.grey.shade100,
+                      leading: Icon(Icons.phone_android,
+                          color: ApiService.baseUrl == ApiService.EMULATOR_URL
+                              ? Colors.black
+                              : Colors.grey),
+                      title: const Text('Android Emulator (10.0.2.2)'),
+                      subtitle: Text(ApiService.EMULATOR_URL, style: const TextStyle(fontSize: 12)),
+                      trailing: ApiService.baseUrl == ApiService.EMULATOR_URL
+                          ? const Icon(Icons.check_circle, color: Colors.black)
+                          : null,
+                      onTap: () {
+                        setState(() => ApiService.baseUrl = ApiService.EMULATOR_URL);
+                        setModalState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      tileColor: ApiService.baseUrl == ApiService.LOCALHOST_URL
+                          ? appleGrayCard
+                          : Colors.grey.shade100,
+                      leading: Icon(Icons.computer,
+                          color: ApiService.baseUrl == ApiService.LOCALHOST_URL
+                              ? Colors.black
+                              : Colors.grey),
+                      title: const Text('Local Web / Localhost (3000)'),
+                      subtitle: Text(ApiService.LOCALHOST_URL, style: const TextStyle(fontSize: 12)),
+                      trailing: ApiService.baseUrl == ApiService.LOCALHOST_URL
+                          ? const Icon(Icons.check_circle, color: Colors.black)
+                          : null,
+                      onTap: () {
+                        setState(() => ApiService.baseUrl = ApiService.LOCALHOST_URL);
+                        setModalState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: customIpController,
+                      decoration: const InputDecoration(
+                        labelText: 'Custom Server URL (e.g. http://192.168.1.5:3000/api)',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.link),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: userIdController,
+                      decoration: const InputDecoration(
+                        labelText: 'User ID Header',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        ),
+                        onPressed: () {
+                          if (customIpController.text.trim().isNotEmpty) {
+                            ApiService.baseUrl = customIpController.text.trim();
+                          }
+                          if (userIdController.text.trim().isNotEmpty) {
+                            ApiService.userId = userIdController.text.trim();
+                          }
+                          Navigator.pop(context);
+                          _loadExpenses();
+                        },
+                        child: const Text('Save & Reconnect',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Travel Expense Tracker'),
-        elevation: 2,
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Travel Expense Log', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+            Text('Server: ${ApiService.baseUrl}',
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                overflow: TextOverflow.ellipsis),
+          ],
+        ),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.settings, color: Colors.black),
+            tooltip: 'Server Settings',
+            onPressed: _showServerSettings,
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.black),
+            tooltip: 'Refresh',
             onPressed: _loadExpenses,
           )
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _expenses.isEmpty
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: Colors.black),
+                  SizedBox(height: 16),
+                  Text('Loading expenses...', style: TextStyle(color: Colors.grey)),
+                ],
+              ),
+            )
+          : _errorMessage != null
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        'No travel expenses yet!',
-                        style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Tap + button to record a new travel entry',
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.wifi_off_rounded, size: 70, color: Colors.black),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Connection Failed',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton.icon(
+                          onPressed: _showServerSettings,
+                          icon: const Icon(Icons.settings),
+                          label: const Text('Change Server / Switch to Local'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: _loadExpenses,
+                          icon: const Icon(Icons.refresh, color: Colors.black),
+                          label: const Text('Retry', style: TextStyle(color: Colors.black)),
+                        ),
+                      ],
+                    ),
                   ),
                 )
-              : RefreshIndicator(
-                  onRefresh: _loadExpenses,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _expenses.length,
-                    itemBuilder: (context, index) {
-                      final expense = _expenses[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 3,
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.blue.shade100,
-                            child: const Icon(Icons.directions_car, color: Colors.blue),
+              : _expenses.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'No travel expenses yet!',
+                            style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.bold),
                           ),
-                          title: Text(
-                            expense.location,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Tap + button to record a new travel entry',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Date: ${expense.date}', style: const TextStyle(fontSize: 13)),
-                                Text('Receipts: ${expense.receipts.length}', style: TextStyle(fontSize: 13, color: Colors.blue.shade700)),
-                              ],
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadExpenses,
+                      color: Colors.black,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _expenses.length,
+                        itemBuilder: (context, index) {
+                          final expense = _expenses[index];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(color: const Color(0xFFE5E5EA)),
                             ),
-                          ),
-                          trailing: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              leading: CircleAvatar(
+                                backgroundColor: appleGrayCard,
+                                child: const Icon(Icons.directions_car, color: Colors.black),
+                              ),
+                              title: Text(
+                                expense.location,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Date: ${expense.date}', style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                                    Text('Receipts: ${expense.receipts.length}', style: const TextStyle(fontSize: 13, color: Colors.black)),
+                                  ],
+                                ),
+                              ),
+                              trailing: Text(
                                 '₹${expense.total.toStringAsFixed(0)}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,
-                                  color: Colors.green,
+                                  color: Colors.black,
                                 ),
                               ),
-                              if (expense.receipts.isNotEmpty)
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.attach_file, size: 14, color: Colors.blue),
-                                    Text('${expense.receipts.length}', style: const TextStyle(fontSize: 12, color: Colors.blue)),
-                                  ],
-                                )
-                            ],
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ExpenseDetailScreen(expense: expense),
-                              ),
-                            ).then((_) => _loadExpenses());
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => AddExpenseScreen()),
-          ).then((_) => _loadExpenses());
-        },
-        label: const Text('Add Entry'),
-        icon: const Icon(Icons.add),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ExpenseDetailScreen(expense: expense),
+                                  ),
+                                ).then((_) => _loadExpenses());
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFC3D0), Color(0xFFE3D5FA), Color(0xFFCBDDF9)],
+          ),
+        ),
+        padding: const EdgeInsets.all(4),
+        child: FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => AddExpenseScreen()),
+            ).then((_) => _loadExpenses());
+          },
+          label: const Text('Add Entry', style: TextStyle(fontWeight: FontWeight.bold)),
+          icon: const Icon(Icons.add),
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+        ),
       ),
     );
   }
@@ -390,7 +658,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Travel Expense'),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -470,9 +738,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.shade200),
+                  color: const Color(0xFFF4F4F7),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5E5EA)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -480,7 +748,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     const Text('Total Expense:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     Text(
                       '₹${grandTotal.toStringAsFixed(0)}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.green),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black),
                     ),
                   ],
                 ),
@@ -491,9 +759,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 child: ElevatedButton(
                   onPressed: _loading ? null : _saveExpense,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: Colors.black,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
                   ),
                   child: _loading
                       ? const CircularProgressIndicator(color: Colors.white)
@@ -594,7 +863,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(expense.location),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -609,7 +878,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               elevation: 2,
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -640,7 +909,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
-                            color: Colors.green,
+                            color: Colors.black,
                           ),
                         ),
                       ],
@@ -680,8 +949,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                   icon: const Icon(Icons.upload_file, size: 16),
                   label: const Text('Upload Receipt'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: Colors.black,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                 ),
               ],
@@ -705,7 +975,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                     final receipt = expense.receipts[index];
                     return Card(
                       child: ListTile(
-                        leading: const Icon(Icons.insert_drive_file, color: Colors.blue),
+                        leading: const Icon(Icons.insert_drive_file, color: Colors.black),
                         title: Text(receipt.fileName),
                         subtitle: Text(
                           'Uploaded: ${receipt.uploadedAt.toString().substring(0, 10)}',

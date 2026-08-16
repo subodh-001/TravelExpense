@@ -118,11 +118,125 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ---------- USER PROFILE MANAGEMENT ----------
+const nodemailer = require('nodemailer');
+
+// Setup Gmail SMTP Transporter for OTP Emails
+let mailTransporter = null;
+const gmailUser = process.env.GMAIL_USER || 'subodhram3350@gmail.com';
+const gmailPass = (process.env.GMAIL_APP_PASSWORD || 'ozyt ospi hwnj hmbk').replace(/\s+/g, '');
+
+try {
+  mailTransporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: gmailUser,
+      pass: gmailPass
+    }
+  });
+  console.log(`📧 Gmail SMTP Configured for Real OTP Emails (${gmailUser})`);
+} catch (smtpErr) {
+  console.warn('⚠️ Gmail SMTP setup warning:', smtpErr.message);
+}
+
+const crypto = require('crypto');
+
+// ---------- USER AUTHENTICATION & PROFILE MANAGEMENT ----------
 const otpStore = new Map();
 
+// Register User Account (Name + Email + Password)
+// Check if email already registered
+app.post('/api/auth/check-email', (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.json({ exists: false });
+    const cleanEmail = email.toLowerCase().trim();
+    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const users = getLocalUsers();
+    const exists = !!(users[userId] && users[userId].passwordHash);
+    res.json({ exists });
+  } catch (err) {
+    res.json({ exists: false });
+  }
+});
+
+app.post('/api/auth/register', (req, res) => {
+  try {
+    const { email, password, name } = req.body;
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Valid email address is required' });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const users = getLocalUsers();
+
+    if (users[userId] && users[userId].passwordHash) {
+      return res.status(400).json({ error: 'An account with this email already exists. Please Sign In.' });
+    }
+
+    const cleanName = (name || cleanEmail.split('@')[0]).replace(/[\._]/g, ' ');
+    const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+    const picture = users[userId]?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+
+    users[userId] = {
+      id: userId,
+      name: capitalizedName,
+      email: cleanEmail,
+      passwordHash,
+      picture,
+      verified: true,
+      updatedAt: new Date().toISOString()
+    };
+    saveLocalUsers(users);
+
+    const safeUser = { ...users[userId] };
+    delete safeUser.passwordHash;
+
+    console.log(`👤 Registered new user account: ${cleanEmail}`);
+    res.json({ success: true, user: safeUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Password Login Route
+app.post('/api/auth/login', (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const users = getLocalUsers();
+    const user = users[userId];
+
+    if (!user || !user.passwordHash) {
+      return res.status(401).json({ error: 'No password set for this email. Please Sign Up or use Gmail OTP.' });
+    }
+
+    const inputHash = crypto.createHash('sha256').update(password).digest('hex');
+    if (user.passwordHash !== inputHash) {
+      return res.status(401).json({ error: 'Incorrect password. Please check and try again.' });
+    }
+
+    const safeUser = { ...user };
+    delete safeUser.passwordHash;
+
+    console.log(`🔑 Password Login successful for: ${cleanEmail}`);
+    res.json({ success: true, user: safeUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Send 6-Digit OTP Verification Code
-app.post('/api/auth/send-otp', (req, res) => {
+app.post('/api/auth/send-otp', async (req, res) => {
   try {
     const { email, name } = req.body;
     if (!email || !email.includes('@')) {
@@ -135,6 +249,29 @@ app.post('/api/auth/send-otp', (req, res) => {
     otpStore.set(email.toLowerCase(), { otp, expiresAt, name });
     console.log(`🔑 Generated 6-Digit OTP for ${email}: [ ${otp} ]`);
 
+    // Send Real Email via Nodemailer Gmail SMTP
+    if (mailTransporter) {
+      mailTransporter.sendMail({
+        from: `"TravelExpense Security" <${gmailUser}>`,
+        to: email,
+        subject: `🔑 ${otp} is your TravelExpense Verification Code`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e5e5ea; border-radius: 20px; background: #ffffff;">
+            <h2 style="color: #000000; font-size: 20px; font-weight: 800; margin-bottom: 8px;">TravelExpense</h2>
+            <p style="color: #6e6e73; font-size: 14px; margin-bottom: 20px;">Your 6-digit verification code to log in to TravelExpense is:</p>
+            <div style="background: #F4F4F7; padding: 20px; border-radius: 14px; text-align: center; margin-bottom: 20px; border: 1px solid #e5e5ea;">
+              <span style="font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #000000;">${otp}</span>
+            </div>
+            <p style="color: #8e8e93; font-size: 12px; line-height: 1.5; margin: 0;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
+          </div>
+        `
+      }).then(() => {
+        console.log(`✉️ Real OTP Email successfully sent to ${email}`);
+      }).catch((mailErr) => {
+        console.error(`⚠️ Failed to send OTP email to ${email}:`, mailErr.message);
+      });
+    }
+
     res.json({
       success: true,
       message: `6-Digit OTP Verification Code sent to ${email}`,
@@ -145,7 +282,7 @@ app.post('/api/auth/send-otp', (req, res) => {
   }
 });
 
-// Verify 6-Digit OTP Code
+// Strict Verify 6-Digit OTP Code (NO DEMO BYPASS)
 app.post('/api/auth/verify-otp', (req, res) => {
   try {
     const { email, name, otp } = req.body;
@@ -153,40 +290,47 @@ app.post('/api/auth/verify-otp', (req, res) => {
       return res.status(400).json({ error: 'Email and 6-Digit OTP Code are required' });
     }
 
-    const record = otpStore.get(email.toLowerCase());
+    const cleanEmail = email.toLowerCase().trim();
+    const record = otpStore.get(cleanEmail);
 
-    if (!record && otp !== '123456') {
-      return res.status(400).json({ error: 'OTP Code expired or not requested. Please click Send OTP.' });
+    if (!record) {
+      return res.status(400).json({ error: 'No active OTP requested for this email. Please click Send OTP.' });
     }
 
-    if (record && record.expiresAt < Date.now() && otp !== '123456') {
-      otpStore.delete(email.toLowerCase());
+    if (record.expiresAt < Date.now()) {
+      otpStore.delete(cleanEmail);
       return res.status(400).json({ error: 'OTP Code has expired. Please request a new code.' });
     }
 
-    if (record && record.otp !== otp && otp !== '123456') {
-      return res.status(400).json({ error: 'Invalid 6-digit OTP Code. Please check and try again.' });
+    if (record.otp !== otp.toString().trim()) {
+      return res.status(400).json({ error: 'Invalid 6-digit OTP Code. Please check your Gmail inbox.' });
     }
 
-    const cleanName = (name || (record && record.name) || email.split('@')[0]).replace(/[\._]/g, ' ');
+    const cleanName = (name || record.name || cleanEmail.split('@')[0]).replace(/[\._]/g, ' ');
     const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
-    const userId = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
-    const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
     const users = getLocalUsers();
+    const existing = users[userId] || {};
+
     users[userId] = {
+      ...existing,
       id: userId,
-      name: capitalizedName,
-      email: email.toLowerCase(),
-      picture,
+      name: existing.name || capitalizedName,
+      email: cleanEmail,
+      picture: existing.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`,
       verified: true,
       updatedAt: new Date().toISOString()
     };
     saveLocalUsers(users);
-    otpStore.delete(email.toLowerCase());
+    otpStore.delete(cleanEmail);
 
-    console.log(`✅ Verified OTP & Account Created for ${email}: ${capitalizedName}`);
-    res.json({ success: true, user: users[userId] });
+    const safeUser = { ...users[userId] };
+    delete safeUser.passwordHash;
+
+    const hasPassword = !!existing.passwordHash;
+    console.log(`✅ Real OTP Verified for ${cleanEmail}: ${capitalizedName} (hasPassword: ${hasPassword})`);
+    res.json({ success: true, user: safeUser, hasPassword });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -200,9 +344,9 @@ app.post('/api/user/profile', (req, res) => {
     const users = getLocalUsers();
     users[id] = {
       id,
-      name: name || 'Subodh Kumar',
-      email: email || 'subodh.travels@gmail.com',
-      picture: picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'Subodh')}`,
+      name: name || 'Traveler',
+      email: email || 'user@example.com',
+      picture: picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'Traveler')}`,
       updatedAt: new Date().toISOString()
     };
     saveLocalUsers(users);
@@ -220,8 +364,8 @@ app.get('/api/user/profile/:userId', (req, res) => {
     const users = getLocalUsers();
     const user = users[userId] || {
       id: userId,
-      name: userId.includes('subodh') ? 'Subodh Kumar' : 'Traveler',
-      email: userId.includes('subodh') ? 'subodh.travels@gmail.com' : `${userId}@gmail.com`,
+      name: 'Traveler',
+      email: `${userId}@gmail.com`,
       picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userId)}`
     };
     res.json({ success: true, user });
@@ -402,7 +546,7 @@ app.get('/api/expenses', async (req, res) => {
           userId = token || 'user_123';
         }
       } else {
-        userId = 'google_subodh';
+        userId = 'google_user';
       }
     }
 
@@ -422,7 +566,7 @@ app.get('/api/expenses', async (req, res) => {
       return res.json({ success: true, expenses });
     } else {
       const all = getLocalExpenses();
-      const userExpenses = all.filter(e => e.userId === userId || (!e.userId && userId === 'google_subodh'));
+      const userExpenses = all.filter(e => e.userId === userId || !e.userId);
       userExpenses.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
       return res.json({ success: true, expenses: userExpenses });

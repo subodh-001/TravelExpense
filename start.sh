@@ -30,7 +30,7 @@ function stop_server() {
 
 function start_server() {
     echo -e "${CYAN}==============================================================================${NC}"
-    echo -e "  🚀 TravelExpense.io — Mobile Travel Log & Cloudinary Receipt Vault"
+    echo -e "  🚀 TravelExpense — Mobile Travel Log & Cloudinary Receipt Vault"
     echo -e "${CYAN}==============================================================================${NC}"
 
     if ! command -v node &> /dev/null; then
@@ -55,6 +55,38 @@ function start_server() {
     exec node backend/server.js
 }
 
+function start_expo() {
+    echo -e "${CYAN}==============================================================================${NC}"
+    echo -e "  📱 Starting Expo Mobile Server for Expo Go (Instant Phone Testing)"
+    echo -e "${CYAN}==============================================================================${NC}"
+
+    if [ ! -d "$SCRIPT_DIR/mobile-expo/node_modules" ]; then
+        echo -e "${YELLOW}📦 Installing Expo app dependencies...${NC}"
+        cd "$SCRIPT_DIR/mobile-expo" && npm install && cd "$SCRIPT_DIR"
+    fi
+
+    echo -e "${GREEN}📲 Open the Expo Go app on your phone and scan the QR code below!${NC}"
+    cd "$SCRIPT_DIR/mobile-expo" && npx expo start
+}
+
+function start_all() {
+    echo -e "${CYAN}==============================================================================${NC}"
+    echo -e "  🚀 Launching Backend API + Expo Mobile Server"
+    echo -e "${CYAN}==============================================================================${NC}"
+
+    stop_server > /dev/null 2>&1
+
+    # Start backend in background
+    node "$SCRIPT_DIR/backend/server.js" &
+    BACKEND_PID=$!
+
+    echo -e "${GREEN}🟢 Backend started (PID: $BACKEND_PID) on http://localhost:3000${NC}"
+    sleep 2
+
+    # Start Expo
+    start_expo
+}
+
 function check_status() {
     PID_ON_3000=$(lsof -ti:3000 2>/dev/null)
     if [ -n "$PID_ON_3000" ]; then
@@ -75,6 +107,12 @@ case "$ACTION" in
     restart)
         stop_server
         start_server
+        ;;
+    expo|mobile)
+        start_expo
+        ;;
+    all)
+        start_all
         ;;
     start|*)
         start_server
