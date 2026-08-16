@@ -1903,7 +1903,11 @@ async function sendGoogleOtp(isResend = false) {
 
     showGoogleOtpStep(2);
     setTimeout(() => document.getElementById('googleOtpCode')?.focus(), 100);
-    showToast(`✉️ Verification code sent to ${email}`);
+    if (data.otp) {
+      showToast(`🔑 Verification Code: ${data.otp}`);
+    } else {
+      showToast(`✉️ Verification code sent to ${email}`);
+    }
   } catch (err) {
     if (hintEl) hintEl.innerHTML = '<span style="color:#ef4444">❌ Server error. Make sure backend is running.</span>';
     if (btnText) btnText.textContent = 'Send Verification Code';
@@ -2216,7 +2220,11 @@ async function handleSignUpStep1(e) {
     document.getElementById('signUpStep1').style.display = 'none';
     document.getElementById('signUpStep2').style.display = 'block';
     setTimeout(() => document.getElementById('signUpOtpCode')?.focus(), 100);
-    showToast(`✉️ Verification code sent to ${email}`);
+    if (data.otp) {
+      showToast(`🔑 Verification Code: ${data.otp}`);
+    } else {
+      showToast(`✉️ Verification code sent to ${email}`);
+    }
   } catch (err) {
     showFieldError('signUpEmailError', 'Server error. Please try again.');
     if (btn) btn.querySelector('span').textContent = 'Continue';
@@ -2277,12 +2285,17 @@ async function verifySignUpOtp() {
 // Resend OTP for Sign Up
 async function resendSignUpOtp() {
   try {
-    await fetch(`${API_BASE_URL}/auth/send-otp`, {
+    const res = await fetch(`${API_BASE_URL}/auth/send-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: signUpPendingEmail, name: signUpPendingName })
     });
-    showToast(`✉️ New code sent to ${signUpPendingEmail}`);
+    const data = await res.json();
+    if (data.otp) {
+      showToast(`🔑 New Code: ${data.otp}`);
+    } else {
+      showToast(`✉️ New code sent to ${signUpPendingEmail}`);
+    }
   } catch (err) {
     showToast('❌ Failed to resend code');
   }
