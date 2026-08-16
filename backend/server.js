@@ -122,8 +122,8 @@ const nodemailer = require('nodemailer');
 
 // Setup Gmail SMTP Transporter for OTP Emails
 let mailTransporter = null;
-const gmailUser = process.env.GMAIL_USER || 'subodhram3350@gmail.com';
-const gmailPass = (process.env.GMAIL_APP_PASSWORD || 'ozyt ospi hwnj hmbk').replace(/\s+/g, '');
+const gmailUser = (process.env.GMAIL_USER || 'subodhram3350@gmail.com').trim();
+const gmailPass = (process.env.GMAIL_APP_PASS || process.env.GMAIL_APP_PASSWORD || 'ozytospihwnjhmbk').replace(/\s+/g, '');
 
 try {
   mailTransporter = nodemailer.createTransport({
