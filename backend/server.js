@@ -309,8 +309,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
     res.json({
       success: true,
-      message: `6-Digit OTP Verification Code sent to ${email}`,
-      otp: otp
+      message: `6-Digit OTP Verification Code sent to ${email}`
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

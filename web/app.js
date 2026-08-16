@@ -1694,28 +1694,21 @@ async function requestOtpCode() {
 
     const data = await res.json();
     if (data.success) {
-      lastGeneratedOtp = data.otp || '123456';
-      document.getElementById('otpTargetEmail').textContent = email;
-      document.getElementById('demoOtpCode').textContent = lastGeneratedOtp;
-      document.getElementById('otpCodeInput').value = lastGeneratedOtp;
+      const target = document.getElementById('otpTargetEmail');
+      if (target) target.textContent = email;
+      const input = document.getElementById('otpCodeInput');
+      if (input) input.value = '';
       
       document.getElementById('otpStep1').style.display = 'none';
       document.getElementById('otpStep2').style.display = 'block';
 
-      showToast(`🔑 6-Digit OTP Sent: ${lastGeneratedOtp}`);
+      showToast(`✉️ 6-Digit OTP code sent to ${email}`);
     } else {
-      alert(`OTP request failed: ${data.error}`);
+      customAlert(`OTP request failed: ${data.error}`);
     }
   } catch (err) {
     console.error('OTP request error:', err);
-    lastGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    document.getElementById('otpTargetEmail').textContent = email;
-    document.getElementById('demoOtpCode').textContent = lastGeneratedOtp;
-    document.getElementById('otpCodeInput').value = lastGeneratedOtp;
-
-    document.getElementById('otpStep1').style.display = 'none';
-    document.getElementById('otpStep2').style.display = 'block';
-    showToast(`🔑 6-Digit OTP Verification Code: ${lastGeneratedOtp}`);
+    showToast('❌ Server error requesting OTP');
   } finally {
     if (sendBtn) sendBtn.disabled = false;
   }
@@ -1802,27 +1795,18 @@ async function sendFullSignInOtp() {
   const hintEl = document.getElementById('signInOtpHint');
 
   try {
-    const res = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+    await fetch(`${API_BASE_URL}/auth/send-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
     });
-    const data = await res.json();
-    const otp = data.otp || '123456';
-    if (passwordInput) passwordInput.value = otp;
     if (hintEl) {
       hintEl.style.display = 'block';
-      hintEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Verification OTP Code: <strong>${otp}</strong>`;
+      hintEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Verification OTP code sent to <strong>${email}</strong>`;
     }
-    showToast(`🔑 6-Digit OTP Verification Code: ${otp}`);
+    showToast(`✉️ Verification code sent to ${email}`);
   } catch (err) {
-    const otp = '123456';
-    if (passwordInput) passwordInput.value = otp;
-    if (hintEl) {
-      hintEl.style.display = 'block';
-      hintEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Verification OTP Code: <strong>${otp}</strong>`;
-    }
-    showToast(`🔑 6-Digit OTP Verification Code: ${otp}`);
+    showToast('❌ Failed to send OTP');
   }
 }
 
@@ -1906,11 +1890,7 @@ async function sendGoogleOtp(isResend = false) {
 
     showGoogleOtpStep(2);
     setTimeout(() => document.getElementById('googleOtpCode')?.focus(), 100);
-    if (data.otp) {
-      showToast(`🔑 Verification Code: ${data.otp}`);
-    } else {
-      showToast(`✉️ Verification code sent to ${email}`);
-    }
+    showToast(`✉️ Verification code sent to ${email}`);
   } catch (err) {
     if (hintEl) hintEl.innerHTML = '<span style="color:#ef4444">❌ Server error. Make sure backend is running.</span>';
     if (btnText) btnText.textContent = 'Send Verification Code';
