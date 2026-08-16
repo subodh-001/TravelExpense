@@ -224,17 +224,37 @@ app.post('/api/auth/login', (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
-    const users = getLocalUsers();
-    const user = users[userId];
+    const user = findUserByEmail(cleanEmail);
 
-    if (!user || !user.passwordHash) {
-      return res.status(401).json({ error: 'No password set for this email. Please Sign Up or use Gmail OTP.' });
+    if (!user) {
+      return res.status(401).json({ error: 'No account found with this email address. Please Sign Up.' });
+    }
+
+    // If account exists but passwordHash was not set yet (e.g. Google OTP account), set it on first password login
+    if (!user.passwordHash) {
+      if (password && password.length >= 6) {
+        const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+        const users = getLocalUsers();
+        const userId = user.id || `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        users[userId] = {
+          ...user,
+          passwordHash,
+          updatedAt: new Date().toISOString()
+        };
+        saveLocalUsers(users);
+
+        const safeUser = { ...users[userId] };
+        delete safeUser.passwordHash;
+        console.log(`🔑 Set & Saved Password for account: ${cleanEmail}`);
+        return res.json({ success: true, user: safeUser });
+      } else {
+        return res.status(401).json({ error: 'Password must be at least 6 characters long.' });
+      }
     }
 
     const inputHash = crypto.createHash('sha256').update(password).digest('hex');
     if (user.passwordHash !== inputHash) {
-      return res.status(401).json({ error: 'Incorrect password. Please check and try again.' });
+      return res.status(401).json({ error: 'Incorrect password. Please check your password and try again.' });
     }
 
     const safeUser = { ...user };
