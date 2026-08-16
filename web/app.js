@@ -549,18 +549,21 @@ async function checkHealth() {
 }
 
 async function fetchWithAuth(url, options = {}) {
+  const userId = state.currentGoogleUser ? state.currentGoogleUser.id : 'user_123';
   const headers = {
     ...options.headers,
-    'user-id': state.currentGoogleUser.id
+    'user-id': userId
   };
   return fetch(url, { ...options, headers });
 }
 
 // ==================== LOAD & FILTER DATA ====================
 async function loadExpenses() {
+  if (!state.currentGoogleUser && !state.sharedMode) return;
   try {
+    const userId = state.currentGoogleUser ? state.currentGoogleUser.id : '';
     const url = state.isReadOnlySharedView 
-      ? `${API_BASE_URL}/expenses?share=${encodeURIComponent(state.currentGoogleUser.id)}`
+      ? `${API_BASE_URL}/expenses?share=${encodeURIComponent(userId)}`
       : `${API_BASE_URL}/expenses`;
 
     const res = await fetchWithAuth(url);

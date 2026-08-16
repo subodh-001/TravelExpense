@@ -127,7 +127,9 @@ const gmailPass = (process.env.GMAIL_APP_PASS || process.env.GMAIL_APP_PASSWORD 
 
 try {
   mailTransporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
       user: gmailUser,
       pass: gmailPass
@@ -283,25 +285,26 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
     // Send Real Email via Nodemailer Gmail SMTP
     if (mailTransporter) {
-      mailTransporter.sendMail({
-        from: `"TravelExpense Security" <${gmailUser}>`,
-        to: email,
-        subject: `🔑 ${otp} is your TravelExpense Verification Code`,
-        html: `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e5e5ea; border-radius: 20px; background: #ffffff;">
-            <h2 style="color: #000000; font-size: 20px; font-weight: 800; margin-bottom: 8px;">TravelExpense</h2>
-            <p style="color: #6e6e73; font-size: 14px; margin-bottom: 20px;">Your 6-digit verification code to log in to TravelExpense is:</p>
-            <div style="background: #F4F4F7; padding: 20px; border-radius: 14px; text-align: center; margin-bottom: 20px; border: 1px solid #e5e5ea;">
-              <span style="font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #000000;">${otp}</span>
+      try {
+        await mailTransporter.sendMail({
+          from: `"TravelExpense Security" <${gmailUser}>`,
+          to: email,
+          subject: `🔑 ${otp} is your TravelExpense Verification Code`,
+          html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e5e5ea; border-radius: 20px; background: #ffffff;">
+              <h2 style="color: #000000; font-size: 20px; font-weight: 800; margin-bottom: 8px;">TravelExpense</h2>
+              <p style="color: #6e6e73; font-size: 14px; margin-bottom: 20px;">Your 6-digit verification code to log in to TravelExpense is:</p>
+              <div style="background: #F4F4F7; padding: 20px; border-radius: 14px; text-align: center; margin-bottom: 20px; border: 1px solid #e5e5ea;">
+                <span style="font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #000000;">${otp}</span>
+              </div>
+              <p style="color: #8e8e93; font-size: 12px; line-height: 1.5; margin: 0;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
             </div>
-            <p style="color: #8e8e93; font-size: 12px; line-height: 1.5; margin: 0;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
-          </div>
-        `
-      }).then(() => {
+          `
+        });
         console.log(`✉️ Real OTP Email successfully sent to ${email}`);
-      }).catch((mailErr) => {
+      } catch (mailErr) {
         console.error(`⚠️ Failed to send OTP email to ${email}:`, mailErr.message);
-      });
+      }
     }
 
     res.json({
