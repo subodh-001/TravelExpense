@@ -1004,7 +1004,8 @@ function renderMobileCards() {
 
 // ==================== RENDER EXCEL MATRIX TABLE ====================
 function renderTable() {
-  tableCountBadge.textContent = `${state.filteredExpenses.length} Entries`;
+  if (tableCountBadge) tableCountBadge.textContent = `${state.filteredExpenses.length} Entries`;
+  if (!expenseTableBody) return;
 
   if (state.filteredExpenses.length === 0) {
     expenseTableBody.innerHTML = `
@@ -1110,11 +1111,11 @@ function renderTable() {
 }
 
 function updateTableSums(metro, local, auto, others, grand) {
-  sumMetro.textContent = `₹${metro}`;
-  sumLocal.textContent = `₹${local}`;
-  sumAuto.textContent = `₹${auto}`;
-  sumOthers.textContent = `₹${others}`;
-  sumGrandTotal.textContent = `₹${grand}`;
+  if (sumMetro) sumMetro.textContent = `₹${metro}`;
+  if (sumLocal) sumLocal.textContent = `₹${local}`;
+  if (sumAuto) sumAuto.textContent = `₹${auto}`;
+  if (sumOthers) sumOthers.textContent = `₹${others}`;
+  if (sumGrandTotal) sumGrandTotal.textContent = `₹${grand}`;
 }
 
 // ==================== CALCULATE KPIS ====================
@@ -1151,8 +1152,8 @@ function updateKPIs() {
     }
   });
 
-  kpiTopCategory.textContent = topMode;
-  kpiTopCategoryAmount.textContent = `₹${topAmount} spent`;
+  if (kpiTopCategory) kpiTopCategory.textContent = topMode;
+  if (kpiTopCategoryAmount) kpiTopCategoryAmount.textContent = `₹${topAmount} spent`;
 }
 
 async function togglePaymentStatus(expenseId, currentStatus) {
