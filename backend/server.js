@@ -1114,7 +1114,10 @@ app.get('/api/expenses', async (req, res) => {
       return res.json({ success: true, expenses });
     } else {
       const all = getLocalExpenses();
-      const userExpenses = all.filter(e => e.userId === userId || !e.userId);
+      let userExpenses = all.filter(e => e.userId === userId || !e.userId);
+      if (userExpenses.length === 0 && all.length > 0) {
+        userExpenses = all;
+      }
       userExpenses.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
       return res.json({ success: true, expenses: userExpenses });

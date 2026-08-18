@@ -299,7 +299,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function getStoredGoogleUser() {
   try {
     const stored = localStorage.getItem('google_user');
-    return stored ? JSON.parse(stored) : DEFAULT_GOOGLE_USER;
+    let user = stored ? JSON.parse(stored) : DEFAULT_GOOGLE_USER;
+    if (!user || !user.id || user.id === 'google_user' || user.id === 'user_123' || (user.email && user.email.toLowerCase().trim() === 'subodhram3350@gmail.com')) {
+      user = DEFAULT_GOOGLE_USER;
+      localStorage.setItem('google_user', JSON.stringify(DEFAULT_GOOGLE_USER));
+    }
+    return user;
   } catch (e) {
     return DEFAULT_GOOGLE_USER;
   }
