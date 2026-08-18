@@ -291,8 +291,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   if (refreshBtn) refreshBtn.addEventListener('click', () => loadExpenses());
-
-  setupEntryCalculators();
 });
 
 // ==================== GOOGLE USER AUTH HELPERS ====================
@@ -903,16 +901,14 @@ function renderUserEntriesList() {
 
 // ==================== RENDER MOBILE CARDS ====================
 function renderMobileCards() {
-  cardsCountBadge.textContent = `${state.filteredExpenses.length} Entries`;
+  if (cardsCountBadge) cardsCountBadge.textContent = `${state.filteredExpenses.length} Entries`;
+  if (!mobileCardsContainer) return;
 
   if (state.filteredExpenses.length === 0) {
     mobileCardsContainer.innerHTML = `
       <div class="empty-state">
         <i class="fa-solid fa-folder-open"></i>
         <p>No travel expenses recorded yet for this user.</p>
-        <button class="btn btn-primary btn-sm" onclick="openAddExpenseModal()">
-          + Add First Travel Entry
-        </button>
       </div>
     `;
     return;
