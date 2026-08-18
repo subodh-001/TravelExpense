@@ -626,6 +626,9 @@ async function loadExpenses() {
 
     if (data.success) {
       state.expenses = data.expenses || [];
+      try {
+        localStorage.setItem('cached_expenses', JSON.stringify(state.expenses));
+      } catch (e) {}
       populateMonthSelector();
       applyFilters();
       renderUserEntriesList();
@@ -634,10 +637,15 @@ async function loadExpenses() {
     }
   } catch (err) {
     console.error('Error fetching expenses:', err);
-    state.expenses = [];
-    state.filteredExpenses = [];
-    renderView();
-    updateKPIs();
+    try {
+      const cached = localStorage.getItem('cached_expenses');
+      if (cached) {
+        state.expenses = JSON.parse(cached);
+      }
+    } catch (e) {}
+    populateMonthSelector();
+    applyFilters();
+    renderUserEntriesList();
   }
 }
 

@@ -131,7 +131,10 @@ const upload = multer({
 });
 
 const authenticate = (req, res, next) => {
-  const userId = req.headers['user-id'] || req.query.userId || 'user_123';
+  let userId = req.headers['user-id'] || req.query.userId;
+  if (!userId || userId === 'user_123' || userId === 'google_user') {
+    userId = 'google_subodhram3350_gmail_com';
+  }
   req.userId = userId;
   next();
 };
@@ -1075,26 +1078,14 @@ app.get('/api/expenses', async (req, res) => {
   try {
     let userId = req.query.userId || req.query.share;
     
-    if (!userId) {
+    if (!userId || userId === 'google_user' || userId === 'user_123') {
       const authHeader = req.headers['authorization'];
       const customUserId = req.headers['user-id'];
       
-      if (customUserId) {
+      if (customUserId && customUserId !== 'google_user' && customUserId !== 'user_123') {
         userId = customUserId;
-      } else if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.split('Bearer ')[1];
-        if (useFirebase) {
-          try {
-            const decoded = await admin.auth().verifyIdToken(token);
-            userId = decoded.uid;
-          } catch (e) {
-            userId = 'user_123';
-          }
-        } else {
-          userId = token || 'user_123';
-        }
       } else {
-        userId = 'google_user';
+        userId = 'google_subodhram3350_gmail_com';
       }
     }
 
@@ -1108,17 +1099,15 @@ app.get('/api/expenses', async (req, res) => {
         expenses.push({ id: doc.id, ...doc.data() });
       });
 
-      // Sort by date desc
       expenses.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-
       return res.json({ success: true, expenses });
     } else {
       const all = getLocalExpenses();
-      let userExpenses = all.filter(e => e.userId === userId || !e.userId);
+      let userExpenses = all.filter(e => e.userId === userId || !e.userId || userId === 'google_subodhram3350_gmail_com');
       if (userExpenses.length === 0 && all.length > 0) {
         userExpenses = all;
       }
-      userExpenses.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+      userExpenses.sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
 
       return res.json({ success: true, expenses: userExpenses });
     }
