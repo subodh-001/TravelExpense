@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Monthly Travel Expense Tracker - Mobile & Web</title>
+  <title>Welcome to FreeG Wifi</title>
   
   <!-- Google Fonts & FontAwesome Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,219 +14,21 @@
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
-  <!-- Favicon & Logo -->
-  <link rel="icon" type="image/png" href="logo.png" />
-  
   <link rel="stylesheet" href="style.css?v=authentic_google_modal_v20" />
 </head>
 <body>
 
-  <!-- ENTERPRISE SAAS MASTERPIECE LANDING PAGE -->
-  <div id="landingPage" class="landing-page">
-    <!-- Navbar -->
-    <nav class="landing-nav">
-      <div class="landing-nav-container">
-        <div class="landing-logo" onclick="switchAppPage('landing')" style="cursor: pointer;">
-          <img src="logo.png" alt="Logo" class="landing-logo-img" style="width:36px; height:36px; max-width:36px; max-height:36px; object-fit:contain; background: transparent;" />
-          <span>TravelExpense</span>
-        </div>
-        <div class="landing-nav-links">
-          <a href="#features">Features</a>
-          <a href="#preview">Live Matrix</a>
-          <a href="/app-release.apk" class="nav-apk-btn"><i class="fa-brands fa-android"></i> Download APK</a>
-          <button type="button" class="landing-btn-outline" onclick="openAuthScreen('signin')">Sign In</button>
-          <button type="button" class="landing-btn-primary" onclick="openAuthScreen('signup')">Get Started Free →</button>
-        </div>
-      </div>
-    </nav>
-
-    <!-- HERO BANNER -->
-    <header class="landing-hero">
-      <div class="hero-bg-glow"></div>
-      <div class="landing-hero-container">
-        <div class="hero-badge">
-          <span class="pulse-dot"></span> ✨ #1 Travel Reimbursement & Expense Tracker for Professionals
-        </div>
-        
-        <h1 class="hero-main-title">
-          Master Your Travel Expenses & <span class="gradient-text">Reimbursements</span> in Seconds
-        </h1>
-        
-        <p class="hero-main-desc">
-          Effortlessly log local transport (Metro, Train, Auto, Rapido, Cab), upload bills directly to Cloudinary Vault, and export audit-ready Excel reimbursement matrices.
-        </p>
-
-        <div class="hero-cta-buttons">
-          <button type="button" class="hero-btn-main" onclick="openAuthScreen('signup')">
-            Get Started Free <i class="fa-solid fa-arrow-right"></i>
-          </button>
-          <button type="button" class="hero-btn-google" onclick="openRealGoogleAuthPopup()">
-            <svg class="google-icon-sm" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            Sign in with Google
-          </button>
-        </div>
-
-        <!-- STATS HIGHLIGHT BAR -->
-        <div class="landing-stats-bar">
-          <div class="stat-item">
-            <h4>₹1.2M+</h4>
-            <p>Travel Expenses Tracked</p>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <h4>100%</h4>
-            <p>Cloud Receipt Retention</p>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <h4>3 Sec</h4>
-            <p>Express Entry Logging</p>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <h4>500+</h4>
-            <p>Corporate Professionals</p>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- LIVE DASHBOARD PREVIEW MOCKUP -->
-    <section class="landing-preview" id="preview">
-      <div class="landing-preview-container">
-        <div class="preview-glass-frame">
-          <div class="frame-bar">
-            <span class="frame-dot dot-red"></span>
-            <span class="frame-dot dot-yellow"></span>
-            <span class="frame-dot dot-green"></span>
-            <span class="frame-title">TravelExpense — Live Excel Matrix Dashboard</span>
-          </div>
-          <div class="preview-content-mock">
-            <div class="mock-stats-grid">
-              <div class="mock-kpi"><span class="kpi-icon">🚇</span><div><h5>Metro Transport</h5><h4>₹85.00</h4></div></div>
-              <div class="mock-kpi"><span class="kpi-icon">🚆</span><div><h5>Local Train</h5><h4>₹15.00</h4></div></div>
-              <div class="mock-kpi"><span class="kpi-icon">🛺</span><div><h5>Auto / Rapido</h5><h4>₹500.00</h4></div></div>
-              <div class="mock-kpi kpi-total"><span class="kpi-icon">💳</span><div><h5>Grand Total</h5><h4>₹640.00</h4></div></div>
-            </div>
-            <div class="mock-table">
-              <div class="mock-row header-row"><span>Date</span><span>Location</span><span>Transport Breakdown</span><span>Total</span><span>Receipts</span><span>Status</span></div>
-              <div class="mock-row"><span>2026-08-15</span><span>Mumbai Central</span><span>Auto ₹250</span><span>₹250</span><span>📎 1 Bill</span><span class="status-settled">✓ Settled</span></div>
-              <div class="mock-row"><span>2026-08-15</span><span>One Degree</span><span>Metro ₹60 + Local ₹15 + Auto ₹250</span><span>₹365</span><span>📎 1 Bill</span><span class="status-pending">⏳ Pending</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 4 CORE FEATURES GRID -->
-    <section class="landing-features" id="features">
-      <div class="landing-features-container">
-        <div class="feature-card">
-          <div class="feature-icon-gradient icon-blue"><i class="fa-solid fa-train-subway"></i></div>
-          <h3>Local Transport Breakdown</h3>
-          <p>Separate daily travel costs into Metro, Local Train, Auto/Rapido, and Cab with automated sum calculations.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon-gradient icon-purple"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-          <h3>Cloudinary Receipt Vault</h3>
-          <p>Drag and drop image receipts directly to cloud storage. Attach bills to any entry with 1-click zoom preview.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon-gradient icon-green"><i class="fa-solid fa-file-excel"></i></div>
-          <h3>Excel Reimbursement Matrix</h3>
-          <p>Generate clean monthly reimbursement reports and export audit-ready CSV logs for corporate finance approval.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon-gradient icon-orange"><i class="fa-solid fa-shield-halved"></i></div>
-          <h3>Google OAuth & 6-Digit OTP</h3>
-          <p>Secure multi-device data sync. Log in from any laptop or phone to instantly load your personal travel records.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ANDROID APK DOWNLOAD SECTION -->
-    <section class="landing-apk-banner">
-      <div class="apk-banner-container">
-        <div class="apk-text-content">
-          <span class="apk-badge"><i class="fa-brands fa-android"></i> Android Native App</span>
-          <h2>Take TravelExpense Anywhere</h2>
-          <p>Download our official Android APK app for mobile tracking on the go.</p>
-          <a href="/app-release.apk" download class="apk-download-btn">
-            <i class="fa-brands fa-android"></i> Download Android APK (TravelExpense.apk)
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- REDESIGNED APPLE-STYLE FOOTER -->
-    <footer class="landing-footer">
-      <div class="footer-container">
-        <div class="footer-grid">
-          <!-- Col 1: Brand -->
-          <div class="footer-col brand-col">
-            <div class="footer-logo" onclick="switchAppPage('landing')" style="cursor: pointer; display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-              <img src="logo.png" alt="Logo" style="width:32px; height:32px; object-fit:contain; background: transparent;" />
-              <span style="font-size: 1.3rem; font-weight: 800; color: #000000;">TravelExpense</span>
-            </div>
-            <p class="footer-desc" style="font-size: 0.88rem; color: #6e6e73; line-height: 1.5; margin-bottom: 14px;">Enterprise local transport log & Cloudinary receipt vault. Simplifies daily travel expense logging for corporate reimbursement.</p>
-            <div class="footer-badge" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: linear-gradient(135deg, #ffc3d0 0%, #e3d5fa 50%, #cbddf9 100%); border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: #000000;">
-              <span class="pulse-dot"></span> Certified Logistics Tracker
-            </div>
-          </div>
-
-          <!-- Col 2: Product -->
-          <div class="footer-col">
-            <h4>Product</h4>
-            <ul>
-              <li><a href="#preview" onclick="switchAppPage('landing')">Live Matrix Dashboard</a></li>
-              <li><a href="#features" onclick="switchAppPage('landing')">OTP Security</a></li>
-              <li><a href="#preview" onclick="switchAppPage('landing')">Cloud Receipt Vault</a></li>
-              <li><a href="/app-release.apk" download>Android APK App</a></li>
-            </ul>
-          </div>
-
-          <!-- Col 3: Transport Modes -->
-          <div class="footer-col">
-            <h4>Features</h4>
-            <ul>
-              <li><a href="#" onclick="switchAppPage('landing'); return false;">Metro & Local Train</a></li>
-              <li><a href="#" onclick="switchAppPage('landing'); return false;">Auto & Rapido Expenses</a></li>
-              <li><a href="#" onclick="switchAppPage('landing'); return false;">Cloudinary Uploads</a></li>
-              <li><a href="#" onclick="switchAppPage('landing'); return false;">Monthly Excel Matrix</a></li>
-            </ul>
-          </div>
-
-          <!-- Col 4: Quick Action -->
-          <div class="footer-col">
-            <h4>Get Started</h4>
-            <p style="font-size: 0.85rem; color: #6e6e73; margin-bottom: 14px;">Start logging your travel expenses in seconds.</p>
-            <button type="button" class="landing-btn-primary" onclick="openAuthScreen('signup')" style="width: 100%; text-align: center;">Get Started Free →</button>
-          </div>
-        </div>
-
-        <div class="footer-bottom-bar" style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e5ea;">
-          <p style="font-size: 0.85rem; color: #8e8e93; margin: 0;">© 2026 TravelExpense — All rights reserved. Enterprise Travel & Reimbursement System.</p>
-          <button type="button" class="back-to-top-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" style="background: #000000; color: #ffffff; border: none; padding: 8px 18px; border-radius: 20px; font-weight: 700; font-size: 0.82rem; cursor: pointer;">
-            ↑ Back to Top
-          </button>
-        </div>
-      </div>
-    </footer>
-  </div>
-
-  <!-- FULL-SCREEN AUTH PAGE -->
+  <!-- FULL-SCREEN AUTH PAGE (Default starting screen) -->
   <div id="fullAuthPage" class="full-auth-page">
     <div class="auth-center-wrapper">
 
-      <!-- Logo -->
-      <div class="auth-brand-logo" onclick="switchAppPage('landing')" style="cursor: pointer;">
-        <img src="logo.png" alt="Logo" class="auth-logo-img" style="background: transparent;" />
-        <span class="auth-logo-title">TravelExpense</span>
+      <!-- Heading Title (Welcome to FreeG Wifi) -->
+      <div class="auth-brand-logo" onclick="switchAppPage('auth')" style="cursor: pointer; text-align: center; flex-direction: column; gap: 8px;">
+        <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 8px 24px rgba(37,99,235,0.3);">
+          <i class="fa-solid fa-wifi" style="color: #ffffff; font-size: 1.8rem;"></i>
+        </div>
+        <h1 class="auth-logo-title" style="font-size: 2rem; font-weight: 800; color: #0f172a; margin-top: 4px;">Welcome to FreeG Wifi</h1>
+        <p style="font-size: 0.9rem; color: #64748b; margin: 0;">Log in or create an account to access FreeG Wifi services</p>
       </div>
 
       <!-- Auth Card -->
@@ -421,256 +223,173 @@
 
   <!-- PAGE 3: DASHBOARD CONTAINER VIEW -->
   <div id="appDashboard" class="app-page-view hidden">
-    <!-- App Header -->
-    <header class="app-header">
-    <div class="header-container">
-      <div class="brand" onclick="switchAppPage('landing')" style="cursor: pointer;">
-        <div class="brand-icon" style="background: none; border: none; padding: 0; width: 40px; height: 40px;">
-          <img src="logo.png" alt="TravelExpense Logo" style="width: 100%; height: 100%; object-fit: contain; background: transparent;" />
-        </div>
-        <div class="brand-text">
-          <h1>TravelExpense</h1>
-          <p class="subtitle">Mobile Expense Log & Receipt Vault</p>
-        </div>
-      </div>
+    <!-- User Dashboard Header -->
+    <header class="app-header" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100;">
+      <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+        <!-- Left: Hamburger Menu Button -->
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <button type="button" id="userHamburgerBtn" onclick="toggleUserSideDrawer()" style="border: none; background: #f1f5f9; width: 40px; height: 40px; border-radius: 10px; font-size: 1.2rem; cursor: pointer; color: #0f172a; display: flex; align-items: center; justify-content: center; border: 1px solid #cbd5e1;">
+            <i class="fa-solid fa-bars"></i>
+          </button>
 
-      <div class="header-actions">
-        <!-- Connection Status Badge -->
-        <div class="status-badge" id="statusBadge">
-          <span class="status-dot"></span>
-          <span id="statusText">Connecting...</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="background: #0f172a; color: #ffffff; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <i class="fa-solid fa-wifi" style="font-size: 1rem;"></i>
+            </div>
+            <div>
+              <h1 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0; line-height: 1.1;">Welcome, <span id="userWelcomeHeaderName">Traveler</span></h1>
+              <p style="font-size: 0.75rem; color: #64748b; margin: 0;">FreeG Wifi Travel Portal</p>
+            </div>
+          </div>
         </div>
 
-        <!-- Google User Profile / Auth Container -->
-        <div class="google-auth-container" id="googleAuthContainer">
-          <!-- Rendered dynamically via JS: Google Sign-In Button or User Avatar Badge -->
-          <button class="google-signin-btn" id="googleAuthBtn">
-            <svg class="google-icon" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            <span>Sign in with Google</span>
+        <!-- Right: Top-Right Total Amount Badge -->
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div id="userTopTotalSpentBadge" style="background: #0f172a; color: #ffffff; padding: 8px 16px; border-radius: 20px; font-weight: 800; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(15,23,42,0.2);">
+            <i class="fa-solid fa-wallet" style="color: #10b981;"></i> Total Spent: <span id="userTotalSpentHeaderVal">₹0</span>
+          </div>
+
+          <!-- Super Admin Quick Access Button if Super Admin -->
+          <button type="button" class="btn btn-secondary btn-sm" id="adminPortalToggleBtn" onclick="switchAppPage('superadmin')" title="Access Super Admin Portal" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 700; display: none; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px;">
+            <i class="fa-solid fa-user-shield"></i> Admin
           </button>
         </div>
-
-        <!-- Landing Page View Button -->
-        <button type="button" class="btn btn-secondary btn-sm" onclick="switchAppPage('landing')" title="View Public Landing Page" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-          <i class="fa-solid fa-globe"></i> Landing Page
-        </button>
-
-        <!-- Direct Header Sign Out Button -->
-        <button type="button" class="btn btn-secondary btn-sm" id="headerSignOutBtn" onclick="performSignOut()" style="background: #ffffff; border: 1px solid #cbd5e1; color: #dc2626; font-weight: 700; display: none; align-items: center; gap: 6px;">
-          <i class="fa-solid fa-right-from-bracket"></i> Sign Out
-        </button>
-
-        <!-- Add Expense Button (Desktop) -->
-        <button class="btn btn-primary desktop-only" id="openAddModalBtn">
-          <i class="fa-solid fa-plus"></i> Add Expense
-        </button>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- Main Application Container -->
-  <main class="main-container">
-
-    <!-- Dashboard Home Page Title Bar -->
-    <div class="home-page-title-bar">
-      <div class="home-title-text">
-        <h2><i class="fa-solid fa-house-chimney"></i> Personal Travel Expense Home</h2>
-        <p>Logged in workspace • Real-time Cloudinary Receipt Vault & Excel Matrix</p>
-      </div>
-    </div>
-
-    <!-- Active User Banner -->
-    <section class="user-welcome-banner" id="userWelcomeBanner">
-      <div class="user-profile-info">
-        <div class="user-avatar-wrapper" id="userAvatarWrapper" title="Click to Change Photo & Edit Profile" style="position: relative; cursor: pointer;">
-          <img id="userAvatarImg" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Traveler" alt="User Avatar" class="user-avatar-lg" />
-          <div class="avatar-edit-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;">
-            <i class="fa-solid fa-camera" style="color: #fff; font-size: 1.1rem;"></i>
-          </div>
-        </div>
-        <div>
-          <div class="user-name-wrapper">
-            <h2 id="userNameDisplay">Traveler</h2>
-            <span class="user-badge-tag" id="userAuthTag"><i class="fa-brands fa-google"></i> Google Verified</span>
-          </div>
-          <p class="user-email" id="userEmailDisplay">user@example.com</p>
-        </div>
-      </div>
-
-      <div class="user-banner-actions">
-        <a href="app-release.apk" download class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-          <i class="fa-brands fa-android"></i> Download APK
-        </a>
-        <button class="btn btn-secondary btn-sm" id="editProfileBtn">
-          <i class="fa-solid fa-pen-to-square"></i> Edit Profile
-        </button>
-        <button class="btn btn-primary btn-sm" id="shareSheetBtn">
-          <i class="fa-solid fa-share-nodes"></i> Share Link
-        </button>
-        <button class="btn btn-secondary btn-sm" id="exportCsvBtn">
-          <i class="fa-solid fa-file-csv"></i> Export CSV
-        </button>
-      </div>
-    </section>
-
-    <!-- Shared View Banner (Hidden by default, shown when opened via shared link) -->
-    <div class="shared-notice-banner hidden" id="sharedNoticeBanner">
-      <i class="fa-solid fa-eye"></i>
-      <span>Shared Travel Expense Log (Read-Only Mode) — Viewing expenses for <strong id="sharedUserName">User</strong></span>
-      <button class="btn btn-secondary btn-sm" id="exitSharedViewBtn">
-        <i class="fa-solid fa-xmark"></i> Exit Shared View
-      </button>
-    </div>
-
-    <!-- KPI Summary Cards Grid -->
-    <section class="kpi-grid" id="statsSection">
-      <div class="kpi-card total-card">
-        <div class="kpi-icon"><i class="fa-solid fa-indian-rupee-sign"></i></div>
-        <div class="kpi-content">
-          <span class="kpi-label">Total Travel Spent</span>
-          <h2 class="kpi-value" id="kpiTotalExpense">₹0</h2>
-          <span class="kpi-subtext">Monthly total</span>
-        </div>
-      </div>
-
-      <div class="kpi-card entries-card">
-        <div class="kpi-icon"><i class="fa-solid fa-map-location-dot"></i></div>
-        <div class="kpi-content">
-          <span class="kpi-label">Trips & Locations</span>
-          <h2 class="kpi-value" id="kpiTotalCount">0</h2>
-          <span class="kpi-subtext">Logged locations</span>
-        </div>
-      </div>
-
-      <div class="kpi-card receipts-card">
-        <div class="kpi-icon"><i class="fa-solid fa-receipt"></i></div>
-        <div class="kpi-content">
-          <span class="kpi-label">Receipt Vault</span>
-          <h2 class="kpi-value" id="kpiTotalReceipts">0</h2>
-          <span class="kpi-subtext">Attached bills</span>
-        </div>
-      </div>
-
-      <div class="kpi-card transport-card">
-        <div class="kpi-icon"><i class="fa-solid fa-car-side"></i></div>
-        <div class="kpi-content">
-          <span class="kpi-label">Top Transport Mode</span>
-          <h2 class="kpi-value" id="kpiTopCategory">Auto/Rapido</h2>
-          <span class="kpi-subtext" id="kpiTopCategoryAmount">₹0 spent</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Controls Bar (Filter, Search & View Switcher) -->
-    <section class="filter-bar">
-      <div class="search-box">
-        <i class="fa-solid fa-search"></i>
-        <input type="text" id="searchLocation" placeholder="Search location or date..." />
-      </div>
-
-      <div class="filter-controls">
-        <div class="month-filter" style="display: flex; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px; gap: 6px;">
-          <i class="fa-solid fa-calendar-days" style="color: #000000;"></i>
-          <select id="monthFilter" style="background: transparent; border: none; color: #0f172a; font-size: 0.85rem; font-weight: 600; cursor: pointer; outline: none;">
-            <!-- Dynamically populated months -->
-          </select>
-        </div>
-
-        <div class="month-filter" style="display: flex; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px; gap: 6px;">
-          <i class="fa-solid fa-money-bill-transfer" style="color: #d97706;"></i>
-          <select id="paymentStatusFilter" style="background: transparent; border: none; color: #0f172a; font-size: 0.85rem; font-weight: 600; cursor: pointer; outline: none;">
-            <option value="ALL" style="background-color: #ffffff; color: #0f172a;">💳 All Reimbursement Statuses</option>
-            <option value="pending" style="background-color: #ffffff; color: #d97706;">⏳ Pending Reimbursement Only</option>
-            <option value="paid" style="background-color: #ffffff; color: #16a34a;">✅ Paid & Settled Only</option>
-          </select>
-        </div>
-
-        <div class="date-filter">
-          <label><i class="fa-regular fa-calendar"></i></label>
-          <input type="date" id="filterDate" />
-          <button class="btn btn-secondary btn-sm" id="clearDateBtn" title="Clear Date Filter">
+    <!-- Side Navigation Drawer Modal -->
+    <div class="modal-overlay hidden" id="userSideDrawer" style="z-index: 10005; background: rgba(15,23,42,0.5);" onclick="if(event.target === this) toggleUserSideDrawer();">
+      <div style="position: absolute; top: 0; left: 0; bottom: 0; width: 300px; background: #ffffff; box-shadow: 4px 0 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; padding: 24px; box-sizing: border-radius;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px;">
+          <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-bars"></i> Navigation Menu
+          </h3>
+          <button type="button" onclick="toggleUserSideDrawer()" style="border: none; background: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
 
-        <!-- View Switcher Toggle: Mobile Cards vs Excel Table -->
-        <div class="view-toggle-group">
-          <button class="view-toggle-btn active" id="viewCardsBtn" title="Mobile Cards View">
-            <i class="fa-solid fa-grip-vertical"></i> <span class="desktop-only">Cards</span>
+        <!-- Member Profile Info Card -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+          <img id="drawerUserAvatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Traveler" style="width: 46px; height: 46px; border-radius: 50%; border: 2px solid #cbd5e1; object-fit: cover;" />
+          <div style="overflow: hidden;">
+            <strong id="drawerUserName" style="font-size: 0.95rem; color: #0f172a; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">User Name</strong>
+            <span id="drawerUserEmail" style="font-size: 0.8rem; color: #64748b; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">user@example.com</span>
+          </div>
+        </div>
+
+        <!-- Menu Links -->
+        <div style="display: flex; flex-direction: column; gap: 10px; flex: 1;">
+          <button type="button" onclick="toggleUserSideDrawer(); openEditProfileModal();" style="width: 100%; text-align: left; padding: 12px 14px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-user" style="color: #2563eb;"></i> My Profile
           </button>
-          <button class="view-toggle-btn" id="viewTableBtn" title="Excel Table Matrix View">
-            <i class="fa-solid fa-table"></i> <span class="desktop-only">Excel Table</span>
+
+          <button type="button" onclick="toggleUserSideDrawer(); scrollToUserEntries();" style="width: 100%; text-align: left; padding: 12px 14px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-list-check" style="color: #059669;"></i> My Uploaded Entries
+          </button>
+
+          <button type="button" id="drawerAdminBtn" onclick="toggleUserSideDrawer(); switchAppPage('superadmin');" style="width: 100%; text-align: left; padding: 12px 14px; background: #e0e7ff; border: 1px solid #c7d2fe; border-radius: 10px; font-weight: 700; color: #3730a3; cursor: pointer; display: none; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-shield-halved"></i> Super Admin Portal
           </button>
         </div>
 
-        <button class="btn btn-secondary" id="refreshBtn" title="Reload Data">
-          <i class="fa-solid fa-rotate-right"></i>
+        <button type="button" onclick="performSignOut()" style="width: 100%; padding: 12px; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: auto;">
+          <i class="fa-solid fa-right-from-bracket"></i> Sign Out
         </button>
       </div>
-    </section>
+    </div>
 
-    <!-- Mobile Expense Cards Container (Shown by default on Mobile) -->
-    <section class="mobile-cards-section" id="mobileCardsSection">
-      <div class="section-title-bar">
-        <h3><i class="fa-solid fa-route"></i> Travel Expenses</h3>
-        <span class="badge" id="cardsCountBadge">0 Entries</span>
-      </div>
-      <div class="cards-grid" id="mobileCardsContainer">
-        <!-- Dynamic Mobile Expense Cards rendered here -->
-      </div>
-    </section>
+    <!-- Main Content Container -->
+    <main class="main-container" style="max-width: 800px; margin: 0 auto; padding: 24px 16px;">
 
-    <!-- Excel Matrix Table Section (Toggleable) -->
-    <section class="table-container hidden" id="tableSection">
-      <div class="table-header">
-        <div>
-          <h3><i class="fa-solid fa-file-excel"></i> Monthly Travel Log (Excel Format)</h3>
-          <span class="badge" id="tableCountBadge">0 Entries</span>
+      <!-- ENTRY FORM CONTAINER (Matching Handwritten Paper Sketch) -->
+      <section style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 28px;">
+        <h3 style="margin: 0 0 20px 0; font-size: 1.2rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+          <i class="fa-solid fa-pen-to-square" style="color: #2563eb;"></i> Add Travel Expense Entry
+        </h3>
+
+        <form id="handwrittenTravelForm" onsubmit="handleUserSubmitExpense(event)">
+          <!-- Camera / Photo Upload Box -->
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 8px;">
+              <i class="fa-solid fa-camera" style="color: #2563eb;"></i> Camera / Photo Uploads
+            </label>
+            <div id="photoDropzoneBox" onclick="document.getElementById('userPhotoFileInput').click()" style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: 14px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.2rem; color: #64748b; margin-bottom: 8px; display: block;"></i>
+              <span style="font-weight: 700; color: #0f172a; font-size: 0.95rem; display: block;">Click or Drag to Upload Ticket / Receipt Photo</span>
+              <small style="color: #94a3b8; font-size: 0.8rem; display: block; margin-top: 4px;">Supports JPG, PNG, PDF receipts</small>
+              <input type="file" id="userPhotoFileInput" accept="image/*,application/pdf" style="display: none;" onchange="handleUserPhotoSelect(event)" />
+            </div>
+            <div id="uploadedPhotoPreview" style="margin-top: 10px; display: none; align-items: center; gap: 10px; background: #f1f5f9; padding: 10px; border-radius: 10px;">
+              <i class="fa-solid fa-file-image" style="color: #059669; font-size: 1.2rem;"></i>
+              <span id="uploadedPhotoName" style="font-size: 0.85rem; font-weight: 600; color: #0f172a;">photo.jpg</span>
+            </div>
+          </div>
+
+          <!-- Item Dropdown (Exact match with paper sketch) -->
+          <div class="form-group" style="margin-bottom: 18px;">
+            <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Item Category</label>
+            <select id="userItemSelect" required style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 0.92rem; color: #0f172a; background: #ffffff; outline: none;">
+              <option value="" disabled selected>Select Travel Item Category...</option>
+              <option value="Metro">🚇 Metro</option>
+              <option value="Local">🚆 Local (Train)</option>
+              <option value="Auto/Rapido">🛺 Auto / Rapido</option>
+              <option value="Ola/Uber">🚗 Ola / Uber</option>
+              <option value="Porter">📦 Porter</option>
+              <option value="Courier">✉️ Courier</option>
+              <option value="Food">🍱 Food</option>
+              <option value="Others">📌 Others</option>
+            </select>
+          </div>
+
+          <!-- Amount Field -->
+          <div class="form-group" style="margin-bottom: 18px;">
+            <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Amount (₹)</label>
+            <input type="number" id="userAmountInput" min="1" step="any" placeholder="Enter amount in ₹ (e.g. 150)" required style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.95rem; font-weight: 700; color: #0f172a; box-sizing: border-box;" />
+          </div>
+
+          <!-- Comment / Description Field -->
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Comment / Description</label>
+            <input type="text" id="userCommentInput" placeholder="Enter travel details or location notes..." style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.92rem; color: #0f172a; box-sizing: border-box;" />
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="userSubmitExpenseBtn" class="btn btn-primary" style="width: 100%; background: #0f172a; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(15,23,42,0.25);">
+            <i class="fa-solid fa-paper-plane"></i> Submit Travel Expense
+          </button>
+        </form>
+      </section>
+
+      <!-- MY UPLOADED ENTRIES SECTION -->
+      <section id="userEntriesSection" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f1f5f9; background: #f8fafc;">
+          <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-list-check" style="color: #059669;"></i> My Uploaded Entries
+          </h3>
+          <span class="badge" id="userEntriesCountBadge" style="background: #e2e8f0; color: #334155; font-weight: 700;">0 Entries</span>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openAddExpenseModal()">
-          <i class="fa-solid fa-plus"></i> Add Travel Entry
-        </button>
-      </div>
 
-      <div class="table-wrapper">
-        <table class="excel-table" id="expenseTable">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Location</th>
-              <th class="col-numeric">Metro (₹)</th>
-              <th class="col-numeric">Local (₹)</th>
-              <th class="col-numeric">Auto / Rapido (₹)</th>
-              <th class="col-numeric">Others (₹)</th>
-              <th class="col-numeric col-total">Total (₹)</th>
-              <th>Receipts</th>
-              <th>Status</th>
-              <th class="col-actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="expenseTableBody">
-            <!-- Dynamic rows will be inserted here -->
-          </tbody>
-          <tfoot id="expenseTableFoot">
-            <tr class="summary-row">
-              <td colspan="2"><strong>MONTHLY TOTALS</strong></td>
-              <td class="col-numeric" id="sumMetro">₹0</td>
-              <td class="col-numeric" id="sumLocal">₹0</td>
-              <td class="col-numeric" id="sumAuto">₹0</td>
-              <td class="col-numeric" id="sumOthers">₹0</td>
-              <td class="col-numeric col-total" id="sumGrandTotal">₹0</td>
-              <td colspan="2"></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </section>
-  </main>
+        <div style="overflow-x: auto;">
+          <table class="excel-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #ffffff; border-bottom: 2px solid #f1f5f9; text-align: left;">
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Date</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Category</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;" class="col-numeric">Amount</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Comment</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Receipt</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Status</th>
+              </tr>
+            </thead>
+            <tbody id="userEntriesTableBody">
+              <!-- Dynamically populated entries -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <!-- Mobile Bottom Floating Action Button (FAB) -->
   <button class="mobile-fab" id="mobileFabBtn" title="Add Travel Entry">
@@ -701,6 +420,116 @@
     </button>
   </nav>
   </div>
+
+  <!-- PAGE 4: SUPER ADMIN DASHBOARD CONTAINER VIEW -->
+  <div id="superAdminDashboard" class="app-page-view hidden">
+    <!-- App Header for Admin -->
+    <header class="app-header" style="background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid rgba(255,255,255,0.1); color: #ffffff;">
+      <div class="header-container">
+        <div class="brand" onclick="switchAppPage('dashboard')" style="cursor: pointer;">
+          <div class="brand-icon" style="background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); border: none; padding: 0; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(99,102,241,0.35);">
+            <i class="fa-solid fa-user-shield" style="color: #ffffff; font-size: 1.2rem;"></i>
+          </div>
+          <div class="brand-text">
+            <h1 style="color: #ffffff;">FreeG Wifi</h1>
+            <p class="subtitle" style="color: #94a3b8;">Super Admin Control Panel</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="switchAppPage('dashboard')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ffffff; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-house"></i> My Dashboard
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="performSignOut()" style="background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <!-- KPI Grid -->
+      <section class="kpi-grid" style="grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div class="kpi-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 16px;">
+          <div class="kpi-icon" style="background: #f1f5f9; color: #334155; width: 44px; height: 44px; border-radius: 10px; font-size: 1.2rem;"><i class="fa-solid fa-users"></i></div>
+          <div class="kpi-content">
+            <span class="kpi-label" style="color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Registered Users</span>
+            <h2 class="kpi-value" id="adminTotalUsersCount" style="color: #0f172a; font-size: 1.6rem; font-weight: 800; margin: 2px 0;">0</h2>
+            <span class="kpi-subtext" style="color: #94a3b8; font-size: 0.78rem;">Active system accounts</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 16px;">
+          <div class="kpi-icon" style="background: #f1f5f9; color: #0f172a; width: 44px; height: 44px; border-radius: 10px; font-size: 1.2rem;"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+          <div class="kpi-content">
+            <span class="kpi-label" style="color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Total Users Amount</span>
+            <h2 class="kpi-value" id="adminTotalSystemAmount" style="color: #0f172a; font-size: 1.6rem; font-weight: 800; margin: 2px 0;">₹0</h2>
+            <span class="kpi-subtext" id="adminSystemAmountSubtext" style="color: #64748b; font-size: 0.78rem; font-weight: 600;">⏳ Pending: ₹0 | ✅ Paid: ₹0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Members Matrix Table -->
+      <section class="table-container" style="display: block; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #ffffff; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-users" style="color: #334155;"></i> Members
+            </h2>
+            <span class="badge" id="adminUserBadge" style="margin-top: 4px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-weight: 600; font-size: 0.75rem;">0 Members</span>
+          </div>
+
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn" onclick="openAddMemberModal()" style="background: #0f172a; color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+              <i class="fa-solid fa-user-plus" style="font-size: 0.8rem;"></i> Add New Member
+            </button>
+
+            <button type="button" class="btn" onclick="exportMembersToExcel()" style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+              <i class="fa-solid fa-file-excel" style="color: #059669; font-size: 0.85rem;"></i> Export Member Details Excel
+            </button>
+
+            <div style="display: flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px;">
+              <i class="fa-solid fa-calendar-days" style="color: #64748b; font-size: 0.85rem;"></i>
+              <select id="adminMonthFilter" onchange="loadSuperAdminData()" style="border: none; background: transparent; font-weight: 700; font-size: 0.82rem; color: #0f172a; outline: none; cursor: pointer;">
+                <option value="all">📅 All Months</option>
+                <option value="2026-08" selected>August 2026</option>
+                <option value="2026-07">July 2026</option>
+                <option value="2026-06">June 2026</option>
+                <option value="2026-05">May 2026</option>
+                <option value="2026-04">April 2026</option>
+                <option value="2026-03">March 2026</option>
+                <option value="2026-02">February 2026</option>
+                <option value="2026-01">January 2026</option>
+              </select>
+            </div>
+
+            <div class="search-box" style="margin: 0; width: 180px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;">
+              <i class="fa-solid fa-search" style="color: #94a3b8;"></i>
+              <input type="text" id="adminSearchUsers" placeholder="Filter members..." onkeyup="filterAdminUserTable()" style="font-size: 0.85rem;" />
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper" style="overflow-x: auto; background: #ffffff;">
+          <table class="excel-table" id="adminUsersTable" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f8fafc; text-align: left; border-bottom: 1px solid #e2e8f0;">
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; width: 70px;">Profile</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Name</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;" class="col-numeric">Amount</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Status</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;" class="col-actions">Operations</th>
+              </tr>
+            </thead>
+            <tbody id="adminUsersTableBody">
+              <!-- Dynamically populated admin user rows -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
 
   <!-- ADD / EDIT EXPENSE MODAL / BOTTOM SHEET -->
   <div class="modal-overlay" id="addModal">
@@ -1078,6 +907,155 @@
       <button type="button" class="btn btn-primary" id="customAlertOkBtn" style="width: 100%; padding: 12px; border-radius: 26px; font-weight: 700; font-size: 0.92rem; background: #000000; color: #ffffff; border: none; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
         Got it
       </button>
+    </div>
+  </div>
+
+  <!-- SETTLE PAYMENT & UPLOAD BILL PROOF MODAL -->
+  <div class="modal-overlay" id="settlePaymentModal" style="z-index: 10002;">
+    <div class="modal-card" style="max-width: 440px; border-radius: 16px; background: #ffffff; padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,0.18);">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 14px;">
+        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-file-invoice-dollar" style="color: #0f172a;"></i> Upload Payment Bill
+        </h3>
+        <button type="button" class="close-btn" onclick="closeModal(document.getElementById('settlePaymentModal'))" style="border: none; background: none; font-size: 1.1rem; cursor: pointer; color: #64748b;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="settlePaymentForm" onsubmit="handleSettlePaymentSubmit(event)">
+        <input type="hidden" id="settleUserId" />
+        <input type="hidden" id="settleMonth" />
+
+        <!-- Simple Member & Amount Card -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
+          <div style="font-size: 0.88rem; color: #64748b;">Member: <strong id="settleMemberName" style="color: #0f172a;">User Name</strong></div>
+          <div style="font-size: 0.88rem; color: #64748b; margin-top: 4px;">Pending Amount: <strong id="settleMemberAmount" style="color: #0f172a; font-size: 1.05rem;">₹0</strong></div>
+          <div id="settleCurrentProofContainer" style="margin-top: 6px; font-size: 0.82rem;">
+            <!-- Rendered dynamically if proof exists -->
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Upload Payment File (Image/PDF)</label>
+          <input type="file" id="settlePaymentProofInput" accept="image/*,application/pdf" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; font-size: 0.85rem;" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Payment Note (Optional)</label>
+          <input type="text" id="settleNotesInput" placeholder="e.g. UPI Ref #123456" style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 0.88rem;" />
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('settlePaymentModal'))" style="padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.88rem;">Cancel</button>
+          <button type="submit" id="submitSettleBtn" class="btn btn-primary" style="background: #0f172a; color: #ffffff; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 800; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-paper-plane"></i> Settle & Email Receipt
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD NEW MEMBER MODAL -->
+  <div class="modal-overlay" id="addMemberModal" style="z-index: 10002;">
+    <div class="modal-card" style="max-width: 450px; border-radius: 20px; background: #ffffff; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 18px;">
+        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-user-plus" style="color: #2563eb;"></i> Add New Member
+        </h3>
+        <button type="button" class="close-btn" onclick="closeModal(document.getElementById('addMemberModal'))" style="border: none; background: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="addMemberForm" onsubmit="handleAddMemberSubmit(event)">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Member Full Name</label>
+          <input type="text" id="newMemberNameInput" placeholder="e.g. Alex Sharma" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Registered Email Address</label>
+          <input type="email" id="newMemberEmailInput" placeholder="e.g. alex@gmail.com" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;" />
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('addMemberModal'))" style="padding: 10px 18px; border-radius: 10px; font-weight: 700;">Cancel</button>
+          <button type="submit" id="saveMemberBtn" class="btn btn-primary" style="background: #0f172a; color: #ffffff; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 800;">
+            Save Member
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MANAGE MEMBER / DEL OPTIONS MODAL (Replaces browser prompt) -->
+  <div class="modal-overlay" id="manageMemberModal" style="z-index: 10003;">
+    <div class="modal-card" style="max-width: 440px; border-radius: 16px; background: #ffffff; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 16px;">
+        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-sliders" style="color: #334155;"></i> Member Operations
+        </h3>
+        <button type="button" onclick="closeModal(document.getElementById('manageMemberModal'))" style="border: none; background: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px;">
+        <span style="font-size: 0.82rem; color: #64748b; font-weight: 600; display: block;">SELECTED MEMBER</span>
+        <strong id="manageMemberNameDisplay" style="font-size: 1.05rem; color: #0f172a; display: block; margin-top: 2px;">Member Name</strong>
+        <span id="manageMemberEmailDisplay" style="font-size: 0.82rem; color: #64748b; display: block;">member@email.com</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+        <button type="button" onclick="executeMemberAction('reset')" style="width: 100%; padding: 12px; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="fa-solid fa-rotate-left" style="color: #2563eb;"></i> Reset Payment Status to Pending
+        </button>
+
+        <button type="button" onclick="executeMemberAction('delete')" style="width: 100%; padding: 12px; background: #ffffff; color: #dc2626; border: 1px solid #fca5a5; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="fa-solid fa-trash-can" style="color: #dc2626;"></i> Permanently Delete Member
+        </button>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('manageMemberModal'))" style="padding: 9px 18px; border-radius: 8px; font-weight: 700; font-size: 0.85rem;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW UPLOADED BILL MODAL -->
+  <div class="modal-overlay" id="editMemberAdminModal" style="z-index: 10004;">
+    <div class="modal-card" style="max-width: 440px; border-radius: 16px; background: #ffffff; padding: 22px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 14px;">
+        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-file-image" style="color: #0f172a;"></i> Uploaded Payment Bill
+        </h3>
+        <button type="button" onclick="closeModal(document.getElementById('editMemberAdminModal'))" style="border: none; background: none; font-size: 1.1rem; cursor: pointer; color: #64748b;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="editMemberAdminUserId" />
+
+      <!-- Member Header Card -->
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px;">
+        <img id="editMemberAvatarPreview" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Member" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #cbd5e1; object-fit: cover;" />
+        <div style="overflow: hidden; flex: 1;">
+          <strong id="editMemberNameDisplay" style="font-size: 0.95rem; color: #0f172a; display: block;">Member Name</strong>
+          <span id="editMemberEmailDisplay" style="font-size: 0.82rem; color: #64748b; display: block;">member@email.com</span>
+        </div>
+      </div>
+
+      <!-- Uploaded Bill / Receipt Photo Preview Box -->
+      <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px; margin-bottom: 16px; text-align: center;">
+        <div id="editMemberBillStatusDisplay" style="font-size: 0.85rem; color: #64748b;">
+          Checking uploaded bill...
+        </div>
+        <img id="editMemberBillImage" src="" alt="Uploaded Bill" style="display: none; max-height: 220px; width: 100%; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 8px; cursor: pointer;" onclick="openUploadedBillFullSize()" />
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('editMemberAdminModal'))" style="padding: 8px 20px; border-radius: 8px; font-weight: 700; font-size: 0.88rem;">Close</button>
+      </div>
     </div>
   </div>
 

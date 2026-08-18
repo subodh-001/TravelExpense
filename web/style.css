@@ -2380,3 +2380,72 @@ img.landing-logo-img, img.auth-logo-img, .landing-logo img, .auth-brand-logo img
   text-align: center;
 }
 
+/* ==================== FREEG WIFI & SUPER ADMIN STYLES ==================== */
+.admin-header {
+  background: rgba(15, 23, 42, 0.98) !important;
+  backdrop-filter: blur(20px);
+}
+
+.brand-icon-wifi {
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+}
+
+#adminUsersTable tbody tr {
+  transition: background 0.15s ease;
+}
+
+#adminUsersTable tbody tr:hover {
+  background: #f8fafc !important;
+}
+
+.auth-logo-title {
+  background: linear-gradient(135deg, #1e293b 0%, #2563eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==================== ULTRA-RESPONSIVE & MOBILE OPTIMIZATIONS ==================== */
+@media (max-width: 768px) {
+  .app-container, .main-content, .auth-center-wrapper {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .modal-card {
+    max-width: 95vw !important;
+    width: 95vw !important;
+    padding: 16px !important;
+    margin: 10px auto !important;
+  }
+
+  table {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .header-actions, .kpi-grid, .admin-kpi-grid {
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .user-header-profile {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+}
+
+

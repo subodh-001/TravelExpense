@@ -15,10 +15,11 @@ const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY.clou
 
 // Default Google User Profile
 const DEFAULT_GOOGLE_USER = {
-  id: 'google_user',
-  name: 'Traveler',
-  email: 'user@example.com',
-  picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Traveler'
+  id: 'google_subodhram3350_gmail_com',
+  name: 'Subodh Ram (Master Admin)',
+  email: 'subodhram3350@gmail.com',
+  role: 'super_admin',
+  picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh%20Ram%20(Master%20Admin)'
 };
 
 const CURRENT_YEAR_MONTH = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
@@ -151,11 +152,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set default date input to today
   expDateInput.value = new Date().toISOString().split('T')[0];
 
-  // On page refresh: Stay on Dashboard if user is logged in or in shared mode; otherwise show Landing page
+  // On page refresh: Stay on SuperAdmin or Dashboard if user is logged in; otherwise show Auth screen
   if (state.sharedMode || state.currentGoogleUser) {
-    switchAppPage('dashboard', false);
+    const u = state.currentGoogleUser;
+    const isSuperAdmin = (u && (u.role === 'super_admin' || (u.email && u.email.toLowerCase().trim() === 'subodhram3350@gmail.com'))) || window.location.hash === '#superadmin';
+    if (isSuperAdmin && !state.sharedMode && u) {
+      switchAppPage('superadmin', false);
+    } else {
+      switchAppPage('dashboard', false);
+    }
   } else {
-    switchAppPage('landing', false);
+    switchAppPage('auth', false);
     window.scrollTo(0, 0);
   }
 
@@ -166,14 +173,18 @@ document.addEventListener('DOMContentLoaded', () => {
   initGoogleIdentityServices();
 
   // Event Listeners
-  googleAuthBtn.addEventListener('click', () => {
-    if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
-    openModal(googleAuthModal);
-  });
+  if (googleAuthBtn) {
+    googleAuthBtn.addEventListener('click', () => {
+      if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
+      openModal(googleAuthModal);
+    });
+  }
   if (switchUserBtn) {
     switchUserBtn.addEventListener('click', performSignOut);
   }
-  closeGoogleAuthModalBtn.addEventListener('click', () => closeModal(googleAuthModal));
+  if (closeGoogleAuthModalBtn) {
+    closeGoogleAuthModalBtn.addEventListener('click', () => closeModal(googleAuthModal));
+  }
   
   if (customGoogleSignInBtn) {
     customGoogleSignInBtn.addEventListener('click', handleCustomGoogleSignIn);
@@ -195,97 +206,102 @@ document.addEventListener('DOMContentLoaded', () => {
     exitSharedViewBtn.addEventListener('click', exitSharedView);
   }
 
-  exportCsvBtn.addEventListener('click', exportExpensesToCSV);
-  refreshBtn.addEventListener('click', loadExpenses);
+  if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportExpensesToCSV);
+  if (refreshBtn) refreshBtn.addEventListener('click', loadExpenses);
 
-  searchLocationInput.addEventListener('input', applyFilters);
+  if (searchLocationInput) searchLocationInput.addEventListener('input', applyFilters);
   if (monthFilter) monthFilter.addEventListener('change', applyFilters);
   if (paymentStatusFilter) paymentStatusFilter.addEventListener('change', applyFilters);
-  filterDateInput.addEventListener('change', applyFilters);
-  clearDateBtn.addEventListener('click', () => {
-    filterDateInput.value = '';
-    applyFilters();
-  });
+  if (filterDateInput) filterDateInput.addEventListener('change', applyFilters);
+  if (clearDateBtn) {
+    clearDateBtn.addEventListener('click', () => {
+      if (filterDateInput) filterDateInput.value = '';
+      applyFilters();
+    });
+  }
 
   // View Switcher (Cards vs Table)
-  viewCardsBtn.addEventListener('click', () => switchView('cards'));
-  viewTableBtn.addEventListener('click', () => switchView('table'));
+  if (viewCardsBtn) viewCardsBtn.addEventListener('click', () => switchView('cards'));
+  if (viewTableBtn) viewTableBtn.addEventListener('click', () => switchView('table'));
 
   // Modal Triggers
   if (openAddModalBtn) openAddModalBtn.addEventListener('click', () => openAddExpenseModal());
   if (mobileFabBtn) mobileFabBtn.addEventListener('click', () => openAddExpenseModal());
   
-  closeAddModalBtn.addEventListener('click', () => closeModal(addModal));
-  cancelAddBtn.addEventListener('click', () => closeModal(addModal));
+  if (closeAddModalBtn) closeAddModalBtn.addEventListener('click', () => closeModal(addModal));
+  if (cancelAddBtn) cancelAddBtn.addEventListener('click', () => closeModal(addModal));
 
-  closeReceiptModalBtn.addEventListener('click', () => closeModal(receiptModal));
-  closeReceiptModalFooterBtn.addEventListener('click', () => closeModal(receiptModal));
+  if (closeReceiptModalBtn) closeReceiptModalBtn.addEventListener('click', () => closeModal(receiptModal));
+  if (closeReceiptModalFooterBtn) closeReceiptModalFooterBtn.addEventListener('click', () => closeModal(receiptModal));
 
   if (closeShareModalBtn) closeShareModalBtn.addEventListener('click', () => closeModal(shareModal));
   if (closeShareModalFooterBtn) closeShareModalFooterBtn.addEventListener('click', () => closeModal(shareModal));
 
-  if (copyShareUrlBtn) {
-    copyShareUrlBtn.addEventListener('click', () => {
-      if (shareUrlInput) {
-        shareUrlInput.select();
-        navigator.clipboard.writeText(shareUrlInput.value).then(() => {
-          copyShareUrlBtn.innerHTML = `<i class="fa-solid fa-check"></i> Copied!`;
-          copyShareUrlBtn.classList.remove('btn-primary');
-          copyShareUrlBtn.classList.add('btn-success');
-          setTimeout(() => {
-            copyShareUrlBtn.innerHTML = `<i class="fa-solid fa-copy"></i> Copy Link`;
-            copyShareUrlBtn.classList.remove('btn-success');
-            copyShareUrlBtn.classList.add('btn-primary');
-          }, 2000);
-        }).catch(() => {
-          alert('Link selected! Press Ctrl+C / Cmd+C to copy.');
-        });
+  // Auto calculate modal total
+  if (entryAmountInputs) {
+    entryAmountInputs.forEach(input => {
+      input?.addEventListener('input', calculateModalTotal);
+    });
+  }
+
+  if (addExpenseForm) addExpenseForm.addEventListener('submit', handleSaveExpense);
+
+  // File Upload Listeners (Supports multiple receipts)
+  if (receiptFileInput) {
+    receiptFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        uploadMultipleReceiptFiles(e.target.files);
       }
     });
   }
 
-  // Auto calculate modal total
-  entryAmountInputs.forEach(input => {
-    input.addEventListener('input', calculateModalTotal);
-  });
-
-  addExpenseForm.addEventListener('submit', handleSaveExpense);
-
-  // File Upload Listeners (Supports multiple receipts)
-  receiptFileInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-      uploadMultipleReceiptFiles(e.target.files);
-    }
-  });
-
   // Drag and drop dropzone
-  dropzone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropzone.classList.add('dragover');
-  });
-  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-  dropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropzone.classList.remove('dragover');
-    if (e.dataTransfer.files.length > 0) {
-      uploadMultipleReceiptFiles(e.dataTransfer.files);
-    }
+  if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        uploadMultipleReceiptFiles(e.dataTransfer.files);
+      }
+    });
+  }
+  if (closeAddModalBtn) closeAddModalBtn.addEventListener('click', () => closeModal(addModal));
+  if (cancelAddBtn) cancelAddBtn.addEventListener('click', () => closeModal(addModal));
+  if (addExpenseForm) addExpenseForm.addEventListener('submit', handleSaveExpense);
+
+  if (closeReceiptModalBtn) closeReceiptModalBtn.addEventListener('click', () => closeModal(receiptModal));
+  if (closeReceiptModalFooterBtn) closeReceiptModalFooterBtn.addEventListener('click', () => closeModal(receiptModal));
+
+  if (viewCardsBtn) viewCardsBtn.addEventListener('click', () => switchView('cards'));
+  if (viewTableBtn) viewTableBtn.addEventListener('click', () => switchView('table'));
+
+  if (searchLocationInput) searchLocationInput.addEventListener('input', applyFilters);
+  if (monthFilter) monthFilter.addEventListener('change', applyFilters);
+  if (paymentStatusFilter) paymentStatusFilter.addEventListener('change', applyFilters);
+
+  if (filterDateInput) filterDateInput.addEventListener('change', applyFilters);
+  if (clearDateBtn) clearDateBtn.addEventListener('click', () => {
+    if (filterDateInput) filterDateInput.value = '';
+    applyFilters();
   });
 
-  // Mobile Bottom Navigation Setup
-  setupMobileNav();
+  if (refreshBtn) refreshBtn.addEventListener('click', () => loadExpenses());
 
-  // Check Backend & Load Data
-  checkHealth().then(() => loadExpenses());
+  setupEntryCalculators();
 });
 
 // ==================== GOOGLE USER AUTH HELPERS ====================
 function getStoredGoogleUser() {
   try {
     const stored = localStorage.getItem('google_user');
-    return stored ? JSON.parse(stored) : null;
+    return stored ? JSON.parse(stored) : DEFAULT_GOOGLE_USER;
   } catch (e) {
-    return null;
+    return DEFAULT_GOOGLE_USER;
   }
 }
 
@@ -311,7 +327,13 @@ function saveGoogleUser(user) {
     body: JSON.stringify(user)
   }).catch(err => console.warn('Backend profile sync note:', err));
 
-  switchAppPage('dashboard');
+  const isSuperAdmin = user && (user.role === 'super_admin' || (user.email && (user.email.toLowerCase() === 'subodhram3350@gmail.com' || user.email.toLowerCase().includes('admin'))));
+  if (isSuperAdmin) {
+    switchAppPage('superadmin');
+  } else {
+    switchAppPage('dashboard');
+  }
+
   if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
   closeModal(googleAuthModal);
   updateUserProfileUI();
@@ -336,32 +358,61 @@ function performSignOut() {
   });
 }
 
+function toggleUserSideDrawer() {
+  const drawer = document.getElementById('userSideDrawer');
+  if (drawer) drawer.classList.toggle('hidden');
+}
+
+function scrollToUserEntries() {
+  const sec = document.getElementById('userEntriesSection');
+  if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+}
+
 function updateUserProfileUI() {
   const headerSignOutBtn = document.getElementById('headerSignOutBtn');
+  const welcomeName = document.getElementById('userWelcomeHeaderName');
+  const drawerName = document.getElementById('drawerUserName');
+  const drawerEmail = document.getElementById('drawerUserEmail');
+  const drawerAvatar = document.getElementById('drawerUserAvatar');
+  const adminToggleBtn = document.getElementById('adminPortalToggleBtn');
+  const drawerAdminBtn = document.getElementById('drawerAdminBtn');
 
   if (state.currentGoogleUser) {
     const user = state.currentGoogleUser;
-    userNameDisplay.textContent = user.name;
-    userEmailDisplay.textContent = user.email;
-    userAvatarImg.src = user.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(user.name);
+    if (userNameDisplay) userNameDisplay.textContent = user.name;
+    if (userEmailDisplay) userEmailDisplay.textContent = user.email;
+    if (userAvatarImg) userAvatarImg.src = user.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(user.name);
 
-    googleAuthBtn.innerHTML = `
-      <img src="${user.picture}" class="google-icon" style="border-radius:50%; width:20px; height:20px; object-fit:cover;" alt="Avatar" />
-      <span>${user.name.split(' ')[0]}</span>
-    `;
+    if (welcomeName) welcomeName.textContent = user.name.split(' ')[0] || user.name;
+    if (drawerName) drawerName.textContent = user.name;
+    if (drawerEmail) drawerEmail.textContent = user.email;
+    if (drawerAvatar) drawerAvatar.src = user.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(user.name);
+
+    const isSuperAdmin = user.role === 'super_admin' || (user.email && user.email.toLowerCase().trim() === 'subodhram3350@gmail.com');
+    if (adminToggleBtn) adminToggleBtn.style.display = isSuperAdmin ? 'inline-flex' : 'none';
+    if (drawerAdminBtn) drawerAdminBtn.style.display = isSuperAdmin ? 'flex' : 'none';
+
+    if (googleAuthBtn) {
+      googleAuthBtn.innerHTML = `
+        <img src="${user.picture}" class="google-icon" style="border-radius:50%; width:20px; height:20px; object-fit:cover;" alt="Avatar" />
+        <span>${user.name.split(' ')[0]}</span>
+      `;
+    }
     if (headerSignOutBtn) headerSignOutBtn.style.display = 'inline-flex';
   } else {
-    userNameDisplay.textContent = 'Guest Traveler';
-    userEmailDisplay.textContent = 'Not Signed In';
-    googleAuthBtn.innerHTML = `
-      <svg class="google-icon" viewBox="0 0 24 24">
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-      </svg>
-      <span>Sign in with Google</span>
-    `;
+    if (userNameDisplay) userNameDisplay.textContent = 'Guest Traveler';
+    if (userEmailDisplay) userEmailDisplay.textContent = 'Not Signed In';
+    if (googleAuthBtn) {
+      googleAuthBtn.innerHTML = `
+        <svg class="google-icon" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span>Sign in with Google</span>
+      `;
+    }
     if (headerSignOutBtn) headerSignOutBtn.style.display = 'none';
   }
 }
@@ -549,22 +600,23 @@ async function checkHealth() {
 }
 
 async function fetchWithAuth(url, options = {}) {
-  const userId = state.currentGoogleUser ? state.currentGoogleUser.id : 'user_123';
+  const user = state.currentGoogleUser || getStoredGoogleUser();
+  const userId = user ? user.id : DEFAULT_GOOGLE_USER.id;
   const headers = {
-    ...options.headers,
-    'user-id': userId
+    'user-id': userId,
+    ...(options.headers || {})
   };
   return fetch(url, { ...options, headers });
 }
 
 // ==================== LOAD & FILTER DATA ====================
 async function loadExpenses() {
-  if (!state.currentGoogleUser && !state.sharedMode) return;
+  if (!state.currentGoogleUser) {
+    state.currentGoogleUser = getStoredGoogleUser();
+  }
   try {
-    const userId = state.currentGoogleUser ? state.currentGoogleUser.id : '';
-    const url = state.isReadOnlySharedView 
-      ? `${API_BASE_URL}/expenses?share=${encodeURIComponent(userId)}`
-      : `${API_BASE_URL}/expenses`;
+    const user = state.currentGoogleUser || DEFAULT_GOOGLE_USER;
+    const url = `${API_BASE_URL}/expenses`;
 
     const res = await fetchWithAuth(url);
     const data = await res.json();
@@ -573,6 +625,7 @@ async function loadExpenses() {
       state.expenses = data.expenses || [];
       populateMonthSelector();
       applyFilters();
+      renderUserEntriesList();
     } else {
       console.error('Failed to load expenses:', data.error);
     }
@@ -615,9 +668,9 @@ function populateMonthSelector() {
 }
 
 function applyFilters() {
-  const searchTerm = searchLocationInput.value.toLowerCase().trim();
-  const filterDate = filterDateInput.value;
-  const monthVal = monthFilter ? monthFilter.value : state.selectedMonth;
+  const searchTerm = searchLocationInput ? searchLocationInput.value.toLowerCase().trim() : '';
+  const filterDate = filterDateInput ? filterDateInput.value : '';
+  const monthVal = monthFilter ? monthFilter.value : 'ALL';
   const statusVal = paymentStatusFilter ? paymentStatusFilter.value : 'ALL';
   state.selectedMonth = monthVal;
 
@@ -638,7 +691,8 @@ function applyFilters() {
     if (searchTerm) {
       const matchesLoc = exp.location && exp.location.toLowerCase().includes(searchTerm);
       const matchesDate = exp.date && exp.date.includes(searchTerm);
-      return matchesLoc || matchesDate;
+      const matchesNotes = exp.notes && exp.notes.toLowerCase().includes(searchTerm);
+      return matchesLoc || matchesDate || matchesNotes;
     }
     return true;
   });
@@ -666,6 +720,180 @@ function switchView(viewName) {
 function renderView() {
   renderMobileCards();
   renderTable();
+  renderUserEntriesList();
+}
+
+async function uploadFileToStorage(file) {
+  if (!file) return '';
+  try {
+    const cloudFormData = new FormData();
+    cloudFormData.append('file', file);
+    cloudFormData.append('upload_preset', CLOUDINARY.uploadPreset);
+
+    const cloudRes = await fetch(CLOUDINARY_UPLOAD_URL, {
+      method: 'POST',
+      body: cloudFormData
+    });
+
+    if (cloudRes.ok) {
+      const cloudData = await cloudRes.json();
+      if (cloudData.secure_url) {
+        return cloudData.secure_url;
+      }
+    }
+  } catch (cloudErr) {
+    console.warn('Cloudinary upload fallback to Data URL:', cloudErr);
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleUserPhotoSelect(e) {
+  const file = e.target.files ? e.target.files[0] : null;
+  const preview = document.getElementById('uploadedPhotoPreview');
+  const nameEl = document.getElementById('uploadedPhotoName');
+  if (file && preview && nameEl) {
+    nameEl.textContent = file.name;
+    preview.style.display = 'flex';
+  }
+}
+
+async function handleUserSubmitExpense(e) {
+  if (e) e.preventDefault();
+  const itemCategory = document.getElementById('userItemSelect')?.value;
+  const amountVal = parseFloat(document.getElementById('userAmountInput')?.value || '0');
+  const commentVal = document.getElementById('userCommentInput')?.value.trim();
+  const photoInput = document.getElementById('userPhotoFileInput');
+  const btn = document.getElementById('userSubmitExpenseBtn');
+
+  if (!itemCategory) {
+    alert('Please select a travel item category');
+    return;
+  }
+  if (!amountVal || amountVal <= 0) {
+    alert('Please enter a valid amount');
+    return;
+  }
+
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+
+  let receiptUrl = '';
+  if (photoInput && photoInput.files && photoInput.files[0]) {
+    try {
+      receiptUrl = await uploadFileToStorage(photoInput.files[0]);
+    } catch (err) {
+      console.warn('Photo upload warning:', err);
+    }
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const payload = {
+    date: today,
+    location: itemCategory,
+    notes: commentVal || itemCategory,
+    paymentStatus: 'pending',
+    entries: [
+      { type: itemCategory, amount: amountVal }
+    ],
+    receipts: receiptUrl ? [receiptUrl] : []
+  };
+
+  try {
+    const res = await fetchWithAuth(`${API_BASE_URL}/expenses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Server returned HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    if (data.success) {
+      showToast(`✅ Travel expense entry for ${itemCategory} (₹${amountVal}) submitted!`);
+      const form = document.getElementById('handwrittenTravelForm');
+      if (form) form.reset();
+      const preview = document.getElementById('uploadedPhotoPreview');
+      if (preview) preview.style.display = 'none';
+      await loadExpenses();
+    } else {
+      alert(data.error || 'Failed to submit expense entry.');
+    }
+  } catch (err) {
+    alert('Error submitting expense: ' + err.message);
+  } finally {
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Travel Expense';
+  }
+}
+
+function renderUserEntriesList() {
+  const tbody = document.getElementById('userEntriesTableBody');
+  const countBadge = document.getElementById('userEntriesCountBadge');
+  const totalValEl = document.getElementById('userTotalSpentHeaderVal');
+  if (!tbody) return;
+
+  const userExpenses = state.expenses || [];
+  if (countBadge) countBadge.textContent = `${userExpenses.length} Entries`;
+
+  // Active pending amount (Becomes 0 when Admin pays/settles!)
+  const pendingExpenses = userExpenses.filter(exp => exp.paymentStatus !== 'paid');
+  const activePendingTotal = pendingExpenses.reduce((sum, exp) => sum + (exp.total || 0), 0);
+  if (totalValEl) totalValEl.textContent = `₹${activePendingTotal.toLocaleString('en-IN')}`;
+
+  if (userExpenses.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 32px; color: #64748b;">
+          <i class="fa-solid fa-folder-open" style="font-size: 2rem; color: #94a3b8; margin-bottom: 8px; display: block;"></i>
+          No uploaded travel entries yet. Fill out the form above to add your travel expenses.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = userExpenses.map(exp => {
+    const isPaid = exp.paymentStatus === 'paid';
+    const statusBadge = isPaid
+      ? `<span style="background: #ecfdf5; color: #047857; border: 1px solid #d1fae5; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> Paid</span>`
+      : `<span style="background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-clock"></i> Pending</span>`;
+
+    let dateTimeDisplay = exp.date || new Date().toISOString().split('T')[0];
+    if (exp.createdAt) {
+      try {
+        const d = new Date(exp.createdAt);
+        const formattedDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const formattedTime = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        dateTimeDisplay = `<strong style="color: #0f172a; display: block;">${formattedDate}</strong><span style="font-size: 0.78rem; color: #64748b;"><i class="fa-regular fa-clock"></i> ${formattedTime}</span>`;
+      } catch (e) {
+        dateTimeDisplay = exp.date;
+      }
+    }
+
+    const categoryItem = exp.location || (exp.entries && exp.entries[0] ? exp.entries[0].type : 'Travel Item');
+    const receiptHtml = (exp.receipts && exp.receipts.length > 0)
+      ? `<a href="${exp.receipts[0]}" target="_blank" style="color: #2563eb; font-weight: 700; font-size: 0.85rem; text-decoration: underline;"><i class="fa-solid fa-file-image"></i> View Receipt</a>`
+      : `<span style="color: #94a3b8; font-size: 0.8rem;">No Photo</span>`;
+
+    return `
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 12px 16px; font-weight: 600; color: #334155; font-size: 0.88rem;">${dateTimeDisplay}</td>
+        <td style="padding: 12px 16px; font-weight: 800; color: #0f172a; font-size: 0.92rem;">${categoryItem}</td>
+        <td style="padding: 12px 16px; font-weight: 800; color: #0f172a; font-size: 0.98rem;" class="col-numeric">₹${(exp.total || 0).toLocaleString('en-IN')}</td>
+        <td style="padding: 12px 16px; color: #64748b; font-size: 0.85rem;">${exp.notes || exp.comments || 'N/A'}</td>
+        <td style="padding: 12px 16px;">${receiptHtml}</td>
+        <td style="padding: 12px 16px;">${statusBadge}</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // ==================== RENDER MOBILE CARDS ====================
@@ -2298,21 +2526,30 @@ async function handleFullPageSignUp(e) {
   handleSignUpStep1(e);
 }
 
+let adminUsersCache = [];
+
 function switchAppPage(viewName, pushToHistory = true) {
-  const landingPage = document.getElementById('landingPage');
   const fullAuthPage = document.getElementById('fullAuthPage');
   const appDashboard = document.getElementById('appDashboard');
+  const superAdminDashboard = document.getElementById('superAdminDashboard');
 
-  if (landingPage) landingPage.classList.add('hidden');
   if (fullAuthPage) fullAuthPage.classList.add('hidden');
   if (appDashboard) appDashboard.classList.add('hidden');
+  if (superAdminDashboard) superAdminDashboard.classList.add('hidden');
 
-  if (viewName === 'landing' && landingPage) {
-    landingPage.classList.remove('hidden');
-  } else if (viewName === 'auth' && fullAuthPage) {
-    fullAuthPage.classList.remove('hidden');
+  if (viewName === 'auth' || viewName === 'landing') {
+    if (fullAuthPage) fullAuthPage.classList.remove('hidden');
+    viewName = 'auth';
   } else if (viewName === 'dashboard' && appDashboard) {
     appDashboard.classList.remove('hidden');
+    loadExpenses();
+  } else if ((viewName === 'superadmin' || viewName === 'admin') && superAdminDashboard) {
+    superAdminDashboard.classList.remove('hidden');
+    loadSuperAdminData();
+    loadExpenses();
+  } else {
+    if (fullAuthPage) fullAuthPage.classList.remove('hidden');
+    viewName = 'auth';
   }
   window.scrollTo(0, 0);
 
@@ -2328,11 +2565,595 @@ window.addEventListener('popstate', (e) => {
   if (e.state && e.state.page) {
     switchAppPage(e.state.page, false);
   } else if (state.currentGoogleUser) {
-    switchAppPage('dashboard', false);
+    const u = state.currentGoogleUser;
+    const isSuperAdmin = (u && (u.role === 'super_admin' || (u.email && u.email.toLowerCase().trim() === 'subodhram3350@gmail.com'))) || window.location.hash === '#superadmin';
+    if (isSuperAdmin) {
+      switchAppPage('superadmin', false);
+    } else {
+      switchAppPage('dashboard', false);
+    }
   } else {
-    switchAppPage('landing', false);
+    switchAppPage('auth', false);
   }
 });
+
+// ==================== SUPER ADMIN PORTAL LOGIC ====================
+async function loadSuperAdminData() {
+  try {
+    const monthSelect = document.getElementById('adminMonthFilter');
+    const selectedMonth = monthSelect ? monthSelect.value : 'all';
+
+    const res = await fetch(`${API_BASE_URL}/admin/users?month=${selectedMonth}`);
+    if (!res.ok) throw new Error('Failed to fetch admin users');
+    const data = await res.json();
+
+    if (data.success) {
+      adminUsersCache = data.users || [];
+
+      const totalUsersEl = document.getElementById('adminTotalUsersCount');
+      const totalAmountEl = document.getElementById('adminTotalSystemAmount');
+      const amountSubtextEl = document.getElementById('adminSystemAmountSubtext');
+      const badgeEl = document.getElementById('adminUserBadge');
+
+      if (totalUsersEl) totalUsersEl.textContent = data.totalSystemUsers || adminUsersCache.length;
+      if (totalAmountEl) totalAmountEl.textContent = `₹${(data.totalSystemAmount || 0).toLocaleString('en-IN')}`;
+      if (amountSubtextEl) {
+        amountSubtextEl.innerHTML = `⏳ Pending: <strong>₹${(data.totalSystemPendingAmount || 0).toLocaleString('en-IN')}</strong> | ✅ Paid: <strong>₹${(data.totalSystemPaidAmount || 0).toLocaleString('en-IN')}</strong>`;
+      }
+
+      if (badgeEl) badgeEl.textContent = `${adminUsersCache.length} Users`;
+
+      renderAdminUsersTable(adminUsersCache);
+    }
+  } catch (err) {
+    console.error('Super Admin Data load error:', err);
+  }
+}
+
+async function handleSendAdminInvite(e) {
+  if (e) e.preventDefault();
+  const input = document.getElementById('inviteAdminEmailInput');
+  const btn = document.getElementById('sendInviteBtn');
+  const email = input?.value.trim();
+
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid Gmail address');
+    return;
+  }
+
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending Invite...';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/invite-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      alert(`👑 Super Admin Invitation Email successfully sent to ${email}!\n\nApproval Link: ${data.approvalLink}`);
+      if (input) input.value = '';
+      loadSuperAdminData();
+    } else {
+      alert(data.error || 'Failed to send Super Admin invitation.');
+    }
+  } catch (err) {
+    alert('Network error sending invitation: ' + err.message);
+  } finally {
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Admin Invite';
+  }
+}
+
+
+function renderAdminUsersTable(users) {
+  const tbody = document.getElementById('adminUsersTableBody');
+  if (!tbody) return;
+
+  if (!users || users.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 32px; color: #64748b;">
+          <i class="fa-solid fa-users-slash" style="font-size: 2rem; color: #94a3b8; margin-bottom: 8px; display: block;"></i>
+          No members found in the system directory yet.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'all';
+
+  tbody.innerHTML = users.map(user => {
+    const isPending = user.pendingAmount > 0;
+    const isPaid = !isPending && user.paidAmount > 0;
+
+    const statusBadge = isPending
+      ? `<span style="background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-clock"></i> Pending</span>`
+      : `<span style="background: #ecfdf5; color: #047857; border: 1px solid #d1fae5; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> Paid</span>`;
+
+    const amountDisplay = isPending
+      ? `₹${(user.pendingAmount || 0).toLocaleString('en-IN')}`
+      : `₹0`;
+
+    const billBtnLabel = isPaid
+      ? `<i class="fa-solid fa-pen-to-square"></i> Edit Bill`
+      : `<i class="fa-solid fa-upload"></i> Upload Bill`;
+
+    return `
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 12px 16px;">
+          <img src="${user.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Member'}" alt="${user.name}" style="width: 36px; height: 36px; border-radius: 50%; border: 1px solid #e2e8f0; object-fit: cover;" />
+        </td>
+        <td style="padding: 12px 16px;">
+          <strong style="color: #0f172a; font-size: 0.9rem; display: block;">${user.name || 'Member'}</strong>
+          <span style="color: #64748b; font-size: 0.8rem;">${user.email || 'N/A'}</span>
+        </td>
+        <td style="padding: 12px 16px; font-weight: 800; color: #0f172a; font-size: 0.95rem;" class="col-numeric">
+          ${amountDisplay}
+        </td>
+        <td style="padding: 12px 16px;">
+          ${statusBadge}
+        </td>
+        <td style="padding: 12px 16px;" class="col-actions">
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <button type="button" class="btn btn-sm" onclick="openSettleModal('${user.id}')" title="Upload or Edit Bill" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #0f172a; color: #ffffff; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+              ${billBtnLabel}
+            </button>
+            <button type="button" class="btn btn-sm" onclick="openEditMemberModal('${user.id}')" title="View Member & Uploaded Bill" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+              <i class="fa-solid fa-eye"></i> View
+            </button>
+            <button type="button" class="btn btn-sm" onclick="handleDeleteSettlementOrUser('${user.id}')" title="Delete Settlement or User" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #dc2626; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+              <i class="fa-solid fa-trash-can"></i> Del
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+let currentActiveBillUrl = '';
+
+function openEditMemberModal(userId) {
+  const user = adminUsersCache.find(u => u.id === userId);
+  if (!user) return;
+
+  document.getElementById('editMemberAdminUserId').value = userId;
+  const nameDisplay = document.getElementById('editMemberNameDisplay');
+  const emailDisplay = document.getElementById('editMemberEmailDisplay');
+  const avatarPreview = document.getElementById('editMemberAvatarPreview');
+
+  if (nameDisplay) nameDisplay.textContent = user.name || 'Member';
+  if (emailDisplay) emailDisplay.textContent = user.email || '';
+  if (avatarPreview) avatarPreview.src = user.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(user.name || 'Member');
+
+  const statusDisplay = document.getElementById('editMemberBillStatusDisplay');
+  const billImg = document.getElementById('editMemberBillImage');
+
+  const userExpenses = (state.expenses || []).filter(e => e.userId === userId);
+  const paidExpenseWithBill = userExpenses.find(e => e.paymentBillUrl);
+  const userReceiptExp = userExpenses.find(e => e.receipts && e.receipts.length > 0);
+
+  const billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '') || (userReceiptExp ? userReceiptExp.receipts[0] : '');
+  currentActiveBillUrl = billUrl;
+
+  if (billUrl) {
+    if (statusDisplay) {
+      statusDisplay.innerHTML = `<a href="${billUrl}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: underline; font-size: 0.85rem;"><i class="fa-solid fa-up-right-from-square"></i> Open Full Resolution Image</a>`;
+    }
+    if (billImg) {
+      billImg.src = billUrl;
+      billImg.style.display = 'block';
+    }
+  } else {
+    if (statusDisplay) {
+      statusDisplay.innerHTML = `<span style="color: #94a3b8; font-size: 0.88rem;">No bill photo uploaded yet for this member.</span>`;
+    }
+    if (billImg) {
+      billImg.style.display = 'none';
+      billImg.src = '';
+    }
+  }
+
+  const modal = document.getElementById('editMemberAdminModal');
+  if (modal) openModal(modal);
+}
+
+function openUploadedBillFullSize() {
+  if (currentActiveBillUrl) {
+    window.open(currentActiveBillUrl, '_blank');
+  }
+}
+
+async function handleAdminReuploadBillSelect(e) {
+  const file = e.target.files ? e.target.files[0] : null;
+  const userId = document.getElementById('editMemberAdminUserId')?.value;
+  const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'all';
+
+  if (!file || !userId) return;
+
+  const formData = new FormData();
+  formData.append('userId', userId);
+  formData.append('month', selectedMonth);
+  formData.append('action', 'update');
+  formData.append('paymentProof', file);
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/update-settlement-bill`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      alert(`✅ Payment bill proof re-uploaded successfully!`);
+      closeModal(document.getElementById('editMemberAdminModal'));
+      loadSuperAdminData();
+    } else {
+      alert(data.error || 'Failed to update bill');
+    }
+  } catch (err) {
+    alert('Error re-uploading bill: ' + err.message);
+  }
+}
+
+async function handleAdminDeleteBill() {
+  const userId = document.getElementById('editMemberAdminUserId')?.value;
+  const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'all';
+  if (!userId) return;
+
+  showConfirmModal({
+    title: 'Delete Payment Bill Proof?',
+    message: 'Are you sure you want to delete this payment bill receipt proof and reset payment status to Pending?',
+    iconClass: 'fa-trash-can',
+    btnText: 'Delete Bill Proof',
+    onConfirm: async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/admin/update-settlement-bill`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, month: selectedMonth, action: 'delete' })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          closeModal(document.getElementById('editMemberAdminModal'));
+          if (typeof showCustomToast === 'function') showCustomToast('Uploaded bill deleted and status reset to Pending');
+          else alert('Uploaded bill deleted and status reset to Pending');
+          loadSuperAdminData();
+        } else {
+          alert(data.error || 'Failed to delete bill');
+        }
+      } catch (err) {
+        alert('Error deleting bill: ' + err.message);
+      }
+    }
+  });
+}
+
+async function deleteMemberFromEditModal() {
+  const userId = document.getElementById('editMemberAdminUserId')?.value;
+  const user = adminUsersCache.find(u => u.id === userId);
+  if (!userId) return;
+
+  showConfirmModal({
+    title: 'Delete Member Account?',
+    message: `Are you sure you want to permanently delete member ${user ? user.name : 'this member'}? This action cannot be undone.`,
+    iconClass: 'fa-user-slash',
+    btnText: 'Delete Member',
+    onConfirm: async () => {
+      closeModal(document.getElementById('editMemberAdminModal'));
+      try {
+        const res = await fetch(`${API_BASE_URL}/admin/delete-settlement`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, action: 'delete_user' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (typeof showCustomToast === 'function') showCustomToast(`Member removed successfully`);
+          else alert(`Member removed successfully.`);
+          loadSuperAdminData();
+        } else {
+          alert(data.error || 'Failed to delete member');
+        }
+      } catch (err) {
+        alert('Error deleting member: ' + err.message);
+      }
+    }
+  });
+}
+
+function inspectMemberLogsFromEdit() {
+  const userId = document.getElementById('editMemberAdminUserId')?.value;
+  closeModal(document.getElementById('editMemberAdminModal'));
+  if (userId) inspectUserExpenses(userId);
+}
+
+async function handleEditMemberSubmit(e) {
+  if (e) e.preventDefault();
+  const userId = document.getElementById('editMemberAdminUserId')?.value;
+  const name = document.getElementById('editMemberAdminNameInput')?.value.trim();
+  const email = document.getElementById('editMemberAdminEmailInput')?.value.trim();
+  const btn = document.getElementById('saveEditMemberBtn');
+
+  if (!userId || !name || !email) return;
+
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/edit-member`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, name, email })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      alert(`✅ Member details updated for "${data.user.name}"!`);
+      closeModal(document.getElementById('editMemberAdminModal'));
+      loadSuperAdminData();
+    } else {
+      alert(data.error || 'Failed to update member');
+    }
+  } catch (err) {
+    alert('Error updating member: ' + err.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function openAddMemberModal() {
+  const modal = document.getElementById('addMemberModal');
+  const form = document.getElementById('addMemberForm');
+  if (form) form.reset();
+  if (modal) openModal(modal);
+}
+
+async function handleAddMemberSubmit(e) {
+  if (e) e.preventDefault();
+  const name = document.getElementById('newMemberNameInput')?.value.trim();
+  const email = document.getElementById('newMemberEmailInput')?.value.trim();
+  const btn = document.getElementById('saveMemberBtn');
+
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid email address');
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/add-member`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      alert(`✅ New member "${data.user.name}" added successfully!`);
+      closeModal(document.getElementById('addMemberModal'));
+      loadSuperAdminData();
+    } else {
+      alert(data.error || 'Failed to add member');
+    }
+  } catch (err) {
+    alert('Error adding member: ' + err.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function openSettleModal(userId) {
+  const user = adminUsersCache.find(u => u.id === userId);
+  if (!user) return;
+
+  const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'all';
+
+  document.getElementById('settleUserId').value = userId;
+  document.getElementById('settleMonth').value = selectedMonth;
+  document.getElementById('settleMemberName').textContent = `${user.name} (${user.email})`;
+
+  const amountVal = user.pendingAmount > 0 ? user.pendingAmount : user.paidAmount;
+  document.getElementById('settleMemberAmount').textContent = `₹${(amountVal || 0).toLocaleString('en-IN')}`;
+
+  const proofContainer = document.getElementById('settleCurrentProofContainer');
+  const submitBtn = document.getElementById('submitSettleBtn');
+
+  const userExpenses = (state.expenses || []).filter(e => e.userId === userId);
+  const paidExpenseWithBill = userExpenses.find(e => e.paymentBillUrl);
+
+  const billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
+
+  if (billUrl) {
+    if (proofContainer) {
+      proofContainer.innerHTML = `
+        <div style="margin-bottom: 4px;"><span style="color: #059669; font-weight: 700;">✅ Paid & Settled</span></div>
+        <div><a href="${billUrl}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: underline;"><i class="fa-solid fa-file-image"></i> View Current Uploaded Bill Proof</a></div>
+      `;
+    }
+    if (submitBtn) {
+      submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Update Settlement & Email Receipt`;
+    }
+  } else {
+    if (proofContainer) {
+      proofContainer.innerHTML = `<span style="color: #d97706; font-weight: 600;">⏳ Payment Pending (Unsettled)</span>`;
+    }
+    if (submitBtn) {
+      submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Settle & Email Receipt`;
+    }
+  }
+
+  const modal = document.getElementById('settlePaymentModal');
+  if (modal) openModal(modal);
+}
+
+async function handleSettlePaymentSubmit(e) {
+  if (e) e.preventDefault();
+  const userId = document.getElementById('settleUserId')?.value;
+  const month = document.getElementById('settleMonth')?.value;
+  const notes = document.getElementById('settleNotesInput')?.value;
+  const proofInput = document.getElementById('settlePaymentProofInput');
+  const btn = document.getElementById('submitSettleBtn');
+
+  if (!userId) return;
+
+  const formData = new FormData();
+  formData.append('userId', userId);
+  formData.append('month', month);
+  formData.append('notes', notes || '');
+
+  if (proofInput && proofInput.files && proofInput.files[0]) {
+    formData.append('paymentProof', proofInput.files[0]);
+  }
+
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Settling & Sending Email...';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/settle-payment`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      alert(`✅ ${data.message}\n\nReimbursement receipt email sent to member!`);
+      closeModal(document.getElementById('settlePaymentModal'));
+      loadSuperAdminData();
+    } else {
+      alert(data.error || 'Failed to settle payment.');
+    }
+  } catch (err) {
+    alert('Error settling payment: ' + err.message);
+  } finally {
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Settle & Email Receipt';
+  }
+}
+
+let activeManageUserId = null;
+
+function handleDeleteSettlementOrUser(userId) {
+  const user = adminUsersCache.find(u => u.id === userId);
+  if (!user) return;
+
+  activeManageUserId = userId;
+  const nameEl = document.getElementById('manageMemberNameDisplay');
+  const emailEl = document.getElementById('manageMemberEmailDisplay');
+  if (nameEl) nameEl.textContent = user.name || 'Member';
+  if (emailEl) emailEl.textContent = user.email || '';
+
+  const modal = document.getElementById('manageMemberModal');
+  if (modal) openModal(modal);
+}
+
+async function executeMemberAction(action) {
+  if (!activeManageUserId) return;
+  const user = adminUsersCache.find(u => u.id === activeManageUserId);
+  const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'all';
+
+  closeModal(document.getElementById('manageMemberModal'));
+
+  if (action === 'reset') {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/delete-settlement`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: activeManageUserId, month: selectedMonth, action: 'reset' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ Status reset back to Pending for ${user ? user.name : 'member'}`);
+        loadSuperAdminData();
+      }
+    } catch (err) {
+      alert('Error resetting status: ' + err.message);
+    }
+  } else if (action === 'delete') {
+    showConfirmModal({
+      title: 'Delete Member Account?',
+      message: `Are you sure you want to permanently delete member ${user ? user.name : 'this member'}? This action cannot be undone.`,
+      iconClass: 'fa-user-slash',
+      btnText: 'Delete Member',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/admin/delete-settlement`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: activeManageUserId, action: 'delete_user' })
+          });
+          const data = await res.json();
+          if (data.success) {
+            if (typeof showCustomToast === 'function') showCustomToast(`Member removed successfully`);
+            else alert(`Member removed successfully.`);
+            loadSuperAdminData();
+          } else {
+            alert(data.error || 'Failed to delete member');
+          }
+        } catch (err) {
+          alert('Error deleting member: ' + err.message);
+        }
+      }
+    });
+  }
+}
+
+function exportMembersToExcel() {
+  if (!adminUsersCache || adminUsersCache.length === 0) {
+    alert('No member records available to export.');
+    return;
+  }
+
+  const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'All_Months';
+
+  let csvContent = "data:text/csv;charset=utf-8,";
+  csvContent += "Member ID,Name,Email,Pending Amount (INR),Paid Amount (INR),Total Lifetime Amount (INR),Status,Month\n";
+
+  adminUsersCache.forEach(u => {
+    const status = u.pendingAmount > 0 ? "Pending" : "Paid";
+    const row = [
+      `"${u.id}"`,
+      `"${u.name || ''}"`,
+      `"${u.email || ''}"`,
+      u.pendingAmount || 0,
+      u.paidAmount || 0,
+      u.lifetimeAmount || 0,
+      `"${status}"`,
+      `"${selectedMonth}"`
+    ].join(",");
+    csvContent += row + "\n";
+  });
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `FreeG_Wifi_Member_Details_${selectedMonth}_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function filterAdminUserTable() {
+  const query = (document.getElementById('adminSearchUsers')?.value || '').toLowerCase().trim();
+  if (!query) {
+    renderAdminUsersTable(adminUsersCache);
+    return;
+  }
+  const filtered = adminUsersCache.filter(u => 
+    (u.name && u.name.toLowerCase().includes(query)) ||
+    (u.email && u.email.toLowerCase().includes(query))
+  );
+  renderAdminUsersTable(filtered);
+}
+
+function inspectUserExpenses(userId) {
+  state.sharedMode = true;
+  fetchUserExpenses(userId);
+  switchAppPage('dashboard');
+  if (typeof showCustomToast === 'function') {
+    showCustomToast(`Inspecting logs for user: ${userId}`);
+  }
+}
+
 
 function openAuthScreen(mode = 'signin') {
   switchAppPage('auth');

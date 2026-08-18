@@ -5,11 +5,13 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Ensure local directories exist for fallback storage
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
@@ -95,6 +97,33 @@ const saveLocalUsers = (users) => {
   fs.writeFileSync(USERS_DB_FILE, JSON.stringify(users, null, 2));
 };
 
+// Seed Master Super Admin Account (subodhram3350@gmail.com / nothing05)
+const seedMasterSuperAdmin = () => {
+  try {
+    const users = getLocalUsers();
+    const masterEmail = 'subodhram3350@gmail.com';
+    const masterUserId = `google_${masterEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const passwordHash = crypto.createHash('sha256').update('nothing05').digest('hex');
+
+    users[masterUserId] = {
+      ...(users[masterUserId] || {}),
+      id: masterUserId,
+      name: 'Subodh Ram (Master Admin)',
+      email: masterEmail,
+      passwordHash,
+      role: 'super_admin',
+      verified: true,
+      updatedAt: new Date().toISOString()
+    };
+    saveLocalUsers(users);
+    console.log(`👑 Master Super Admin account initialized: ${masterEmail}`);
+  } catch (err) {
+    console.warn('Failed to seed master super admin:', err.message);
+  }
+};
+seedMasterSuperAdmin();
+
+
 // ==================== MIDDLEWARE ====================
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -139,8 +168,6 @@ try {
 } catch (smtpErr) {
   console.warn('⚠️ Gmail SMTP setup warning:', smtpErr.message);
 }
-
-const crypto = require('crypto');
 
 // ---------- USER AUTHENTICATION & PROFILE MANAGEMENT ----------
 const otpStore = new Map();
@@ -408,10 +435,496 @@ app.get('/api/user/profile/:userId', (req, res) => {
   }
 });
 
+// ---------- SUPER ADMIN ENDPOINTS ----------
+const adminInviteStore = new Map();
+
+// Send Super Admin Invitation Link via Email
+app.post('/api/admin/invite-admin', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Valid email address is required' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const token = uuidv4();
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+    adminInviteStore.set(token, { email: cleanEmail, expiresAt });
+    console.log(`👑 Created Super Admin Invitation Token for ${cleanEmail}: ${token}`);
+
+    const protocol = req.protocol || 'http';
+    const host = req.get('host') || 'localhost:3000';
+    const approvalLink = `${protocol}://${host}/api/admin/accept-invite?token=${token}`;
+
+    if (mailTransporter) {
+      try {
+        await mailTransporter.sendMail({
+          from: `"FreeG Wifi Admin Security" <${gmailUser}>`,
+          to: cleanEmail,
+          subject: `👑 Invitation: Become a Super Admin on FreeG Wifi`,
+          html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 20px; background: #ffffff;">
+              <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                <span style="font-size: 24px; color: #ffffff;">👑</span>
+              </div>
+              <h2 style="color: #0f172a; font-size: 22px; font-weight: 800; margin-bottom: 8px;">FreeG Wifi — Super Admin Invitation</h2>
+              <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+                You have been invited to become a <strong>Super Admin</strong> for FreeG Wifi. Accepting this invitation grants you full administrative privileges to view all system users and expense amounts.
+              </p>
+              <div style="text-align: center; margin-bottom: 28px;">
+                <a href="${approvalLink}" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 800; font-size: 16px; display: inline-block; box-shadow: 0 4px 14px rgba(79,70,229,0.35);">
+                  ✓ Accept Super Admin Role
+                </a>
+              </div>
+              <p style="color: #94a3b8; font-size: 12px; line-height: 1.5; margin: 0;">
+                If you did not expect this invitation, please ignore this email. Link expires in 24 hours.<br/>
+                Approval Link: <span style="font-family: monospace;">${approvalLink}</span>
+              </p>
+            </div>
+          `
+        });
+        console.log(`✉️ Super Admin invitation email sent to ${cleanEmail}`);
+      } catch (mailErr) {
+        console.error(`⚠️ Failed to send admin invite email to ${cleanEmail}:`, mailErr.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Super Admin Invitation Link sent to ${cleanEmail}`,
+      approvalLink
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Accept Super Admin Invitation
+app.get('/api/admin/accept-invite', (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token || !adminInviteStore.has(token)) {
+      return res.status(400).send(`
+        <div style="font-family: sans-serif; text-align: center; padding: 50px;">
+          <h2 style="color: #ef4444;">⚠️ Invalid or Expired Invitation Token</h2>
+          <p style="color: #64748b;">This Super Admin invitation link is invalid or has expired.</p>
+          <a href="/" style="background: #000; color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none;">Go to Login</a>
+        </div>
+      `);
+    }
+
+    const invite = adminInviteStore.get(token);
+    if (invite.expiresAt < Date.now()) {
+      adminInviteStore.delete(token);
+      return res.status(400).send(`
+        <div style="font-family: sans-serif; text-align: center; padding: 50px;">
+          <h2 style="color: #ef4444;">⚠️ Invitation Expired</h2>
+          <p style="color: #64748b;">Please ask the Master Super Admin to send a new invitation link.</p>
+          <a href="/" style="background: #000; color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none;">Go to Login</a>
+        </div>
+      `);
+    }
+
+    const cleanEmail = invite.email;
+    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const users = getLocalUsers();
+    const existing = users[userId] || {};
+
+    users[userId] = {
+      ...existing,
+      id: userId,
+      name: existing.name || cleanEmail.split('@')[0],
+      email: cleanEmail,
+      role: 'super_admin',
+      verified: true,
+      updatedAt: new Date().toISOString()
+    };
+    saveLocalUsers(users);
+    adminInviteStore.delete(token);
+
+    console.log(`👑 Super Admin Role Granted to ${cleanEmail}`);
+
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Super Admin Role Accepted - FreeG Wifi</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+        <style>
+          body { font-family: 'Inter', sans-serif; background: #0f172a; color: #ffffff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+          .card { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 40px; text-align: center; max-width: 440px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+          .badge { width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 32px; box-shadow: 0 8px 24px rgba(16,185,129,0.3); }
+          h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; color: #ffffff; }
+          p { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; margin-bottom: 28px; }
+          .btn { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; border: none; padding: 14px 28px; border-radius: 14px; font-weight: 700; font-size: 1rem; text-decoration: none; display: inline-block; width: 100%; box-sizing: border-box; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="badge"><i class="fa-solid fa-crown"></i></div>
+          <h1>Super Admin Role Approved!</h1>
+          <p>Your account (<strong>${cleanEmail}</strong>) is now registered as a Super Admin on FreeG Wifi.</p>
+          <a href="/#auth" class="btn">Proceed to Login →</a>
+        </div>
+      </body>
+      </html>
+    `);
+  } catch (err) {
+    res.status(500).send('Error accepting admin invitation: ' + err.message);
+  }
+});
+
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const { month } = req.query; // e.g., '2026-08' or 'all'
+    const usersObj = getLocalUsers();
+    let allExpenses = getLocalExpenses();
+
+    if (month && month !== 'all') {
+      allExpenses = allExpenses.filter(e => e.date && e.date.startsWith(month));
+    }
+
+    let totalSystemPending = 0;
+    let totalSystemPaid = 0;
+
+    const usersList = Object.values(usersObj).map(user => {
+      const userExpenses = allExpenses.filter(e => e.userId === user.id);
+      
+      const pendingAmount = userExpenses
+        .filter(e => e.paymentStatus === 'pending' || !e.paymentStatus)
+        .reduce((sum, e) => sum + (e.total || 0), 0);
+
+      const paidAmount = userExpenses
+        .filter(e => e.paymentStatus === 'paid')
+        .reduce((sum, e) => sum + (e.total || 0), 0);
+
+      const lifetimeAmount = userExpenses.reduce((sum, e) => sum + (e.total || 0), 0);
+
+      totalSystemPending += pendingAmount;
+      totalSystemPaid += paidAmount;
+
+      const receiptCount = userExpenses.reduce((sum, e) => sum + ((e.receipts && e.receipts.length) || 0), 0);
+      const role = user.role || ((user.email && (user.email.toLowerCase().includes('admin') || user.email.toLowerCase().includes('superadmin') || user.email.toLowerCase() === 'subodhram3350@gmail.com')) ? 'super_admin' : 'user');
+
+      const paidExpWithBill = userExpenses.find(e => e.paymentBillUrl);
+      const paymentBillUrl = paidExpWithBill ? paidExpWithBill.paymentBillUrl : '';
+
+      return {
+        id: user.id,
+        name: user.name || 'User',
+        email: user.email,
+        picture: user.picture,
+        verified: !!user.verified,
+        role,
+        totalAmount: pendingAmount, // Active outstanding balance: becomes 0 when settled/paid!
+        pendingAmount,
+        paidAmount,
+        lifetimeAmount,
+        expenseCount: userExpenses.length,
+        receiptCount,
+        paymentBillUrl,
+        updatedAt: user.updatedAt || new Date().toISOString()
+      };
+    });
+
+    res.json({
+      success: true,
+      selectedMonth: month || 'all',
+      users: usersList,
+      totalSystemUsers: usersList.length,
+      totalSystemAmount: totalSystemPending, // Active outstanding total across system
+      totalSystemPendingAmount: totalSystemPending,
+      totalSystemPaidAmount: totalSystemPaid,
+      totalSystemLifetimeAmount: totalSystemPending + totalSystemPaid
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+app.post('/api/admin/add-member', async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Valid email address is required' });
+    }
+    const cleanEmail = email.toLowerCase().trim();
+    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const users = getLocalUsers();
+
+    if (users[userId]) {
+      return res.status(400).json({ error: 'Member with this email already exists' });
+    }
+
+    users[userId] = {
+      id: userId,
+      name: name || cleanEmail.split('@')[0],
+      email: cleanEmail,
+      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || cleanEmail)}`,
+      verified: true,
+      role: 'user',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    saveLocalUsers(users);
+
+    res.json({ success: true, user: users[userId] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/edit-member', async (req, res) => {
+  try {
+    const { userId, name, email } = req.body;
+    if (!userId) return res.status(400).json({ error: 'User ID is required' });
+
+    const users = getLocalUsers();
+    if (!users[userId]) return res.status(404).json({ error: 'Member not found' });
+
+    if (name) users[userId].name = name.trim();
+    if (email && email.includes('@')) users[userId].email = email.toLowerCase().trim();
+    users[userId].updatedAt = new Date().toISOString();
+
+    saveLocalUsers(users);
+    res.json({ success: true, user: users[userId] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/update-settlement-bill', upload.single('paymentProof'), async (req, res) => {
+  try {
+    const { userId, month, action } = req.body;
+    if (!userId) return res.status(400).json({ error: 'User ID is required' });
+
+    let allExpenses = getLocalExpenses();
+    let paymentBillUrl = '';
+
+    if (action === 'update' && req.file) {
+      const ext = path.extname(req.file.originalname) || '.png';
+      const fileName = `bill_${Date.now()}_${uuidv4().substring(0, 8)}${ext}`;
+      const filePath = path.join(UPLOADS_DIR, fileName);
+      fs.writeFileSync(filePath, req.file.buffer);
+      const protocol = req.protocol || 'http';
+      const host = req.get('host') || 'localhost:3000';
+      paymentBillUrl = `${protocol}://${host}/uploads/${fileName}`;
+    }
+
+    let modifiedCount = 0;
+
+    allExpenses = allExpenses.map(e => {
+      const isTargetUser = (e.userId === userId);
+      const isTargetMonth = (!month || month === 'all' || (e.date && e.date.startsWith(month)));
+
+      if (isTargetUser && isTargetMonth) {
+        modifiedCount++;
+        if (action === 'delete') {
+          return {
+            ...e,
+            paymentStatus: 'pending',
+            paymentBillUrl: '',
+            settledAt: null,
+            settlementNotes: ''
+          };
+        } else if (action === 'update' && paymentBillUrl) {
+          return {
+            ...e,
+            paymentBillUrl: paymentBillUrl
+          };
+        }
+      }
+      return e;
+    });
+
+    const users = getLocalUsers();
+    if (users[userId]) {
+      if (action === 'delete') {
+        users[userId].paymentBillUrl = '';
+      } else if (action === 'update' && paymentBillUrl) {
+        users[userId].paymentBillUrl = paymentBillUrl;
+      }
+      users[userId].updatedAt = new Date().toISOString();
+      saveLocalUsers(users);
+    }
+
+    saveLocalExpenses(allExpenses);
+    res.json({
+      success: true,
+      message: action === 'delete' ? 'Payment bill deleted and status reset to Pending' : 'Payment bill updated successfully',
+      paymentBillUrl
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req, res) => {
+  try {
+    const { userId, month, notes } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const users = getLocalUsers();
+    const targetUser = users[userId];
+    if (!targetUser) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+
+    let paymentBillUrl = '';
+    if (req.file) {
+      const ext = path.extname(req.file.originalname) || '.png';
+      const fileName = `bill_${Date.now()}_${uuidv4().substring(0, 8)}${ext}`;
+      const filePath = path.join(UPLOADS_DIR, fileName);
+      fs.writeFileSync(filePath, req.file.buffer);
+      const protocol = req.protocol || 'http';
+      const host = req.get('host') || 'localhost:3000';
+      paymentBillUrl = `${protocol}://${host}/uploads/${fileName}`;
+    }
+
+    if (paymentBillUrl) {
+      targetUser.paymentBillUrl = paymentBillUrl;
+      targetUser.updatedAt = new Date().toISOString();
+      saveLocalUsers(users);
+    }
+
+    let allExpenses = getLocalExpenses();
+    let settledCount = 0;
+    let settledTotal = 0;
+
+    allExpenses = allExpenses.map(e => {
+      const isTargetUser = (e.userId === userId);
+      const isTargetMonth = (!month || month === 'all' || (e.date && e.date.startsWith(month)));
+
+      if (isTargetUser && isTargetMonth) {
+        if (e.paymentStatus !== 'paid') {
+          settledCount++;
+          settledTotal += (e.total || 0);
+        }
+        return {
+          ...e,
+          paymentStatus: 'paid',
+          settledAt: new Date().toISOString(),
+          paymentBillUrl: paymentBillUrl || e.paymentBillUrl || '',
+          settlementNotes: notes || e.settlementNotes || 'Paid by Super Admin'
+        };
+      }
+      return e;
+    });
+
+    saveLocalExpenses(allExpenses);
+
+    // Send Reimbursement Confirmation Email to User via Nodemailer
+    if (mailTransporter && targetUser.email) {
+      try {
+        const monthLabel = month && month !== 'all' ? month : 'current month';
+        await mailTransporter.sendMail({
+          from: `"FreeG Wifi Accounts" <${gmailUser}>`,
+          to: targetUser.email,
+          subject: `✅ Reimbursement Paid: ₹${settledTotal.toLocaleString('en-IN')} for ${targetUser.name}`,
+          html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 20px; background: #ffffff;">
+              <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                <span style="font-size: 24px; color: #ffffff;">💳</span>
+              </div>
+              <h2 style="color: #0f172a; font-size: 22px; font-weight: 800; margin-bottom: 8px;">Reimbursement Payment Successful!</h2>
+              <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 16px;">
+                Hello <strong>${targetUser.name}</strong>,<br/>
+                Your travel expense reimbursement of <strong style="color: #059669; font-size: 18px;">₹${settledTotal.toLocaleString('en-IN')}</strong> for <strong>${monthLabel}</strong> has been successfully settled and paid by Super Admin.
+              </p>
+              ${paymentBillUrl ? `
+                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 14px; padding: 16px; margin-bottom: 20px; text-align: center;">
+                  <span style="font-size: 14px; font-weight: 700; color: #334155; display: block; margin-bottom: 8px;">📑 Uploaded Payment Proof / Receipt:</span>
+                  <a href="${paymentBillUrl}" target="_blank" style="background: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block;">
+                    View Uploaded Payment Bill
+                  </a>
+                </div>
+              ` : ''}
+              <p style="color: #94a3b8; font-size: 13px; margin: 0;">FreeG Wifi Expense Management System</p>
+            </div>
+          `
+        });
+        console.log(`📧 Reimbursement payment email sent to ${targetUser.email}`);
+      } catch (mailErr) {
+        console.warn('Reimbursement email failed:', mailErr.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully settled ₹${settledTotal} for ${targetUser.name}`,
+      settledCount,
+      settledTotal,
+      paymentBillUrl
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/delete-settlement', async (req, res) => {
+  try {
+    const { userId, month, action } = req.body;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+
+    const users = getLocalUsers();
+    if (action === 'delete_user') {
+      delete users[userId];
+      saveLocalUsers(users);
+      let allExpenses = getLocalExpenses();
+      allExpenses = allExpenses.filter(e => e.userId !== userId);
+      saveLocalExpenses(allExpenses);
+      return res.json({ success: true, message: 'Member deleted' });
+    }
+
+    // Reset payment status back to pending
+    let allExpenses = getLocalExpenses();
+    allExpenses = allExpenses.map(e => {
+      if (e.userId === userId && (!month || month === 'all' || (e.date && e.date.startsWith(month)))) {
+        return {
+          ...e,
+          paymentStatus: 'pending',
+          settledAt: null,
+          paymentBillUrl: null
+        };
+      }
+      return e;
+    });
+    saveLocalExpenses(allExpenses);
+
+    res.json({ success: true, message: 'Settlement reset back to Pending' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/all-expenses', async (req, res) => {
+  try {
+    const allExpenses = getLocalExpenses();
+    const usersObj = getLocalUsers();
+
+    const expensesWithUser = allExpenses.map(exp => ({
+      ...exp,
+      userName: usersObj[exp.userId]?.name || 'User',
+      userEmail: usersObj[exp.userId]?.email || exp.userId
+    }));
+
+    res.json({ success: true, expenses: expensesWithUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // ---------- CREATE EXPENSE ----------
 app.post('/api/expenses', authenticate, async (req, res) => {
   try {
-    const { date, location, entries, paymentStatus } = req.body;
+    const { date, location, entries, paymentStatus, receipts, notes } = req.body;
     const userId = req.userId;
 
     if (!date || !location) {
@@ -429,10 +942,11 @@ app.post('/api/expenses', authenticate, async (req, res) => {
       userId,
       date,
       location,
+      notes: notes || location,
       entries: cleanEntries,
       total,
       paymentStatus: paymentStatus || 'pending', // 'pending' or 'paid'
-      receipts: [],
+      receipts: receipts || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
