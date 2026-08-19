@@ -150,9 +150,11 @@ document.addEventListener('DOMContentLoaded', () => {
   checkSharedViewUrl();
 
   // Set default date input to today
-  expDateInput.value = new Date().toISOString().split('T')[0];
+  if (expDateInput) expDateInput.value = new Date().toISOString().split('T')[0];
 
   // On page refresh: Stay on SuperAdmin or Dashboard if user is logged in; otherwise show Auth screen
+  state.currentGoogleUser = getStoredGoogleUser();
+
   if (state.sharedMode || state.currentGoogleUser) {
     const u = state.currentGoogleUser;
     const isSuperAdmin = (u && (u.role === 'super_admin' || (u.email && u.email.toLowerCase().trim() === 'subodhram3350@gmail.com'))) || window.location.hash === '#superadmin';
@@ -291,46 +293,52 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   if (refreshBtn) refreshBtn.addEventListener('click', () => loadExpenses());
+
+  // Setup Mobile Bottom Navigation Listeners
+  setupMobileNav();
 });
 
 // ==================== GOOGLE USER AUTH HELPERS ====================
 function getStoredGoogleUser() {
   try {
     const stored = localStorage.getItem('google_user');
-    let user = stored ? JSON.parse(stored) : DEFAULT_GOOGLE_USER;
-    if (!user || !user.id || user.id === 'google_user' || user.id === 'user_123' || (user.email && user.email.toLowerCase().trim() === 'subodhram3350@gmail.com')) {
-      user = DEFAULT_GOOGLE_USER;
-      localStorage.setItem('google_user', JSON.stringify(DEFAULT_GOOGLE_USER));
-    }
+    if (!stored) return null;
+    const user = JSON.parse(stored);
+    if (!user || !user.id || !user.email) return null;
     return user;
   } catch (e) {
-    return DEFAULT_GOOGLE_USER;
+    return null;
   }
 }
 
 function saveGoogleUser(user) {
-  state.currentGoogleUser = user;
+  if (!user || !user.email) return;
+
+  const safeUser = {
+    id: user.id || `google_${user.email.replace(/[^a-zA-Z0-9]/g, '_')}`,
+    name: user.name || user.email.split('@')[0],
+    email: user.email,
+    picture: (user.picture && user.picture.length < 1000) 
+      ? user.picture 
+      : `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name || user.email)}`,
+    role: user.role || 'user'
+  };
+
+  state.currentGoogleUser = safeUser;
   try {
-    localStorage.setItem('google_user', JSON.stringify(user));
+    localStorage.setItem('google_user', JSON.stringify(safeUser));
   } catch (e) {
     console.warn('LocalStorage quota note:', e.message);
-    try {
-      const compactUser = { ...user };
-      if (compactUser.picture && compactUser.picture.length > 500) {
-        compactUser.picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`;
-      }
-      localStorage.setItem('google_user', JSON.stringify(compactUser));
-    } catch (e2) {}
   }
 
   // Backend Profile Sync for Shared Views
   fetch('/api/user/profile', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(user)
+    body: JSON.stringify(safeUser)
   }).catch(err => console.warn('Backend profile sync note:', err));
 
-  const isSuperAdmin = user && (user.role === 'super_admin' || (user.email && (user.email.toLowerCase() === 'subodhram3350@gmail.com' || user.email.toLowerCase().includes('admin'))));
+  const isSuperAdmin = safeUser && (safeUser.role === 'super_admin' || (safeUser.email && (safeUser.email.toLowerCase() === 'subodhram3350@gmail.com' || safeUser.email.toLowerCase().includes('admin'))));
   if (isSuperAdmin) {
     switchAppPage('superadmin');
   } else {
@@ -604,9 +612,11 @@ async function checkHealth() {
 
 async function fetchWithAuth(url, options = {}) {
   const user = state.currentGoogleUser || getStoredGoogleUser();
-  const userId = user ? user.id : DEFAULT_GOOGLE_USER.id;
+  if (!user || !user.id) {
+    throw new Error('Not authenticated');
+  }
   const headers = {
-    'user-id': userId,
+    'user-id': user.id,
     ...(options.headers || {})
   };
   return fetch(url, { ...options, headers });
@@ -791,7 +801,10 @@ async function handleUserSubmitExpense(e) {
     return;
   }
 
-  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+  const isEditMode = Boolean(state.editingExpenseId);
+  if (btn) btn.innerHTML = isEditMode 
+    ? '<i class="fa-solid fa-spinner fa-spin"></i> Updating...' 
+    : '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
 
   let receiptUrl = '';
   if (photoInput && photoInput.files && photoInput.files[0]) {
@@ -810,13 +823,21 @@ async function handleUserSubmitExpense(e) {
     paymentStatus: 'pending',
     entries: [
       { type: itemCategory, amount: amountVal }
-    ],
-    receipts: receiptUrl ? [receiptUrl] : []
+    ]
   };
 
+  if (receiptUrl) {
+    payload.receipts = [receiptUrl];
+  }
+
   try {
-    const res = await fetchWithAuth(`${API_BASE_URL}/expenses`, {
-      method: 'POST',
+    const url = isEditMode 
+      ? `${API_BASE_URL}/expenses/${state.editingExpenseId}` 
+      : `${API_BASE_URL}/expenses`;
+    const method = isEditMode ? 'PUT' : 'POST';
+
+    const res = await fetchWithAuth(url, {
+      method: method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
@@ -829,7 +850,11 @@ async function handleUserSubmitExpense(e) {
     const data = await res.json();
 
     if (data.success) {
-      showToast(`✅ Travel expense entry for ${itemCategory} (₹${amountVal}) submitted!`);
+      showToast(isEditMode 
+        ? `✅ Travel expense updated for ${itemCategory} (₹${amountVal})!` 
+        : `✅ Travel expense entry for ${itemCategory} (₹${amountVal}) submitted!`);
+      
+      state.editingExpenseId = null;
       const form = document.getElementById('handwrittenTravelForm');
       if (form) form.reset();
       const preview = document.getElementById('uploadedPhotoPreview');
@@ -890,8 +915,10 @@ function renderUserEntriesList() {
     }
 
     const categoryItem = exp.location || (exp.entries && exp.entries[0] ? exp.entries[0].type : 'Travel Item');
-    const receiptHtml = (exp.receipts && exp.receipts.length > 0)
-      ? `<a href="${exp.receipts[0]}" target="_blank" style="color: #2563eb; font-weight: 700; font-size: 0.85rem; text-decoration: underline;"><i class="fa-solid fa-file-image"></i> View Receipt</a>`
+    const firstReceipt = exp.receipts && exp.receipts[0];
+    const firstReceiptUrl = firstReceipt ? (typeof firstReceipt === 'string' ? firstReceipt : firstReceipt.fileUrl) : null;
+    const receiptHtml = firstReceiptUrl
+      ? `<a href="${firstReceiptUrl}" target="_blank" style="color: #2563eb; font-weight: 700; font-size: 0.85rem; text-decoration: underline;"><i class="fa-solid fa-file-image"></i> View Receipt</a>`
       : `<span style="color: #94a3b8; font-size: 0.8rem;">No Photo</span>`;
 
     return `
@@ -1212,19 +1239,24 @@ function exportExpensesToCSV() {
 }
 
 // ==================== ADD / EDIT EXPENSE ====================
+function scrollToExpenseForm() {
+  const formSection = document.getElementById('handwrittenTravelForm')?.closest('section');
+  if (formSection) {
+    formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => {
+      const selectEl = document.getElementById('userItemSelect');
+      if (selectEl) selectEl.focus();
+    }, 400);
+  }
+}
+
 function openAddExpenseModal() {
   state.editingExpenseId = null;
-  addExpenseForm.reset();
-  const modalHeaderH3 = addModal.querySelector('.modal-header h3');
-  if (modalHeaderH3) modalHeaderH3.innerHTML = `<i class="fa-solid fa-plus-circle"></i> Add Travel Expense Entry`;
-  
-  const saveBtn = document.getElementById('saveExpenseBtn');
-  if (saveBtn) saveBtn.innerHTML = `<i class="fa-solid fa-check"></i> Save Entry`;
-
-  expDateInput.value = new Date().toISOString().split('T')[0];
-  if (paymentStatusInput) paymentStatusInput.value = 'pending';
-  modalCalculatedTotal.textContent = '₹0';
-  openModal(addModal);
+  const form = document.getElementById('handwrittenTravelForm');
+  if (form) form.reset();
+  const btn = document.getElementById('userSubmitExpenseBtn');
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Travel Expense';
+  scrollToExpenseForm();
 }
 
 function openEditExpenseModal(expenseId) {
@@ -1232,27 +1264,18 @@ function openEditExpenseModal(expenseId) {
   if (!exp) return;
 
   state.editingExpenseId = expenseId;
-  addExpenseForm.reset();
+  const selectEl = document.getElementById('userItemSelect');
+  const amountEl = document.getElementById('userAmountInput');
+  const commentEl = document.getElementById('userCommentInput');
+  const btn = document.getElementById('userSubmitExpenseBtn');
 
-  const modalHeaderH3 = addModal.querySelector('.modal-header h3');
-  if (modalHeaderH3) modalHeaderH3.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Edit Travel Expense Entry`;
+  const cat = exp.location || (exp.entries && exp.entries[0] ? exp.entries[0].type : 'Others');
+  if (selectEl) selectEl.value = cat;
+  if (amountEl) amountEl.value = exp.total || (exp.entries && exp.entries[0] ? exp.entries[0].amount : 0);
+  if (commentEl) commentEl.value = exp.notes || '';
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Update Travel Expense';
 
-  const saveBtn = document.getElementById('saveExpenseBtn');
-  if (saveBtn) saveBtn.innerHTML = `<i class="fa-solid fa-check"></i> Save Changes`;
-
-  expDateInput.value = exp.date || new Date().toISOString().split('T')[0];
-  expLocationInput.value = exp.location || '';
-  if (paymentStatusInput) paymentStatusInput.value = exp.paymentStatus || 'pending';
-
-  // Pre-fill breakdown input amounts
-  entryAmountInputs.forEach(input => {
-    const type = input.getAttribute('data-type');
-    const entry = (exp.entries || []).find(e => e.type === type);
-    input.value = entry ? entry.amount : 0;
-  });
-
-  calculateModalTotal();
-  openModal(addModal);
+  scrollToExpenseForm();
 }
 
 function calculateModalTotal() {
@@ -1602,10 +1625,10 @@ function openReceiptModal(expenseId) {
 }
 
 function renderReceiptsGallery(expense) {
-  const receipts = expense.receipts || [];
-  receiptCount.textContent = receipts.length;
+  const rawReceipts = expense.receipts || [];
+  receiptCount.textContent = rawReceipts.length;
 
-  if (receipts.length === 0) {
+  if (rawReceipts.length === 0) {
     receiptsGrid.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1; padding: 20px;">
         <i class="fa-solid fa-receipt"></i>
@@ -1615,25 +1638,41 @@ function renderReceiptsGallery(expense) {
     return;
   }
 
+  // Normalize: handle both plain string URLs/base64 and proper object format
+  const receipts = rawReceipts.map((r, idx) => {
+    if (typeof r === 'string') {
+      return {
+        fileUrl: r,
+        fileName: `receipt_${idx + 1}`,
+        originalName: `Receipt ${idx + 1}`,
+        uploadedAt: null
+      };
+    }
+    return r;
+  });
+
   let html = '';
   receipts.forEach((r, idx) => {
-    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(r.fileName || r.originalName || r.fileUrl);
-    
+    const url = r.fileUrl || '';
+    const isBase64Image = url.startsWith('data:image/');
+    const isImage = isBase64Image || /\.(jpg|jpeg|png|gif|webp)$/i.test(r.fileName || r.originalName || url);
+    const displayName = r.originalName || r.fileName || `Receipt ${idx + 1}`;
+
     html += `
       <div class="receipt-card">
-        <div class="receipt-preview">
-          ${isImage 
-            ? `<img src="${r.fileUrl}" alt="Receipt" />` 
-            : `<i class="fa-solid fa-file-pdf"></i>`
+        <div class="receipt-preview" style="cursor:pointer;" onclick="window.open('${url}', '_blank')">
+          ${isImage
+            ? `<img src="${url}" alt="Receipt" style="width:100%; height:100%; object-fit:cover;" />`
+            : `<i class="fa-solid fa-file-pdf" style="font-size:2rem; color:#e53e3e;"></i>`
           }
         </div>
         <div class="receipt-info">
-          <span class="receipt-filename" title="${r.originalName || r.fileName}">${r.originalName || r.fileName}</span>
-          <span class="receipt-date">${new Date(r.uploadedAt || Date.now()).toLocaleDateString()}</span>
+          <span class="receipt-filename" title="${displayName}">${displayName}</span>
+          <span class="receipt-date">${r.uploadedAt ? new Date(r.uploadedAt).toLocaleDateString() : 'Uploaded'}</span>
         </div>
         <div class="receipt-actions">
-          <a href="${r.fileUrl}" target="_blank" class="btn btn-secondary btn-sm" title="View Full File">
-            <i class="fa-solid fa-eye"></i> View File
+          <a href="${url}" target="_blank" class="btn btn-secondary btn-sm" title="View Full File">
+            <i class="fa-solid fa-eye"></i> View
           </a>
           ${state.isReadOnlySharedView ? '' : `
             <button class="btn btn-danger btn-sm" onclick="deleteReceiptByIndex('${expense.id}', ${idx})" title="Delete Receipt">
@@ -1818,7 +1857,11 @@ function deleteReceiptByIndex(expenseId, index) {
 
 // ==================== MOBILE BOTTOM NAVIGATION ====================
 function setupMobileNav() {
-  if (!navHome) return;
+  const navHome = document.getElementById('navHome');
+  const navAdd = document.getElementById('navAdd');
+  const navReceipts = document.getElementById('navReceipts');
+  const navStats = document.getElementById('navStats');
+  const navProfile = document.getElementById('navProfile');
 
   const navItems = [navHome, navAdd, navReceipts, navStats, navProfile];
   
@@ -1827,33 +1870,55 @@ function setupMobileNav() {
     if (activeBtn) activeBtn.classList.add('active');
   }
 
-  navHome.addEventListener('click', () => {
-    setActiveNav(navHome);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
+  if (navHome) {
+    navHome.addEventListener('click', (e) => {
+      e.preventDefault();
+      setActiveNav(navHome);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
 
-  navAdd.addEventListener('click', () => {
-    openAddExpenseModal();
-  });
+  if (navAdd) {
+    navAdd.addEventListener('click', (e) => {
+      e.preventDefault();
+      setActiveNav(navAdd);
+      scrollToExpenseForm();
+    });
+  }
 
-  navReceipts.addEventListener('click', () => {
-    setActiveNav(navReceipts);
-    if (state.expenses.length > 0) {
-      openReceiptModal(state.expenses[0].id);
-    } else {
-      openAddExpenseModal();
-    }
-  });
+  if (navReceipts) {
+    navReceipts.addEventListener('click', (e) => {
+      e.preventDefault();
+      setActiveNav(navReceipts);
+      const userEntries = document.getElementById('userEntriesSection');
+      if (userEntries) {
+        userEntries.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        scrollToExpenseForm();
+      }
+    });
+  }
 
-  navStats.addEventListener('click', () => {
-    setActiveNav(navStats);
-    statsSection.scrollIntoView({ behavior: 'smooth' });
-  });
+  if (navStats) {
+    navStats.addEventListener('click', (e) => {
+      e.preventDefault();
+      setActiveNav(navStats);
+      const topBadge = document.getElementById('userTopTotalSpentBadge');
+      if (topBadge) {
+        topBadge.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  }
 
-  navProfile.addEventListener('click', () => {
-    setActiveNav(navProfile);
-    openModal(googleAuthModal);
-  });
+  if (navProfile) {
+    navProfile.addEventListener('click', (e) => {
+      e.preventDefault();
+      setActiveNav(navProfile);
+      toggleUserSideDrawer();
+    });
+  }
 }
 
 // ==================== MODAL UTILITIES ====================
@@ -2542,23 +2607,35 @@ function switchAppPage(viewName, pushToHistory = true) {
   const fullAuthPage = document.getElementById('fullAuthPage');
   const appDashboard = document.getElementById('appDashboard');
   const superAdminDashboard = document.getElementById('superAdminDashboard');
+  const mobileNav = document.querySelector('.mobile-nav-bar');
 
   if (fullAuthPage) fullAuthPage.classList.add('hidden');
   if (appDashboard) appDashboard.classList.add('hidden');
   if (superAdminDashboard) superAdminDashboard.classList.add('hidden');
 
+  // If user is not logged in, force auth screen
+  if (!state.currentGoogleUser) {
+    viewName = 'auth';
+  }
+
   if (viewName === 'auth' || viewName === 'landing') {
     if (fullAuthPage) fullAuthPage.classList.remove('hidden');
+    if (mobileNav) mobileNav.classList.remove('nav-visible');
+    toggleAuthPageView('signin');
     viewName = 'auth';
   } else if (viewName === 'dashboard' && appDashboard) {
     appDashboard.classList.remove('hidden');
+    if (mobileNav) mobileNav.classList.add('nav-visible');
     loadExpenses();
   } else if ((viewName === 'superadmin' || viewName === 'admin') && superAdminDashboard) {
     superAdminDashboard.classList.remove('hidden');
+    if (mobileNav) mobileNav.classList.remove('nav-visible');
     loadSuperAdminData();
     loadExpenses();
   } else {
     if (fullAuthPage) fullAuthPage.classList.remove('hidden');
+    if (mobileNav) mobileNav.classList.remove('nav-visible');
+    toggleAuthPageView('signin');
     viewName = 'auth';
   }
   window.scrollTo(0, 0);

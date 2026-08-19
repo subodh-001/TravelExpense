@@ -35,7 +35,7 @@
       <div class="auth-card">
 
         <!-- ===== SIGN IN VIEW ===== -->
-        <div id="authPageSignInView" style="display:none;">
+        <div id="authPageSignInView">
           <h2 class="auth-title">Welcome back</h2>
           <p class="auth-subtitle">
             Don't have an account?
@@ -79,7 +79,7 @@
         </div>
 
         <!-- ===== SIGN UP VIEW ===== -->
-        <div id="authPageSignUpView">
+        <div id="authPageSignUpView" style="display:none;">
           <h2 class="auth-title">Create a free account</h2>
           <p class="auth-subtitle">
             Already have an account?
@@ -226,33 +226,21 @@
     <!-- User Dashboard Header -->
     <header class="app-header" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100;">
       <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
-        <!-- Left: Hamburger Menu Button -->
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <button type="button" id="userHamburgerBtn" onclick="toggleUserSideDrawer()" style="border: none; background: #f1f5f9; width: 40px; height: 40px; border-radius: 10px; font-size: 1.2rem; cursor: pointer; color: #0f172a; display: flex; align-items: center; justify-content: center; border: 1px solid #cbd5e1;">
-            <i class="fa-solid fa-bars"></i>
-          </button>
-
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="background: #0f172a; color: #ffffff; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-              <i class="fa-solid fa-wifi" style="font-size: 1rem;"></i>
-            </div>
-            <div>
-              <h1 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0; line-height: 1.1;">Welcome, <span id="userWelcomeHeaderName">Traveler</span></h1>
-              <p style="font-size: 0.75rem; color: #64748b; margin: 0;">FreeG Wifi Travel Portal</p>
-            </div>
+        <!-- Left: Header Branding & Welcome -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="background: #0f172a; color: #ffffff; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-wifi" style="font-size: 1rem;"></i>
+          </div>
+          <div>
+            <h1 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0; line-height: 1.1;">Welcome, <span id="userWelcomeHeaderName">Traveler</span></h1>
           </div>
         </div>
 
         <!-- Right: Top-Right Total Amount Badge -->
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div id="userTopTotalSpentBadge" style="background: #0f172a; color: #ffffff; padding: 8px 16px; border-radius: 20px; font-weight: 800; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(15,23,42,0.2);">
-            <i class="fa-solid fa-wallet" style="color: #10b981;"></i> Total Spent: <span id="userTotalSpentHeaderVal">₹0</span>
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+          <div id="userTopTotalSpentBadge" style="background: #f8fafc; color: #1e293b; border: 1px solid #e2e8f0; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-wallet" style="color: #2563eb;"></i> Total Spent: <span id="userTotalSpentHeaderVal" style="color: #0f172a; font-weight: 800;">₹0</span>
           </div>
-
-          <!-- Super Admin Quick Access Button if Super Admin -->
-          <button type="button" class="btn btn-secondary btn-sm" id="adminPortalToggleBtn" onclick="switchAppPage('superadmin')" title="Access Super Admin Portal" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 700; display: none; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px;">
-            <i class="fa-solid fa-user-shield"></i> Admin
-          </button>
         </div>
       </div>
     </header>
@@ -391,11 +379,6 @@
     </main>
   </div>
 
-  <!-- Mobile Bottom Floating Action Button (FAB) -->
-  <button class="mobile-fab" id="mobileFabBtn" title="Add Travel Entry">
-    <i class="fa-solid fa-plus"></i>
-  </button>
-
   <!-- Mobile Bottom Navigation Bar -->
   <nav class="mobile-nav-bar">
     <button class="nav-item active" id="navHome">
@@ -530,75 +513,6 @@
     </main>
   </div>
 
-
-  <!-- ADD / EDIT EXPENSE MODAL / BOTTOM SHEET -->
-  <div class="modal-overlay" id="addModal">
-    <div class="modal-card bottom-sheet">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-plus-circle"></i> Add Travel Expense Entry</h3>
-        <button class="close-btn" id="closeAddModalBtn"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <form id="addExpenseForm">
-        <div class="modal-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="expDate"><i class="fa-regular fa-calendar-days"></i> Travel Date</label>
-              <input type="date" id="expDate" required />
-            </div>
-            <div class="form-group">
-              <label for="expLocation"><i class="fa-solid fa-location-dot"></i> Location / Destination</label>
-              <input type="text" id="expLocation" placeholder="e.g. Colaba One Degree" required />
-            </div>
-          </div>
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label for="paymentStatusInput"><i class="fa-solid fa-hand-holding-dollar"></i> Reimbursement Status</label>
-            <select id="paymentStatusInput" class="form-control" style="background: rgba(15,23,42,0.9); color: white; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; cursor: pointer;">
-              <option value="pending" style="background-color: #0f172a; color: #fbbf24;">⏳ Payment Pending (Unsettled)</option>
-              <option value="paid" style="background-color: #0f172a; color: #34d399;">✅ Paid & Settled</option>
-            </select>
-          </div>
-
-          <div class="form-section-title">
-            <span>Expense Breakdown (₹)</span>
-          </div>
-
-          <div class="entries-grid">
-            <div class="entry-input-group">
-              <label><i class="fa-solid fa-train-subway"></i> Metro</label>
-              <input type="number" class="entry-amount" data-type="Metro" placeholder="0" min="0" step="any" value="0" />
-            </div>
-
-            <div class="entry-input-group">
-              <label><i class="fa-solid fa-train"></i> Local</label>
-              <input type="number" class="entry-amount" data-type="Local" placeholder="0" min="0" step="any" value="0" />
-            </div>
-
-            <div class="entry-input-group">
-              <label><i class="fa-solid fa-taxi"></i> Auto / Rapido</label>
-              <input type="number" class="entry-amount" data-type="Auto/Rapido" placeholder="0" min="0" step="any" value="0" />
-            </div>
-
-            <div class="entry-input-group">
-              <label><i class="fa-solid fa-ellipsis"></i> Others</label>
-              <input type="number" class="entry-amount" data-type="Others" placeholder="0" min="0" step="any" value="0" />
-            </div>
-          </div>
-
-          <div class="calculated-total-box">
-            <span>Total Calculated:</span>
-            <strong id="modalCalculatedTotal">₹0</strong>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" id="cancelAddBtn">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="saveExpenseBtn">
-            <i class="fa-solid fa-check"></i> Save Entry
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- RECEIPTS MANAGEMENT MODAL -->
   <div class="modal-overlay" id="receiptModal">

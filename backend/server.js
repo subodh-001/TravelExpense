@@ -133,7 +133,7 @@ const upload = multer({
 const authenticate = (req, res, next) => {
   let userId = req.headers['user-id'] || req.query.userId;
   if (!userId || userId === 'user_123' || userId === 'google_user') {
-    userId = 'google_subodhram3350_gmail_com';
+    return res.status(401).json({ error: 'Unauthorized: Missing or invalid user-id header' });
   }
   req.userId = userId;
   next();
@@ -1076,17 +1076,16 @@ app.patch('/api/expenses/:expenseId/payment-status', authenticate, async (req, r
 // ---------- GET ALL EXPENSES (By User or Shared Link) ----------
 app.get('/api/expenses', async (req, res) => {
   try {
+    // For shared view: allow userId from query param
     let userId = req.query.userId || req.query.share;
-    
-    if (!userId || userId === 'google_user' || userId === 'user_123') {
-      const authHeader = req.headers['authorization'];
-      const customUserId = req.headers['user-id'];
-      
-      if (customUserId && customUserId !== 'google_user' && customUserId !== 'user_123') {
-        userId = customUserId;
-      } else {
-        userId = 'google_subodhram3350_gmail_com';
-      }
+
+    // Otherwise, require user-id header (authenticated user)
+    if (!userId) {
+      userId = req.headers['user-id'];
+    }
+
+    if (!userId || userId === 'user_123' || userId === 'google_user') {
+      return res.status(401).json({ error: 'Unauthorized: user-id required' });
     }
 
     if (useFirebase) {
@@ -1103,10 +1102,8 @@ app.get('/api/expenses', async (req, res) => {
       return res.json({ success: true, expenses });
     } else {
       const all = getLocalExpenses();
-      let userExpenses = all.filter(e => e.userId === userId || !e.userId || userId === 'google_subodhram3350_gmail_com');
-      if (userExpenses.length === 0 && all.length > 0) {
-        userExpenses = all;
-      }
+      // Strictly filter by userId - each user sees ONLY their own expenses
+      let userExpenses = all.filter(e => e.userId === userId);
       userExpenses.sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
 
       return res.json({ success: true, expenses: userExpenses });

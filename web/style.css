@@ -1091,6 +1091,10 @@ body {
   align-items: center;
   padding: 0 10px;
 }
+/* Show nav only when user is logged in */
+.mobile-nav-bar.nav-visible {
+  display: flex !important;
+}
 .nav-item {
   background: transparent;
   border: none;
@@ -1248,12 +1252,7 @@ body {
   .desktop-only {
     display: none !important;
   }
-  .mobile-nav-bar {
-    display: flex;
-  }
-  .mobile-fab {
-    display: flex;
-  }
+
   .cards-grid {
     grid-template-columns: 1fr;
   }
@@ -2413,11 +2412,57 @@ img.landing-logo-img, img.auth-logo-img, .landing-logo img, .auth-brand-logo img
 
 /* ==================== ULTRA-RESPONSIVE & MOBILE OPTIMIZATIONS ==================== */
 @media (max-width: 768px) {
-  .app-container, .main-content, .auth-center-wrapper {
+  .mobile-nav-bar {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 64px !important;
+    padding-bottom: max(4px, env(safe-area-inset-bottom)) !important;
+    z-index: 10000 !important;
+    background: #0f172a !important;
+  }
+
+  .mobile-fab {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 74px !important;
+    right: 18px !important;
+    z-index: 9999 !important;
+  }
+
+  .app-container, .main-content, .main-container, .auth-center-wrapper {
     padding-left: 12px !important;
     padding-right: 12px !important;
+    padding-bottom: 84px !important;
     width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+  }
+
+  .header-container {
+    padding: 10px 12px !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  #userWelcomeHeaderName {
+    font-size: 0.95rem !important;
+  }
+
+  #userTopTotalSpentBadge {
+    padding: 5px 10px !important;
+    font-size: 0.78rem !important;
+  }
+
+  /* Form & inputs mobile fix - prevent zoom on iOS */
+  input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+    max-width: 100% !important;
   }
 
   .modal-card {
