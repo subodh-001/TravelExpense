@@ -2928,9 +2928,7 @@ async function openEditMemberModal(userId) {
     const userExpenses = data.expenses || [];
 
     const paidExpenseWithBill = userExpenses.find(e => e.paymentBillUrl);
-    const userReceiptExp = userExpenses.find(e => e.receipts && e.receipts.length > 0);
-
-    const billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '') || (userReceiptExp ? (typeof userReceiptExp.receipts[0] === 'string' ? userReceiptExp.receipts[0] : userReceiptExp.receipts[0].fileUrl) : '');
+    const billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
     currentActiveBillUrl = billUrl;
 
     if (billUrl) {
