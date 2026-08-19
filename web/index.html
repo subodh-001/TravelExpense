@@ -510,6 +510,37 @@
           </table>
         </div>
       </section>
+
+      <!-- All Travel Entries Section -->
+      <section class="table-container" style="display: block; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 24px;">
+        <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #ffffff; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-list-check" style="color: #334155;"></i> All System Travel Logs
+            </h2>
+            <span class="badge" id="adminExpensesBadge" style="margin-top: 4px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-weight: 600; font-size: 0.75rem;">0 Entries</span>
+          </div>
+        </div>
+
+        <div class="table-wrapper" style="overflow-x: auto; background: #ffffff;">
+          <table class="excel-table" id="adminAllExpensesTable" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f8fafc; text-align: left; border-bottom: 1px solid #e2e8f0;">
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">User</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Date</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Location/Category</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;" class="col-numeric">Amount</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Comment</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Receipt</th>
+                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Status</th>
+              </tr>
+            </thead>
+            <tbody id="adminAllExpensesTableBody">
+              <!-- Dynamically populated admin expense rows -->
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
   </div>
 

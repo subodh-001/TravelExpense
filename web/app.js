@@ -2692,6 +2692,15 @@ async function loadSuperAdminData() {
 
       renderAdminUsersTable(adminUsersCache);
     }
+
+    // Load and render all system travel logs
+    const expensesRes = await fetch(`${API_BASE_URL}/admin/all-expenses`);
+    if (expensesRes.ok) {
+      const expensesData = await expensesRes.json();
+      if (expensesData.success) {
+        renderAdminAllExpensesTable(expensesData.expenses);
+      }
+    }
   } catch (err) {
     console.error('Super Admin Data load error:', err);
   }
@@ -2802,7 +2811,77 @@ function renderAdminUsersTable(users) {
 
 let currentActiveBillUrl = '';
 
-function openEditMemberModal(userId) {
+function renderAdminAllExpensesTable(expenses) {
+  const tbody = document.getElementById('adminAllExpensesTableBody');
+  const badge = document.getElementById('adminExpensesBadge');
+  if (!tbody) return;
+
+  const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'all';
+
+  // Filter expenses by selectedMonth if needed
+  let filtered = expenses || [];
+  if (selectedMonth && selectedMonth !== 'all') {
+    filtered = filtered.filter(e => e.date && e.date.startsWith(selectedMonth));
+  }
+
+  if (badge) badge.textContent = `${filtered.length} Entries`;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 32px; color: #64748b;">
+          <i class="fa-solid fa-list-check" style="font-size: 2rem; color: #94a3b8; margin-bottom: 8px; display: block;"></i>
+          No travel entries found in the system.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(exp => {
+    let dateTimeDisplay = exp.date;
+    if (exp.createdAt) {
+      try {
+        const d = new Date(exp.createdAt);
+        const formattedDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const formattedTime = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        dateTimeDisplay = `<strong style="color: #0f172a; display: block;">${formattedDate}</strong><span style="font-size: 0.78rem; color: #64748b;"><i class="fa-regular fa-clock"></i> ${formattedTime}</span>`;
+      } catch (e) {
+        dateTimeDisplay = exp.date;
+      }
+    }
+
+    const firstReceipt = exp.receipts && exp.receipts[0];
+    const firstReceiptUrl = firstReceipt ? (typeof firstReceipt === 'string' ? firstReceipt : firstReceipt.fileUrl) : null;
+    const receiptHtml = firstReceiptUrl
+      ? `<a href="${firstReceiptUrl}" target="_blank" style="color: #2563eb; font-weight: 700; font-size: 0.85rem; text-decoration: underline;"><i class="fa-solid fa-file-image"></i> View Receipt</a>`
+      : `<span style="color: #94a3b8; font-size: 0.8rem;">No Photo</span>`;
+
+    const isPaid = exp.paymentStatus === 'paid';
+    const statusBadge = isPaid
+      ? `<span style="background: #ecfdf5; color: #047857; border: 1px solid #d1fae5; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-check"></i> Settled</span>`
+      : `<span style="background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-clock"></i> Unsettled</span>`;
+
+    const categoryItem = exp.location || (exp.entries && exp.entries[0] ? exp.entries[0].type : 'Travel Item');
+
+    return `
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 12px 16px;">
+          <strong style="color: #0f172a; font-size: 0.88rem; display: block;">${exp.userName || 'Member'}</strong>
+          <span style="color: #64748b; font-size: 0.78rem;">${exp.userEmail || ''}</span>
+        </td>
+        <td style="padding: 12px 16px;">${dateTimeDisplay}</td>
+        <td style="padding: 12px 16px; font-weight: 700; color: #0f172a;">${categoryItem}</td>
+        <td style="padding: 12px 16px; font-weight: 800; color: #0f172a;" class="col-numeric">₹${(exp.total || 0).toLocaleString('en-IN')}</td>
+        <td style="padding: 12px 16px; color: #64748b; font-size: 0.82rem;">${exp.notes || exp.comments || 'N/A'}</td>
+        <td style="padding: 12px 16px;">${receiptHtml}</td>
+        <td style="padding: 12px 16px;">${statusBadge}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function openEditMemberModal(userId) {
   const user = adminUsersCache.find(u => u.id === userId);
   if (!user) return;
 
@@ -2818,28 +2897,42 @@ function openEditMemberModal(userId) {
   const statusDisplay = document.getElementById('editMemberBillStatusDisplay');
   const billImg = document.getElementById('editMemberBillImage');
 
-  const userExpenses = (state.expenses || []).filter(e => e.userId === userId);
-  const paidExpenseWithBill = userExpenses.find(e => e.paymentBillUrl);
-  const userReceiptExp = userExpenses.find(e => e.receipts && e.receipts.length > 0);
+  if (statusDisplay) statusDisplay.innerHTML = 'Loading travel receipts...';
+  if (billImg) billImg.style.display = 'none';
 
-  const billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '') || (userReceiptExp ? userReceiptExp.receipts[0] : '');
-  currentActiveBillUrl = billUrl;
+  try {
+    const res = await fetch(`${API_BASE_URL}/expenses?userId=${encodeURIComponent(userId)}`);
+    if (!res.ok) throw new Error('Failed to load user expenses');
+    const data = await res.json();
+    const userExpenses = data.expenses || [];
 
-  if (billUrl) {
+    const paidExpenseWithBill = userExpenses.find(e => e.paymentBillUrl);
+    const userReceiptExp = userExpenses.find(e => e.receipts && e.receipts.length > 0);
+
+    const billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '') || (userReceiptExp ? (typeof userReceiptExp.receipts[0] === 'string' ? userReceiptExp.receipts[0] : userReceiptExp.receipts[0].fileUrl) : '');
+    currentActiveBillUrl = billUrl;
+
+    if (billUrl) {
+      if (statusDisplay) {
+        statusDisplay.innerHTML = `<a href="${billUrl}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: underline; font-size: 0.85rem;"><i class="fa-solid fa-up-right-from-square"></i> Open Full Resolution Image</a>`;
+      }
+      if (billImg) {
+        billImg.src = billUrl;
+        billImg.style.display = 'block';
+      }
+    } else {
+      if (statusDisplay) {
+        statusDisplay.innerHTML = `<span style="color: #94a3b8; font-size: 0.88rem;">No bill photo uploaded yet for this member.</span>`;
+      }
+      if (billImg) {
+        billImg.style.display = 'none';
+        billImg.src = '';
+      }
+    }
+  } catch (err) {
+    console.error('Error loading member bill:', err);
     if (statusDisplay) {
-      statusDisplay.innerHTML = `<a href="${billUrl}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: underline; font-size: 0.85rem;"><i class="fa-solid fa-up-right-from-square"></i> Open Full Resolution Image</a>`;
-    }
-    if (billImg) {
-      billImg.src = billUrl;
-      billImg.style.display = 'block';
-    }
-  } else {
-    if (statusDisplay) {
-      statusDisplay.innerHTML = `<span style="color: #94a3b8; font-size: 0.88rem;">No bill photo uploaded yet for this member.</span>`;
-    }
-    if (billImg) {
-      billImg.style.display = 'none';
-      billImg.src = '';
+      statusDisplay.innerHTML = `<span style="color: #dc2626; font-size: 0.88rem;">Failed to load member receipts.</span>`;
     }
   }
 
@@ -3031,7 +3124,7 @@ async function handleAddMemberSubmit(e) {
   }
 }
 
-function openSettleModal(userId) {
+async function openSettleModal(userId) {
   const user = adminUsersCache.find(u => u.id === userId);
   if (!user) return;
 
@@ -3047,27 +3140,40 @@ function openSettleModal(userId) {
   const proofContainer = document.getElementById('settleCurrentProofContainer');
   const submitBtn = document.getElementById('submitSettleBtn');
 
-  const userExpenses = (state.expenses || []).filter(e => e.userId === userId);
-  const paidExpenseWithBill = userExpenses.find(e => e.paymentBillUrl);
+  if (proofContainer) {
+    proofContainer.innerHTML = `<span style="color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Checking payment proof...</span>`;
+  }
 
-  const billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
+  try {
+    const res = await fetch(`${API_BASE_URL}/expenses?userId=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+    const userExpenses = data.expenses || [];
+    const paidExpenseWithBill = userExpenses.find(e => e.paymentBillUrl);
 
-  if (billUrl) {
+    const billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
+
+    if (billUrl) {
+      if (proofContainer) {
+        proofContainer.innerHTML = `
+          <div style="margin-bottom: 4px;"><span style="color: #059669; font-weight: 700;">✅ Paid & Settled</span></div>
+          <div><a href="${billUrl}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: underline;"><i class="fa-solid fa-file-image"></i> View Current Uploaded Bill Proof</a></div>
+        `;
+      }
+      if (submitBtn) {
+        submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Update Settlement & Email Receipt`;
+      }
+    } else {
+      if (proofContainer) {
+        proofContainer.innerHTML = `<span style="color: #d97706; font-weight: 600;">⏳ Payment Pending (Unsettled)</span>`;
+      }
+      if (submitBtn) {
+        submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Settle & Email Receipt`;
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching settle details:', err);
     if (proofContainer) {
-      proofContainer.innerHTML = `
-        <div style="margin-bottom: 4px;"><span style="color: #059669; font-weight: 700;">✅ Paid & Settled</span></div>
-        <div><a href="${billUrl}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: underline;"><i class="fa-solid fa-file-image"></i> View Current Uploaded Bill Proof</a></div>
-      `;
-    }
-    if (submitBtn) {
-      submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Update Settlement & Email Receipt`;
-    }
-  } else {
-    if (proofContainer) {
-      proofContainer.innerHTML = `<span style="color: #d97706; font-weight: 600;">⏳ Payment Pending (Unsettled)</span>`;
-    }
-    if (submitBtn) {
-      submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Settle & Email Receipt`;
+      proofContainer.innerHTML = `<span style="color: #dc2626;">Error checking proof status</span>`;
     }
   }
 
