@@ -112,7 +112,6 @@ const sumGrandTotal = document.getElementById('sumGrandTotal');
 // Mobile Bottom Nav & FAB
 const mobileFabBtn = document.getElementById('mobileFabBtn');
 const navHome = document.getElementById('navHome');
-const navAdd = document.getElementById('navAdd');
 const navReceipts = document.getElementById('navReceipts');
 const navStats = document.getElementById('navStats');
 const navProfile = document.getElementById('navProfile');
@@ -1879,12 +1878,11 @@ function deleteReceiptByIndex(expenseId, index) {
 // ==================== MOBILE BOTTOM NAVIGATION ====================
 function setupMobileNav() {
   const navHome = document.getElementById('navHome');
-  const navAdd = document.getElementById('navAdd');
   const navReceipts = document.getElementById('navReceipts');
   const navStats = document.getElementById('navStats');
   const navProfile = document.getElementById('navProfile');
 
-  const navItems = [navHome, navAdd, navReceipts, navStats, navProfile];
+  const navItems = [navHome, navReceipts, navStats, navProfile];
   
   function setActiveNav(activeBtn) {
     navItems.forEach(item => item && item.classList.remove('active'));
@@ -1896,14 +1894,6 @@ function setupMobileNav() {
       e.preventDefault();
       setActiveNav(navHome);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
-  if (navAdd) {
-    navAdd.addEventListener('click', (e) => {
-      e.preventDefault();
-      setActiveNav(navAdd);
-      scrollToExpenseForm();
     });
   }
 
