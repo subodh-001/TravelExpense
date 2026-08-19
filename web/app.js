@@ -763,9 +763,30 @@ async function uploadFileToStorage(file) {
       }
     }
   } catch (cloudErr) {
-    console.warn('Cloudinary upload fallback to Data URL:', cloudErr);
+    console.warn('Cloudinary upload fallback to Local backend:', cloudErr);
   }
 
+  // Fallback to local server upload instead of Base64!
+  try {
+    const localFormData = new FormData();
+    localFormData.append('file', file);
+
+    const localRes = await fetch(`${API_BASE_URL}/upload`, {
+      method: 'POST',
+      body: localFormData
+    });
+
+    if (localRes.ok) {
+      const localData = await localRes.json();
+      if (localData.success && localData.fileUrl) {
+        return localData.fileUrl;
+      }
+    }
+  } catch (localErr) {
+    console.error('Local upload fallback failed:', localErr);
+  }
+
+  // Final fallback to Base64 (only if both fail)
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => resolve(e.target.result);

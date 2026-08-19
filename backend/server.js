@@ -438,6 +438,43 @@ app.get('/api/user/profile/:userId', (req, res) => {
   }
 });
 
+// General File Upload Endpoint (for receipts and bills fallback)
+app.post('/api/upload',
+  upload.single('file'),
+  async (req, res) => {
+    try {
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const fileExt = path.extname(file.originalname);
+      const safeFileName = `${Date.now()}_${uuidv4().substring(0, 6)}${fileExt}`;
+      const relativePath = `uploads/temp/${safeFileName}`;
+      const localPath = path.join(UPLOADS_DIR, 'temp', safeFileName);
+
+      // Ensure temp dir exists
+      const tempDir = path.join(UPLOADS_DIR, 'temp');
+      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+      fs.writeFileSync(localPath, file.buffer);
+
+      const protocol = req.protocol;
+      const host = req.get('host');
+      const fileUrl = `${protocol}://${host}/uploads/temp/${safeFileName}`;
+
+      res.json({
+        success: true,
+        fileUrl: fileUrl,
+        fileName: safeFileName
+      });
+    } catch (err) {
+      console.error('File upload error:', err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
 // ---------- SUPER ADMIN ENDPOINTS ----------
 const adminInviteStore = new Map();
 
