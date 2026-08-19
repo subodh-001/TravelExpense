@@ -349,13 +349,54 @@
         </form>
       </section>
 
+      <!-- STATS & SUMMARY WIDGET -->
+      <section id="userStatsSection" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 28px;">
+        <h3 style="margin: 0 0 16px 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+          <i class="fa-solid fa-chart-simple" style="color: #6366f1;"></i> Expense Summary & Stats
+        </h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px;">
+          <!-- Lifetime Total Card -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center;">
+            <span style="font-size: 0.78rem; font-weight: 700; color: #64748b; display: block; text-transform: uppercase; margin-bottom: 4px;">Lifetime Total</span>
+            <strong id="userStatsLifetimeTotal" style="font-size: 1.25rem; color: #0f172a; display: block;">₹0</strong>
+          </div>
+          <!-- Paid/Reimbursed Card -->
+          <div style="background: #ecfdf5; border: 1px solid #d1fae5; border-radius: 12px; padding: 14px; text-align: center;">
+            <span style="font-size: 0.78rem; font-weight: 700; color: #047857; display: block; text-transform: uppercase; margin-bottom: 4px;">Paid / Reimbursed</span>
+            <strong id="userStatsPaidTotal" style="font-size: 1.25rem; color: #065f46; display: block;">₹0</strong>
+          </div>
+          <!-- Pending Settlement Card -->
+          <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 14px; text-align: center;">
+            <span style="font-size: 0.78rem; font-weight: 700; color: #b45309; display: block; text-transform: uppercase; margin-bottom: 4px;">Pending Settlement</span>
+            <strong id="userStatsPendingTotal" style="font-size: 1.25rem; color: #92400e; display: block;">₹0</strong>
+          </div>
+        </div>
+      </section>
+
       <!-- MY UPLOADED ENTRIES SECTION -->
       <section id="userEntriesSection" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f1f5f9; background: #f8fafc;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f1f5f9; background: #f8fafc; flex-wrap: wrap; gap: 10px;">
           <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
             <i class="fa-solid fa-list-check" style="color: #059669;"></i> My Uploaded Entries
           </h3>
-          <span class="badge" id="userEntriesCountBadge" style="background: #e2e8f0; color: #334155; font-weight: 700;">0 Entries</span>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px;">
+              <i class="fa-solid fa-calendar-days" style="color: #64748b; font-size: 0.85rem;"></i>
+              <select id="userMonthFilter" onchange="applyUserMonthFilter()" style="border: none; background: transparent; font-weight: 700; font-size: 0.82rem; color: #0f172a; outline: none; cursor: pointer;">
+                <option value="all">📅 All Months</option>
+                <option value="2026-08" selected>August 2026</option>
+                <option value="2026-07">July 2026</option>
+                <option value="2026-06">June 2026</option>
+                <option value="2026-05">May 2026</option>
+                <option value="2026-04">April 2026</option>
+                <option value="2026-03">March 2026</option>
+                <option value="2026-02">February 2026</option>
+                <option value="2026-01">January 2026</option>
+              </select>
+            </div>
+            <span class="badge" id="userEntriesCountBadge" style="background: #e2e8f0; color: #334155; font-weight: 700;">0 Entries</span>
+          </div>
         </div>
 
         <div style="overflow-x: auto;">
@@ -762,6 +803,13 @@
               <i class="fa-solid fa-lock"></i> Google Email Address <span style="font-size:0.75rem; color:#64748b;">(Logged-In Identity)</span>
             </label>
             <input type="email" id="profileEmailInput" class="form-control" readonly style="cursor: not-allowed; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" title="Email is fixed to your logged-in Google account" />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px; display: block;">
+              <i class="fa-solid fa-key"></i> Change Password <span style="font-size:0.75rem; color:#64748b;">(Optional, min 6 chars)</span>
+            </label>
+            <input type="password" id="profilePasswordInput" class="form-control" placeholder="Enter new password to change" style="background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1;" />
           </div>
         </div>
 

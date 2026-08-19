@@ -402,21 +402,33 @@ app.post('/api/auth/verify-otp', (req, res) => {
 
 app.post('/api/user/profile', (req, res) => {
   try {
-    const { id, name, email, picture } = req.body;
+    const { id, name, email, picture, password } = req.body;
     if (!id) return res.status(400).json({ error: 'User ID is required' });
 
     const users = getLocalUsers();
+    const existingUser = users[id] || {};
+    let passwordHash = existingUser.passwordHash || '';
+
+    if (password && password.length >= 6) {
+      passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+    }
+
     users[id] = {
+      ...existingUser,
       id,
       name: name || 'Traveler',
       email: email || 'user@example.com',
       picture: picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'Traveler')}`,
+      passwordHash,
       updatedAt: new Date().toISOString()
     };
     saveLocalUsers(users);
 
-    console.log(`👤 Updated profile for ${id}: ${name}`);
-    res.json({ success: true, user: users[id] });
+    const safeUser = { ...users[id] };
+    delete safeUser.passwordHash;
+
+    console.log(`👤 Updated profile for ${id}: ${name} (Password updated: ${!!password})`);
+    res.json({ success: true, user: safeUser });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

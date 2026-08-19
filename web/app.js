@@ -66,6 +66,7 @@ const profileEmailInput = document.getElementById('profileEmailInput');
 const profilePhotoInput = document.getElementById('profilePhotoInput');
 const profilePhotoPreview = document.getElementById('profilePhotoPreview');
 const profilePhotoStatus = document.getElementById('profilePhotoStatus');
+const profilePasswordInput = document.getElementById('profilePasswordInput');
 
 // Share Modal Elements
 const shareModal = document.getElementById('shareModal');
@@ -434,6 +435,7 @@ function openEditProfileModal() {
   const user = state.currentGoogleUser || DEFAULT_GOOGLE_USER;
   profileNameInput.value = user.name || '';
   profileEmailInput.value = user.email || '';
+  if (profilePasswordInput) profilePasswordInput.value = '';
   profilePhotoPreview.src = user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`;
   profilePhotoStatus.textContent = 'PNG or JPG, max 5MB (Stores in Cloudinary)';
   state.pendingProfilePhotoUrl = null;
@@ -484,28 +486,59 @@ async function handleProfilePhotoSelect(e) {
   }
 }
 
-function handleSaveProfile(e) {
+async function handleSaveProfile(e) {
   e.preventDefault();
 
   const name = profileNameInput.value.trim();
   const email = state.currentGoogleUser.email; // Email remains locked to logged-in Google Identity
+  const password = profilePasswordInput ? profilePasswordInput.value : '';
 
   if (!name) {
     alert('Please enter a display Name');
     return;
   }
 
+  if (password && password.length < 6) {
+    alert('Password must be at least 6 characters long');
+    return;
+  }
+
   const picture = state.pendingProfilePhotoUrl || state.currentGoogleUser.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
-  const updatedUser = {
-    ...state.currentGoogleUser,
+  
+  const payload = {
+    id: state.currentGoogleUser.id,
     name,
     email,
     picture
   };
+  if (password) {
+    payload.password = password;
+  }
 
-  saveGoogleUser(updatedUser);
-  closeModal(editProfileModal);
-  showToast('✓ Profile updated successfully!');
+  try {
+    const res = await fetch(`${API_BASE_URL}/user/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      const updatedUser = {
+        ...state.currentGoogleUser,
+        name,
+        picture
+      };
+      state.currentGoogleUser = updatedUser;
+      localStorage.setItem('google_user', JSON.stringify(updatedUser));
+      updateUserProfileUI();
+      closeModal(editProfileModal);
+      showToast('✓ Profile updated successfully!');
+    } else {
+      alert(data.error || 'Failed to update profile.');
+    }
+  } catch (err) {
+    alert('Network error updating profile: ' + err.message);
+  }
 }
 
 function selectGoogleAccount(id, name, email, picture) {
@@ -640,6 +673,7 @@ async function loadExpenses() {
       } catch (e) {}
       populateMonthSelector();
       applyFilters();
+      populateUserMonthSelector();
       renderUserEntriesList();
     } else {
       console.error('Failed to load expenses:', data.error);
@@ -654,6 +688,7 @@ async function loadExpenses() {
     } catch (e) {}
     populateMonthSelector();
     applyFilters();
+    populateUserMonthSelector();
     renderUserEntriesList();
   }
 }
@@ -685,6 +720,37 @@ function populateMonthSelector() {
 
   html += `<option value="ALL" style="background-color: #ffffff; color: #0f172a; font-weight: 600;" ${state.selectedMonth === 'ALL' ? 'selected' : ''}>🌐 All Months (Historical)</option>`;
   monthFilter.innerHTML = html;
+}
+
+function populateUserMonthSelector() {
+  const userMonthSelect = document.getElementById('userMonthFilter');
+  if (!userMonthSelect) return;
+
+  const userExpenses = state.expenses || [];
+  const monthsSet = new Set();
+  monthsSet.add(CURRENT_YEAR_MONTH);
+
+  userExpenses.forEach(e => {
+    if (e.date && e.date.length >= 7) {
+      monthsSet.add(e.date.slice(0, 7));
+    }
+  });
+
+  const sortedMonths = Array.from(monthsSet).sort().reverse();
+  const currentValue = userMonthSelect.value || CURRENT_YEAR_MONTH;
+
+  let html = '';
+  sortedMonths.forEach(m => {
+    const [year, monthNum] = m.split('-');
+    const dateObj = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+    const monthName = dateObj.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    const isCurrent = m === CURRENT_YEAR_MONTH;
+    const label = `${monthName}${isCurrent ? ' (Current)' : ''}`;
+    html += `<option value="${m}" ${m === currentValue ? 'selected' : ''}>📅 ${label}</option>`;
+  });
+
+  html += `<option value="all" ${currentValue === 'all' ? 'selected' : ''}>📅 All Months</option>`;
+  userMonthSelect.innerHTML = html;
 }
 
 function applyFilters() {
@@ -897,26 +963,50 @@ function renderUserEntriesList() {
   if (!tbody) return;
 
   const userExpenses = state.expenses || [];
-  if (countBadge) countBadge.textContent = `${userExpenses.length} Entries`;
 
-  // Active pending amount (Becomes 0 when Admin pays/settles!)
+  // Calculate lifetime total spent (sum of all uploaded expenses ever)
+  const lifetimeTotal = userExpenses.reduce((sum, exp) => sum + (exp.total || 0), 0);
+  if (totalValEl) totalValEl.textContent = `₹${lifetimeTotal.toLocaleString('en-IN')}`;
+
+  // Calculate detailed stats
+  const paidExpenses = userExpenses.filter(exp => exp.paymentStatus === 'paid');
+  const paidTotal = paidExpenses.reduce((sum, exp) => sum + (exp.total || 0), 0);
   const pendingExpenses = userExpenses.filter(exp => exp.paymentStatus !== 'paid');
-  const activePendingTotal = pendingExpenses.reduce((sum, exp) => sum + (exp.total || 0), 0);
-  if (totalValEl) totalValEl.textContent = `₹${activePendingTotal.toLocaleString('en-IN')}`;
+  const pendingTotal = pendingExpenses.reduce((sum, exp) => sum + (exp.total || 0), 0);
 
-  if (userExpenses.length === 0) {
+  // Render stats cards
+  const statsLifetime = document.getElementById('userStatsLifetimeTotal');
+  const statsPaid = document.getElementById('userStatsPaidTotal');
+  const statsPending = document.getElementById('userStatsPendingTotal');
+
+  if (statsLifetime) statsLifetime.textContent = `₹${lifetimeTotal.toLocaleString('en-IN')}`;
+  if (statsPaid) statsPaid.textContent = `₹${paidTotal.toLocaleString('en-IN')}`;
+  if (statsPending) statsPending.textContent = `₹${pendingTotal.toLocaleString('en-IN')}`;
+
+  // Filter expenses by selected month
+  const monthSelect = document.getElementById('userMonthFilter');
+  const selectedMonth = monthSelect ? monthSelect.value : '2026-08';
+
+  let filteredExpenses = userExpenses;
+  if (selectedMonth && selectedMonth !== 'all') {
+    filteredExpenses = userExpenses.filter(exp => exp.date && exp.date.startsWith(selectedMonth));
+  }
+
+  if (countBadge) countBadge.textContent = `${filteredExpenses.length} Entries`;
+
+  if (filteredExpenses.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="6" style="text-align: center; padding: 32px; color: #64748b;">
           <i class="fa-solid fa-folder-open" style="font-size: 2rem; color: #94a3b8; margin-bottom: 8px; display: block;"></i>
-          No uploaded travel entries yet. Fill out the form above to add your travel expenses.
+          No uploaded travel entries for the selected month.
         </td>
       </tr>
     `;
     return;
   }
 
-  tbody.innerHTML = userExpenses.map(exp => {
+  tbody.innerHTML = filteredExpenses.map(exp => {
     const isPaid = exp.paymentStatus === 'paid';
     const statusBadge = isPaid
       ? `<span style="background: #ecfdf5; color: #047857; border: 1px solid #d1fae5; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> Paid</span>`
@@ -952,6 +1042,10 @@ function renderUserEntriesList() {
       </tr>
     `;
   }).join('');
+}
+
+function applyUserMonthFilter() {
+  renderUserEntriesList();
 }
 
 // ==================== RENDER MOBILE CARDS ====================
@@ -1914,9 +2008,9 @@ function setupMobileNav() {
     navStats.addEventListener('click', (e) => {
       e.preventDefault();
       setActiveNav(navStats);
-      const topBadge = document.getElementById('userTopTotalSpentBadge');
-      if (topBadge) {
-        topBadge.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const statsSec = document.getElementById('userStatsSection');
+      if (statsSec) {
+        statsSec.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
