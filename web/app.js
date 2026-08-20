@@ -226,6 +226,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (viewCardsBtn) viewCardsBtn.addEventListener('click', () => switchView('cards'));
   if (viewTableBtn) viewTableBtn.addEventListener('click', () => switchView('table'));
 
+  // Initialize default Expense Date field to Today
+  const userDateEl = document.getElementById('userDateInput');
+  if (userDateEl && !userDateEl.value) {
+    userDateEl.value = new Date().toISOString().split('T')[0];
+  }
+
   // Modal Triggers
   if (openAddModalBtn) openAddModalBtn.addEventListener('click', () => openAddExpenseModal());
   if (mobileFabBtn) mobileFabBtn.addEventListener('click', () => openAddExpenseModal());
@@ -296,7 +302,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Setup Mobile Bottom Navigation Listeners
   setupMobileNav();
+
+  // Initialize Real-Time Server-Sent Events (SSE) Sync
+  initRealTimeSync();
 });
+
+// ==================== REAL-TIME SSE SYNC ====================
+let sseSource = null;
+
+function initRealTimeSync() {
+  if (sseSource) {
+    try { sseSource.close(); } catch (e) {}
+  }
+
+  try {
+    const sseUrl = `${API_BASE_URL}/events`;
+    sseSource = new EventSource(sseUrl);
+
+    sseSource.onopen = () => {
+      console.log('⚡ Real-time SSE sync connected');
+      updateRealTimeStatus(true);
+    };
+
+    sseSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.event === 'EXPENSES_UPDATED' || payload.event === 'USERS_UPDATED') {
+          console.log('⚡ Live update received:', payload.event);
+          if (state.currentGoogleUser || state.sharedMode) {
+            loadExpenses();
+            if (typeof loadSuperAdminData === 'function' && (window.location.hash === '#superadmin' || state.currentPage === 'superadmin')) {
+              loadSuperAdminData();
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Error parsing SSE event:', e);
+      }
+    };
+
+    sseSource.onerror = (err) => {
+      console.warn('⚡ SSE connection lost, reconnecting...');
+      updateRealTimeStatus(false);
+    };
+  } catch (e) {
+    console.warn('SSE init failed:', e);
+  }
+}
+
+function updateRealTimeStatus(isLive) {
+  const liveBadge = document.getElementById('statusBadge');
+  const liveText = document.getElementById('statusText');
+  if (liveBadge) {
+    liveBadge.style.backgroundColor = isLive ? '#10b981' : '#f59e0b';
+    liveBadge.style.boxShadow = isLive ? '0 0 10px rgba(16, 185, 129, 0.6)' : 'none';
+  }
+  if (liveText) {
+    liveText.textContent = isLive ? 'Real-Time Live' : 'Connecting Sync...';
+  }
+}
 
 // ==================== GOOGLE USER AUTH HELPERS ====================
 function getStoredGoogleUser() {
@@ -872,12 +936,17 @@ function handleUserPhotoSelect(e) {
 
 async function handleUserSubmitExpense(e) {
   if (e) e.preventDefault();
+  const userDateVal = document.getElementById('userDateInput')?.value || new Date().toISOString().split('T')[0];
   const itemCategory = document.getElementById('userItemSelect')?.value;
   const amountVal = parseFloat(document.getElementById('userAmountInput')?.value || '0');
   const commentVal = document.getElementById('userCommentInput')?.value.trim();
   const photoInput = document.getElementById('userPhotoFileInput');
   const btn = document.getElementById('userSubmitExpenseBtn');
 
+  if (!userDateVal) {
+    alert('Please select an expense date');
+    return;
+  }
   if (!itemCategory) {
     alert('Please select a travel item category');
     return;
@@ -901,9 +970,8 @@ async function handleUserSubmitExpense(e) {
     }
   }
 
-  const today = new Date().toISOString().split('T')[0];
   const payload = {
-    date: today,
+    date: userDateVal,
     location: itemCategory,
     notes: commentVal || itemCategory,
     paymentStatus: 'pending',
@@ -1368,6 +1436,8 @@ function openAddExpenseModal() {
   state.editingExpenseId = null;
   const form = document.getElementById('handwrittenTravelForm');
   if (form) form.reset();
+  const dateEl = document.getElementById('userDateInput');
+  if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
   const btn = document.getElementById('userSubmitExpenseBtn');
   if (btn) btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Travel Expense';
   scrollToExpenseForm();
@@ -1381,12 +1451,14 @@ function openEditExpenseModal(expenseId) {
   const selectEl = document.getElementById('userItemSelect');
   const amountEl = document.getElementById('userAmountInput');
   const commentEl = document.getElementById('userCommentInput');
+  const dateEl = document.getElementById('userDateInput');
   const btn = document.getElementById('userSubmitExpenseBtn');
 
   const cat = exp.location || (exp.entries && exp.entries[0] ? exp.entries[0].type : 'Others');
   if (selectEl) selectEl.value = cat;
   if (amountEl) amountEl.value = exp.total || (exp.entries && exp.entries[0] ? exp.entries[0].amount : 0);
   if (commentEl) commentEl.value = exp.notes || '';
+  if (dateEl) dateEl.value = exp.date || (exp.createdAt ? exp.createdAt.slice(0, 10) : new Date().toISOString().split('T')[0]);
   if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Update Travel Expense';
 
   scrollToExpenseForm();
@@ -2883,11 +2955,11 @@ function renderAdminUsersTable(users) {
 
     return `
       <tr style="border-bottom: 1px solid #f1f5f9;">
-        <td style="padding: 12px 16px;">
-          <img src="${user.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Member'}" alt="${user.name}" style="width: 36px; height: 36px; border-radius: 50%; border: 1px solid #e2e8f0; object-fit: cover;" />
+        <td style="padding: 12px 16px; cursor: pointer;" onclick="inspectUserExpenses('${user.id}')" title="Click to view ${user.name}'s entries & export Excel">
+          <img src="${user.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Member'}" alt="${user.name}" style="width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid #cbd5e1; object-fit: cover;" />
         </td>
-        <td style="padding: 12px 16px;">
-          <strong style="color: #0f172a; font-size: 0.9rem; display: block;">${user.name || 'Member'}</strong>
+        <td style="padding: 12px 16px; cursor: pointer;" onclick="inspectUserExpenses('${user.id}')" title="Click to view ${user.name}'s entries & export Excel">
+          <strong style="color: #0f172a; font-size: 0.92rem; display: block;">${user.name || 'Member'}</strong>
           <span style="color: #64748b; font-size: 0.8rem;">${user.email || 'N/A'}</span>
         </td>
         <td style="padding: 12px 16px; font-weight: 800; color: #0f172a; font-size: 0.95rem;" class="col-numeric">
@@ -2898,13 +2970,13 @@ function renderAdminUsersTable(users) {
         </td>
         <td style="padding: 12px 16px;" class="col-actions">
           <div style="display: flex; gap: 6px; align-items: center;">
-            <button type="button" class="btn btn-sm" onclick="openSettleModal('${user.id}')" title="Upload or Edit Bill" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #0f172a; color: #ffffff; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+            <button type="button" class="btn btn-sm" onclick="openSettleModal('${user.id}')" title="Upload or Edit Bill Proof" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #0f172a; color: #ffffff; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
               ${billBtnLabel}
             </button>
-            <button type="button" class="btn btn-sm" onclick="openEditMemberModal('${user.id}')" title="View Member & Uploaded Bill" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+            <button type="button" class="btn btn-sm" onclick="inspectUserExpenses('${user.id}')" title="View Member Expenses & Export Excel" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
               <i class="fa-solid fa-eye"></i> View
             </button>
-            <button type="button" class="btn btn-sm" onclick="handleDeleteSettlementOrUser('${user.id}')" title="Delete Settlement or User" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #dc2626; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+            <button type="button" class="btn btn-sm" onclick="handleDeleteSettlementOrUser('${user.id}')" title="Delete Settlement or Member" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #dc2626; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
               <i class="fa-solid fa-trash-can"></i> Del
             </button>
           </div>
@@ -3017,7 +3089,7 @@ async function openEditMemberModal(userId) {
 
     if (billUrl) {
       if (statusDisplay) {
-        statusDisplay.innerHTML = `<a href="${billUrl}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: underline; font-size: 0.85rem;"><i class="fa-solid fa-up-right-from-square"></i> Open Full Resolution Image</a>`;
+        statusDisplay.innerHTML = `<span style="color: #059669; font-weight: 700; font-size: 0.9rem;">✅ Payment Bill Proof Uploaded</span><br/><a href="${billUrl}" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: underline; font-size: 0.82rem; display: inline-block; margin-top: 4px;"><i class="fa-solid fa-expand"></i> Click photo or here to open full size photo</a>`;
       }
       if (billImg) {
         billImg.src = billUrl;
@@ -3025,7 +3097,7 @@ async function openEditMemberModal(userId) {
       }
     } else {
       if (statusDisplay) {
-        statusDisplay.innerHTML = `<span style="color: #94a3b8; font-size: 0.88rem;">No bill photo uploaded yet for this member.</span>`;
+        statusDisplay.innerHTML = `<span style="color: #94a3b8; font-size: 0.88rem;">No bill photo uploaded yet for this member.<br/>Click <strong>"Change / Re-upload Photo"</strong> below to attach payment proof photo.</span>`;
       }
       if (billImg) {
         billImg.style.display = 'none';
@@ -3401,31 +3473,120 @@ function exportMembersToExcel() {
 
   const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'All_Months';
 
-  let csvContent = "data:text/csv;charset=utf-8,";
-  csvContent += "Member ID,Name,Email,Pending Amount (INR),Paid Amount (INR),Total Lifetime Amount (INR),Status,Month\n";
+  let totalPendingSum = 0;
+  let totalPaidSum = 0;
+  let totalLifetimeSum = 0;
 
-  adminUsersCache.forEach(u => {
-    const status = u.pendingAmount > 0 ? "Pending" : "Paid";
-    const row = [
-      `"${u.id}"`,
-      `"${u.name || ''}"`,
-      `"${u.email || ''}"`,
-      u.pendingAmount || 0,
-      u.paidAmount || 0,
-      u.lifetimeAmount || 0,
-      `"${status}"`,
-      `"${selectedMonth}"`
-    ].join(",");
-    csvContent += row + "\n";
+  let tableRows = '';
+  adminUsersCache.forEach((u, idx) => {
+    const isPending = (u.pendingAmount || 0) > 0;
+    const statusText = isPending ? "PENDING REIMBURSEMENT" : "SETTLED & PAID";
+    const statusStyle = isPending
+      ? 'background-color: #fef3c7; color: #b45309; font-weight: bold;'
+      : 'background-color: #d1fae5; color: #047857; font-weight: bold;';
+
+    const pending = u.pendingAmount || 0;
+    const paid = u.paidAmount || 0;
+    const lifetime = u.lifetimeAmount || (pending + paid);
+
+    totalPendingSum += pending;
+    totalPaidSum += paid;
+    totalLifetimeSum += lifetime;
+
+    const billUrl = u.paymentBillUrl;
+    const billCell = billUrl
+      ? `<a href="${billUrl}" target="_blank" style="color: #2563eb; font-weight: bold; text-decoration: underline;">🔗 View Payment Proof Bill</a>`
+      : `<span style="color: #94a3b8;">No Proof Uploaded</span>`;
+
+    tableRows += `
+      <tr style="height: 28px;">
+        <td style="border: 1px solid #cbd5e1; text-align: center; font-size: 11pt;">${idx + 1}</td>
+        <td style="border: 1px solid #cbd5e1; font-weight: bold; font-size: 11pt;">${u.name || 'Member'}</td>
+        <td style="border: 1px solid #cbd5e1; font-size: 11pt;">${u.email || ''}</td>
+        <td style="border: 1px solid #cbd5e1; text-align: right; font-weight: bold; font-size: 11pt; color: #dc2626;">₹${pending.toLocaleString('en-IN')}</td>
+        <td style="border: 1px solid #cbd5e1; text-align: right; font-weight: bold; font-size: 11pt; color: #059669;">₹${paid.toLocaleString('en-IN')}</td>
+        <td style="border: 1px solid #cbd5e1; text-align: right; font-weight: bold; font-size: 11pt; color: #0f172a;">₹${lifetime.toLocaleString('en-IN')}</td>
+        <td style="border: 1px solid #cbd5e1; text-align: center; font-size: 11pt; ${statusStyle}">${statusText}</td>
+        <td style="border: 1px solid #cbd5e1; text-align: center; font-size: 11pt;">${billCell}</td>
+      </tr>
+    `;
   });
 
-  const encodedUri = encodeURI(csvContent);
+  const excelTemplate = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <!--[if gte mso 9]>
+      <xml>
+        <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+            <x:ExcelWorksheet>
+              <x:Name>Members Directory</x:Name>
+              <x:WorksheetOptions>
+                <x:DisplayGridlines/>
+              </x:WorksheetOptions>
+            </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+      <style>
+        body { font-family: Arial, sans-serif; }
+        table { border-collapse: collapse; width: 100%; }
+        th { background-color: #0f172a; color: #ffffff; font-weight: bold; font-size: 11pt; border: 1px solid #0f172a; height: 34px; text-align: center; }
+        td { border: 1px solid #cbd5e1; padding: 6px 10px; }
+      </style>
+    </head>
+    <body>
+      <h2 style="color: #0f172a; font-family: Arial, sans-serif; margin-bottom: 4px;">System Members Reimbursement Summary Report</h2>
+      <p style="color: #475569; font-family: Arial, sans-serif; margin-top: 0; margin-bottom: 16px; font-size: 11pt;">
+        <strong>Selected Month:</strong> ${selectedMonth} &nbsp;|&nbsp;
+        <strong>Total System Members:</strong> ${adminUsersCache.length} &nbsp;|&nbsp;
+        <strong>Report Generated:</strong> ${new Date().toLocaleString()}
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 50px;">SR NO</th>
+            <th style="width: 200px;">MEMBER NAME</th>
+            <th style="width: 240px;">GMAIL ID / EMAIL</th>
+            <th style="width: 160px;">PENDING REIMBURSEMENT (INR)</th>
+            <th style="width: 160px;">PAID REIMBURSEMENT (INR)</th>
+            <th style="width: 160px;">LIFETIME TOTAL (INR)</th>
+            <th style="width: 160px;">STATUS</th>
+            <th style="width: 220px;">PAYMENT PROOF BILL LINK</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+          <tr style="height: 32px; background-color: #f1f5f9;">
+            <td colspan="3" style="border: 1px solid #cbd5e1; font-weight: bold; font-size: 11pt; text-align: right; padding-right: 14px;">SYSTEM TOTALS:</td>
+            <td style="border: 1px solid #cbd5e1; font-weight: bold; font-size: 11pt; color: #dc2626; text-align: right;">₹${totalPendingSum.toLocaleString('en-IN')}</td>
+            <td style="border: 1px solid #cbd5e1; font-weight: bold; font-size: 11pt; color: #059669; text-align: right;">₹${totalPaidSum.toLocaleString('en-IN')}</td>
+            <td style="border: 1px solid #cbd5e1; font-weight: bold; font-size: 12pt; color: #0f172a; text-align: right;">₹${totalLifetimeSum.toLocaleString('en-IN')}</td>
+            <td colspan="2" style="border: 1px solid #cbd5e1; background-color: #f1f5f9;"></td>
+          </tr>
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `;
+
+  const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `FreeG_Wifi_Member_Details_${selectedMonth}_${new Date().toISOString().split('T')[0]}.csv`);
+  link.href = url;
+  const fileName = `TravelExpense_Members_Report_${selectedMonth}.xls`;
+  link.setAttribute("download", fileName);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  if (typeof showCustomToast === 'function') {
+    showCustomToast(`📊 Exported Members Excel: ${fileName}`);
+  }
 }
 
 function filterAdminUserTable() {
@@ -3441,12 +3602,394 @@ function filterAdminUserTable() {
   renderAdminUsersTable(filtered);
 }
 
-function inspectUserExpenses(userId) {
-  state.sharedMode = true;
-  fetchUserExpenses(userId);
-  switchAppPage('dashboard');
+let currentInspectUserId = null;
+let currentInspectUserExpenses = [];
+
+async function inspectUserExpenses(userId) {
+  currentInspectUserId = userId;
+  const user = (adminUsersCache && adminUsersCache.find(u => u.id === userId)) || { id: userId, name: 'Member', email: userId };
+
+  const avatar = document.getElementById('inspectUserAvatar');
+  const title = document.getElementById('inspectUserNameTitle');
+  const emailSub = document.getElementById('inspectUserEmailSub');
+
+  if (avatar) avatar.src = user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name || 'User')}`;
+  if (title) title.textContent = `${user.name}'s Expense Entries`;
+  if (emailSub) emailSub.textContent = user.email || '';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/expenses?userId=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+    currentInspectUserExpenses = data.expenses || [];
+
+    populateInspectUserMonthSelector();
+    renderInspectUserExpensesTable();
+    updateInspectUserBillProofCard();
+
+    const modal = document.getElementById('inspectUserModal');
+    if (modal) openModal(modal);
+  } catch (err) {
+    alert('Failed to load member expense logs: ' + err.message);
+  }
+}
+
+function updateInspectUserBillProofCard() {
+  const container = document.getElementById('inspectUserBillProofContainer');
+  if (!container || !currentInspectUserId) return;
+
+  const user = (adminUsersCache && adminUsersCache.find(u => u.id === currentInspectUserId)) || {};
+  let paidExpenseWithBill = (currentInspectUserExpenses || []).find(e => e.paymentBillUrl);
+  let billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
+
+  if (billUrl) {
+    container.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <img src="${billUrl}" style="width: 54px; height: 54px; border-radius: 8px; border: 1.5px solid #059669; object-fit: cover; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onclick="window.open('${billUrl}', '_blank')" title="Click to view full size photo" />
+        <div>
+          <span style="color: #047857; font-weight: 800; font-size: 0.9rem; display: block;"><i class="fa-solid fa-circle-check"></i> Payment Proof Uploaded (Settled)</span>
+          <a href="${billUrl}" target="_blank" style="color: #2563eb; font-weight: 700; font-size: 0.8rem; text-decoration: underline;"><i class="fa-solid fa-expand"></i> Click photo to view full image</a>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <input type="file" id="inspectReuploadBillInput" accept="image/*,.pdf" style="display: none;" onchange="handleInspectReuploadBillSelect(event)" />
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('inspectReuploadBillInput').click()" style="padding: 7px 14px; font-size: 0.82rem; border-radius: 8px; font-weight: 700;">
+          <i class="fa-solid fa-camera"></i> Change Photo
+        </button>
+        <button type="button" class="btn" onclick="handleInspectDeleteBill()" style="padding: 7px 14px; font-size: 0.82rem; border-radius: 8px; font-weight: 700; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; cursor: pointer;">
+          <i class="fa-solid fa-trash-can"></i> Remove Proof
+        </button>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="color: #b45309; font-weight: 700; font-size: 0.88rem;"><i class="fa-solid fa-clock"></i> Payment Status: Pending (No proof photo uploaded yet)</span>
+      </div>
+      <button type="button" class="btn" onclick="openSettleModalFromInspect()" style="padding: 7px 14px; font-size: 0.82rem; font-weight: 700; background: #0f172a; color: #ffffff; border-radius: 8px; border: none; cursor: pointer;">
+        <i class="fa-solid fa-upload"></i> Settle & Upload Proof
+      </button>
+    `;
+  }
+}
+
+async function handleInspectDeleteBill() {
+  if (!currentInspectUserId) return;
+  const user = adminUsersCache && adminUsersCache.find(u => u.id === currentInspectUserId);
+  const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || 'all';
+
+  showConfirmModal({
+    title: 'Remove Payment Proof?',
+    message: `Are you sure you want to remove the uploaded payment proof photo for ${user ? user.name : 'this member'}? This will reset the payment status back to Pending.`,
+    iconClass: 'fa-trash-can',
+    btnText: 'Remove Proof',
+    onConfirm: async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/admin/update-settlement-bill`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentInspectUserId, month: selectedMonth, action: 'delete' })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          if (typeof showCustomToast === 'function') showCustomToast('Uploaded bill deleted and status reset to Pending');
+          else alert('Uploaded bill deleted and status reset to Pending');
+          loadSuperAdminData();
+          inspectUserExpenses(currentInspectUserId);
+        } else {
+          alert(data.error || 'Failed to delete bill');
+        }
+      } catch (err) {
+        alert('Error deleting bill: ' + err.message);
+      }
+    }
+  });
+}
+
+async function handleInspectReuploadBillSelect(e) {
+  const file = e.target.files ? e.target.files[0] : null;
+  const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || 'all';
+
+  if (!file || !currentInspectUserId) return;
+
+  const formData = new FormData();
+  formData.append('userId', currentInspectUserId);
+  formData.append('month', selectedMonth);
+  formData.append('action', 'update');
+  formData.append('paymentProof', file);
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/update-settlement-bill`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      if (typeof showCustomToast === 'function') showCustomToast('Payment proof updated successfully!');
+      else alert('Payment proof updated successfully!');
+      loadSuperAdminData();
+      inspectUserExpenses(currentInspectUserId);
+    } else {
+      alert(data.error || 'Failed to update bill');
+    }
+  } catch (err) {
+    alert('Error re-uploading bill: ' + err.message);
+  }
+}
+
+function openSettleModalFromInspect() {
+  if (!currentInspectUserId) return;
+  closeModal(document.getElementById('inspectUserModal'));
+  openSettleModal(currentInspectUserId);
+}
+
+function populateInspectUserMonthSelector() {
+  const select = document.getElementById('inspectUserMonthFilter');
+  if (!select) return;
+
+  const monthsSet = new Set();
+  const selectedMonthFromAdmin = document.getElementById('adminMonthFilter')?.value || CURRENT_YEAR_MONTH;
+  monthsSet.add(CURRENT_YEAR_MONTH);
+
+  (currentInspectUserExpenses || []).forEach(e => {
+    if (e.date && e.date.length >= 7) {
+      monthsSet.add(e.date.slice(0, 7));
+    }
+  });
+
+  const sortedMonths = Array.from(monthsSet).sort().reverse();
+  let html = '';
+  sortedMonths.forEach(m => {
+    const [year, monthNum] = m.split('-');
+    const dateObj = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+    const monthName = dateObj.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    const isCurrent = m === CURRENT_YEAR_MONTH;
+    const label = `${monthName}${isCurrent ? ' (Current)' : ''}`;
+    html += `<option value="${m}" ${m === selectedMonthFromAdmin ? 'selected' : ''}>📅 ${label}</option>`;
+  });
+  html += `<option value="ALL" ${selectedMonthFromAdmin === 'ALL' || selectedMonthFromAdmin === 'all' ? 'selected' : ''}>🌐 All Months (Historical)</option>`;
+
+  select.innerHTML = html;
+}
+
+function handleInspectUserMonthChange() {
+  renderInspectUserExpensesTable();
+}
+
+function renderInspectUserExpensesTable() {
+  const tbody = document.getElementById('inspectUserTableBody');
+  const badge = document.getElementById('inspectUserEntriesCountBadge');
+  const sumEl = document.getElementById('inspectUserTotalAmountSum');
+  const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || CURRENT_YEAR_MONTH;
+
+  if (!tbody) return;
+
+  let filtered = currentInspectUserExpenses || [];
+  if (selectedMonth && selectedMonth !== 'ALL' && selectedMonth !== 'all') {
+    filtered = filtered.filter(e => e.date && e.date.startsWith(selectedMonth));
+  }
+
+  if (badge) badge.textContent = `${filtered.length} Entries`;
+
+  const totalSum = filtered.reduce((sum, e) => sum + (e.total || 0), 0);
+  if (sumEl) sumEl.textContent = `₹${totalSum.toLocaleString('en-IN')}`;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 36px; color: #64748b;">
+          <i class="fa-solid fa-folder-open" style="font-size: 2rem; color: #94a3b8; margin-bottom: 8px; display: block;"></i>
+          No travel entries logged for this month.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(exp => {
+    let dateTimeDisplay = exp.date;
+    if (exp.createdAt) {
+      try {
+        const d = new Date(exp.createdAt);
+        const formattedDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const formattedTime = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        dateTimeDisplay = `<strong style="color: #0f172a; font-size: 0.88rem; display: block;">${formattedDate}</strong><span style="font-size: 0.78rem; color: #64748b;"><i class="fa-regular fa-clock"></i> ${formattedTime}</span>`;
+      } catch (e) {
+        dateTimeDisplay = exp.date;
+      }
+    }
+
+    const firstReceipt = exp.receipts && exp.receipts[0];
+    const firstReceiptUrl = firstReceipt ? (typeof firstReceipt === 'string' ? firstReceipt : firstReceipt.fileUrl) : null;
+    const receiptHtml = firstReceiptUrl
+      ? `<a href="${firstReceiptUrl}" target="_blank" style="color: #2563eb; font-weight: 700; font-size: 0.85rem; text-decoration: underline;"><i class="fa-solid fa-file-image"></i> View Receipt</a>`
+      : `<span style="color: #94a3b8; font-size: 0.8rem;">No Photo</span>`;
+
+    const isPaid = exp.paymentStatus === 'paid';
+    const statusBadge = isPaid
+      ? `<span style="background: #ecfdf5; color: #047857; border: 1px solid #d1fae5; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-check"></i> Paid</span>`
+      : `<span style="background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-clock"></i> Pending</span>`;
+
+    const categoryItem = exp.location || (exp.entries && exp.entries[0] ? exp.entries[0].type : 'Travel Entry');
+
+    return `
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 12px 16px;">${dateTimeDisplay}</td>
+        <td style="padding: 12px 16px; font-weight: 700; color: #0f172a;">${categoryItem}</td>
+        <td style="padding: 12px 16px; font-weight: 800; color: #0f172a;">₹${(exp.total || 0).toLocaleString('en-IN')}</td>
+        <td style="padding: 12px 16px; color: #475569; font-size: 0.85rem;">${exp.notes || exp.comments || '—'}</td>
+        <td style="padding: 12px 16px;">${receiptHtml}</td>
+        <td style="padding: 12px 16px;">${statusBadge}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function exportInspectUserExpensesExcel() {
+  const user = (adminUsersCache && adminUsersCache.find(u => u.id === currentInspectUserId)) || { name: 'Member', email: currentInspectUserId };
+  const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || CURRENT_YEAR_MONTH;
+
+  let filtered = currentInspectUserExpenses || [];
+  if (selectedMonth && selectedMonth !== 'ALL' && selectedMonth !== 'all') {
+    filtered = filtered.filter(e => e.date && e.date.startsWith(selectedMonth));
+  }
+
+  if (filtered.length === 0) {
+    alert('No entries available to export for this month.');
+    return;
+  }
+
+  const totalSum = filtered.reduce((sum, e) => sum + (e.total || 0), 0);
+  const cleanName = (user.name || 'Member').trim();
+  const cleanEmail = (user.email || '').trim();
+
+  let monthLabel = selectedMonth;
+  if (selectedMonth && selectedMonth !== 'ALL' && selectedMonth !== 'all') {
+    try {
+      const [y, m] = selectedMonth.split('-');
+      const d = new Date(parseInt(y), parseInt(m) - 1, 1);
+      monthLabel = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    } catch (e) {}
+  } else {
+    monthLabel = 'All Months';
+  }
+
+  let tableRows = '';
+  filtered.forEach((exp, idx) => {
+    let dateTimeStr = exp.date || '';
+    if (exp.createdAt) {
+      try {
+        const d = new Date(exp.createdAt);
+        const datePart = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const timePart = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        dateTimeStr = `${datePart}, ${timePart}`;
+      } catch (e) {
+        dateTimeStr = exp.date || '';
+      }
+    }
+
+    // Clean Category ONLY (e.g. Metro, Ola/Uber — no prices in brackets!)
+    const categoryName = (exp.entries && exp.entries[0] && exp.entries[0].type) 
+      ? exp.entries.map(e => e.type).join(', ') 
+      : (exp.location || 'Travel');
+
+    const firstReceipt = exp.receipts && exp.receipts[0];
+    const receiptUrl = firstReceipt ? (typeof firstReceipt === 'string' ? firstReceipt : firstReceipt.fileUrl) : null;
+    const receiptCell = receiptUrl 
+      ? `<a href="${receiptUrl}" target="_blank" style="color: #2563eb; font-weight: bold; text-decoration: underline;">View Receipt Photo</a>`
+      : `<span style="color: #94a3b8;">No Photo Attached</span>`;
+
+    const statusStyle = exp.paymentStatus === 'paid'
+      ? 'background-color: #ecfdf5; color: #047857; font-weight: bold;'
+      : 'background-color: #fffbeb; color: #b45309; font-weight: bold;';
+
+    const statusText = exp.paymentStatus === 'paid' ? 'PAID' : 'PENDING';
+
+    tableRows += `
+      <tr style="height: 28px;">
+        <td style="border: 1px solid #e2e8f0; text-align: center; font-size: 10.5pt;">${idx + 1}</td>
+        <td style="border: 1px solid #e2e8f0; text-align: center; font-size: 10.5pt;">${dateTimeStr}</td>
+        <td style="border: 1px solid #e2e8f0; font-size: 10.5pt; font-weight: 600;">${categoryName}</td>
+        <td style="border: 1px solid #e2e8f0; text-align: right; font-weight: bold; font-size: 10.5pt; color: #0f172a;">₹${(exp.total || 0).toLocaleString('en-IN')}</td>
+        <td style="border: 1px solid #e2e8f0; font-size: 10.5pt;">${exp.notes || exp.location || '—'}</td>
+        <td style="border: 1px solid #e2e8f0; text-align: center; font-size: 10.5pt;">${receiptCell}</td>
+        <td style="border: 1px solid #e2e8f0; text-align: center; font-size: 10.5pt; ${statusStyle}">${statusText}</td>
+      </tr>
+    `;
+  });
+
+  const excelTemplate = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <!--[if gte mso 9]>
+      <xml>
+        <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+            <x:ExcelWorksheet>
+              <x:Name>${cleanName.replace(/[^a-zA-Z0-9]/g, ' ')}</x:Name>
+              <x:WorksheetOptions>
+                <x:DisplayGridlines/>
+              </x:WorksheetOptions>
+            </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+      <style>
+        body { font-family: Arial, sans-serif; color: #1e293b; }
+        table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+        th { background-color: #f1f5f9; color: #334155; font-weight: bold; font-size: 10.5pt; border: 1px solid #cbd5e1; height: 32px; text-align: center; }
+        td { border: 1px solid #e2e8f0; padding: 6px 10px; color: #1e293b; }
+      </style>
+    </head>
+    <body>
+      <h2 style="color: #0f172a; font-family: Arial, sans-serif; margin-bottom: 6px; text-align: center;">Monthly Travel Expense Log Report</h2>
+      <p style="color: #475569; font-family: Arial, sans-serif; margin-top: 0; margin-bottom: 16px; font-size: 10.5pt; text-align: center;">
+        <strong>Member:</strong> ${cleanName} &nbsp;|&nbsp;
+        <strong>Email:</strong> ${cleanEmail} &nbsp;|&nbsp;
+        <strong>Month:</strong> ${monthLabel} &nbsp;|&nbsp;
+        <strong>Generated:</strong> ${new Date().toLocaleString()}
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 50px;">SR NO</th>
+            <th style="width: 170px;">DATE & TIME</th>
+            <th style="width: 140px;">CATEGORY</th>
+            <th style="width: 120px;">AMOUNT</th>
+            <th style="width: 220px;">COMMENT / LOCATION</th>
+            <th style="width: 180px;">RECEIPT</th>
+            <th style="width: 140px;">PAYMENT STATUS</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+          <tr style="height: 32px; background-color: #f8fafc;">
+            <td colspan="3" style="border: 1px solid #cbd5e1; font-weight: bold; font-size: 11pt; text-align: right; padding-right: 14px; color: #0f172a;">TOTAL EXPENSES:</td>
+            <td style="border: 1px solid #cbd5e1; font-weight: bold; font-size: 11.5pt; color: #0f172a; text-align: right;">₹${totalSum.toLocaleString('en-IN')}</td>
+            <td colspan="3" style="border: 1px solid #cbd5e1; background-color: #f8fafc;"></td>
+          </tr>
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `;
+
+  const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  const fileName = `${cleanName.replace(/\s+/g, '_')}_Travel_Expenses_${selectedMonth}.xls`;
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
   if (typeof showCustomToast === 'function') {
-    showCustomToast(`Inspecting logs for user: ${userId}`);
+    showCustomToast(`📊 Exported Excel file: ${fileName}`);
   }
 }
 
@@ -3523,4 +4066,361 @@ function handleCustomGoogleAccountSubmit(e) {
     return;
   }
   selectGoogleAccount(email.split('@')[0], email);
+}
+
+// ==================== DASHBOARD TAB SWITCHING (HOME vs ACCOUNT) ====================
+function switchDashboardTab(tab) {
+  const homeTab = document.getElementById('dashboardHomeTab');
+  const accountTab = document.getElementById('dashboardAccountTab');
+  const navHome = document.getElementById('navHome');
+  const navProfile = document.getElementById('navProfile');
+
+  if (tab === 'account') {
+    if (homeTab) homeTab.classList.add('hidden');
+    if (accountTab) accountTab.classList.remove('hidden');
+    if (navHome) navHome.classList.remove('active');
+    if (navProfile) navProfile.classList.add('active');
+
+    loadAccountProfileData();
+  } else {
+    if (accountTab) accountTab.classList.add('hidden');
+    if (homeTab) homeTab.classList.remove('hidden');
+    if (navProfile) navProfile.classList.remove('active');
+    if (navHome) navHome.classList.add('active');
+  }
+}
+
+function loadAccountProfileData() {
+  const user = state.currentUser || getStoredGoogleUser() || { name: 'Member', email: 'user@example.com' };
+  
+  const avatar = document.getElementById('accountProfileAvatar');
+  const nameEl = document.getElementById('accountProfileName');
+  const emailEl = document.getElementById('accountProfileEmail');
+  const inputName = document.getElementById('accountInputName');
+  const roleBadge = document.getElementById('accountRoleBadge');
+
+  if (avatar) avatar.src = user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name || 'User')}`;
+  if (nameEl) nameEl.textContent = user.name || 'Member';
+  if (emailEl) emailEl.textContent = user.email || 'user@example.com';
+  if (inputName) inputName.value = user.name || '';
+
+  const isMasterAdmin = (user.email || '').toLowerCase() === 'subodhram3350@gmail.com';
+  if (roleBadge) {
+    roleBadge.innerHTML = isMasterAdmin 
+      ? '<i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Master Super Admin' 
+      : '<i class="fa-solid fa-user"></i> Member Account';
+  }
+
+  populateAccountMonthSelector();
+  renderAccountExpenseHistory();
+}
+
+function populateAccountMonthSelector() {
+  const select = document.getElementById('accountMonthFilter');
+  if (!select) return;
+
+  const monthsSet = new Set();
+  monthsSet.add(CURRENT_YEAR_MONTH);
+
+  (state.expenses || []).forEach(e => {
+    if (e.date && e.date.length >= 7) {
+      monthsSet.add(e.date.slice(0, 7));
+    }
+  });
+
+  const sortedMonths = Array.from(monthsSet).sort().reverse();
+  let html = '';
+  sortedMonths.forEach(m => {
+    const [year, monthNum] = m.split('-');
+    const dateObj = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+    const monthName = dateObj.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    const isCurrent = m === CURRENT_YEAR_MONTH;
+    const label = `${monthName}${isCurrent ? ' (Current)' : ''}`;
+    html += `<option value="${m}" ${m === CURRENT_YEAR_MONTH ? 'selected' : ''}>📅 ${label}</option>`;
+  });
+  html += `<option value="all">🌐 All Months (Historical)</option>`;
+
+  select.innerHTML = html;
+}
+
+function renderAccountExpenseHistory() {
+  const tbody = document.getElementById('accountExpenseHistoryTableBody');
+  const loggedSumEl = document.getElementById('accountTotalLoggedSum');
+  const paidSumEl = document.getElementById('accountPaidSum');
+  const pendingSumEl = document.getElementById('accountPendingSum');
+  const selectedMonth = document.getElementById('accountMonthFilter')?.value || CURRENT_YEAR_MONTH;
+
+  if (!tbody) return;
+
+  let filtered = state.expenses || [];
+  if (selectedMonth && selectedMonth !== 'all') {
+    filtered = filtered.filter(e => e.date && e.date.startsWith(selectedMonth));
+  }
+
+  const totalLogged = filtered.reduce((sum, e) => sum + (e.total || 0), 0);
+  const paidTotal = filtered.filter(e => e.paymentStatus === 'paid').reduce((sum, e) => sum + (e.total || 0), 0);
+  const pendingTotal = filtered.filter(e => e.paymentStatus !== 'paid').reduce((sum, e) => sum + (e.total || 0), 0);
+
+  if (loggedSumEl) loggedSumEl.textContent = `₹${totalLogged.toLocaleString('en-IN')}`;
+  if (paidSumEl) paidSumEl.textContent = `₹${paidTotal.toLocaleString('en-IN')}`;
+  if (pendingSumEl) pendingSumEl.textContent = `₹${pendingTotal.toLocaleString('en-IN')}`;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 28px; color: #64748b;">
+          <i class="fa-solid fa-folder-open" style="font-size: 1.8rem; color: #94a3b8; margin-bottom: 8px; display: block;"></i>
+          No expense entries logged for this month.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(exp => {
+    let dateTimeDisplay = exp.date;
+    if (exp.createdAt) {
+      try {
+        const d = new Date(exp.createdAt);
+        const datePart = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const timePart = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        dateTimeDisplay = `<strong style="color: #0f172a; font-size: 0.85rem; display: block;">${datePart}</strong><span style="font-size: 0.76rem; color: #64748b;"><i class="fa-regular fa-clock"></i> ${timePart}</span>`;
+      } catch (e) {
+        dateTimeDisplay = exp.date;
+      }
+    }
+
+    const firstReceipt = exp.receipts && exp.receipts[0];
+    const receiptUrl = firstReceipt ? (typeof firstReceipt === 'string' ? firstReceipt : firstReceipt.fileUrl) : null;
+    const receiptHtml = receiptUrl 
+      ? `<a href="${receiptUrl}" target="_blank" style="color: #2563eb; font-weight: 700; font-size: 0.82rem; text-decoration: underline;"><i class="fa-solid fa-file-image"></i> View Receipt</a>`
+      : `<span style="color: #94a3b8; font-size: 0.78rem;">No Photo</span>`;
+
+    const isPaid = exp.paymentStatus === 'paid';
+    const statusBadge = isPaid
+      ? `<span style="background: #ecfdf5; color: #047857; border: 1px solid #d1fae5; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-check"></i> Paid</span>`
+      : `<span style="background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-clock"></i> Pending</span>`;
+
+    const categoryItem = exp.location || (exp.entries && exp.entries[0] ? exp.entries[0].type : 'Travel Entry');
+
+    return `
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 10px 14px;">${dateTimeDisplay}</td>
+        <td style="padding: 10px 14px; font-weight: 700; color: #0f172a; font-size: 0.88rem;">${categoryItem}</td>
+        <td style="padding: 10px 14px; font-weight: 800; color: #0f172a; font-size: 0.88rem;">₹${(exp.total || 0).toLocaleString('en-IN')}</td>
+        <td style="padding: 10px 14px; color: #475569; font-size: 0.82rem;">${exp.notes || exp.comments || '—'}</td>
+        <td style="padding: 10px 14px;">${receiptHtml}</td>
+        <td style="padding: 10px 14px;">${statusBadge}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function handleAccountUpdateProfile(e) {
+  if (e) e.preventDefault();
+  const inputName = document.getElementById('accountInputName')?.value.trim();
+  const user = state.currentUser || getStoredGoogleUser();
+
+  if (!inputName) {
+    alert('Please enter your name');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user ? user.id : '', email: user ? user.email : '', name: inputName })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      if (user) user.name = inputName;
+      saveGoogleUser(user || { name: inputName });
+      loadAccountProfileData();
+      if (typeof showCustomToast === 'function') showCustomToast('Profile name updated successfully!');
+      else alert('Profile name updated successfully!');
+    } else {
+      alert(data.error || 'Failed to update profile name');
+    }
+  } catch (err) {
+    if (user) user.name = inputName;
+    saveGoogleUser(user || { name: inputName });
+    loadAccountProfileData();
+    if (typeof showCustomToast === 'function') showCustomToast('Profile name updated!');
+  }
+}
+
+async function handleAccountChangePassword(e) {
+  if (e) e.preventDefault();
+  const oldPass = document.getElementById('accountOldPassword')?.value || '';
+  const newPass = document.getElementById('accountNewPassword')?.value || '';
+  const confirmPass = document.getElementById('accountConfirmPassword')?.value || '';
+  const user = state.currentUser || getStoredGoogleUser();
+
+  if (!newPass || newPass.length < 4) {
+    alert('New password must be at least 4 characters long.');
+    return;
+  }
+  if (newPass !== confirmPass) {
+    alert('New password and Confirm password do not match.');
+    return;
+  }
+
+  const btn = document.getElementById('accountChangePassBtn');
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: user ? user.id : '',
+        email: user ? user.email : '',
+        oldPassword: oldPass,
+        newPassword: newPass
+      })
+    });
+    const data = await res.json();
+
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-key"></i> Update Password';
+
+    if (res.ok && data.success) {
+      document.getElementById('accountOldPassword').value = '';
+      document.getElementById('accountNewPassword').value = '';
+      document.getElementById('accountConfirmPassword').value = '';
+      if (typeof showCustomToast === 'function') showCustomToast('🔑 Password updated successfully!');
+      else alert('🔑 Password updated successfully!');
+    } else {
+      alert(data.error || 'Failed to change password.');
+    }
+  } catch (err) {
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-key"></i> Update Password';
+    alert('Error changing password: ' + err.message);
+  }
+}
+
+function toggleAccountPasswordBox() {
+  const box = document.getElementById('accountChangePasswordBox');
+  const arrow = document.getElementById('accountPassArrowIcon');
+  if (!box) return;
+
+  if (box.classList.contains('hidden')) {
+    box.classList.remove('hidden');
+    if (arrow) arrow.className = 'fa-solid fa-chevron-up';
+  } else {
+    box.classList.add('hidden');
+    if (arrow) arrow.className = 'fa-solid fa-chevron-down';
+  }
+}
+
+// ==================== FORGOT PASSWORD OTP WORKFLOW ====================
+let forgotPassState = { email: '' };
+
+function openForgotPasswordModal() {
+  forgotPassState.email = '';
+  showForgotPassStep(1);
+  const emailInput = document.getElementById('forgotPassEmailInput');
+  const currentEmail = document.getElementById('fullSignInEmail')?.value || '';
+  if (emailInput && currentEmail) emailInput.value = currentEmail;
+
+  const modal = document.getElementById('forgotPasswordModal');
+  if (modal) openModal(modal);
+}
+
+function showForgotPassStep(step) {
+  const s1 = document.getElementById('forgotPassStep1');
+  const s2 = document.getElementById('forgotPassStep2');
+  if (step === 1) {
+    if (s1) s1.style.display = 'block';
+    if (s2) s2.style.display = 'none';
+  } else {
+    if (s1) s1.style.display = 'none';
+    if (s2) s2.style.display = 'block';
+  }
+}
+
+async function handleSendForgotPassOtp() {
+  const emailInput = document.getElementById('forgotPassEmailInput');
+  const email = emailInput ? emailInput.value.trim() : '';
+
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid Gmail address.');
+    return;
+  }
+
+  forgotPassState.email = email;
+  const btn = document.getElementById('forgotPassSendOtpBtn');
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending Code...';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Verification Code';
+
+    if (res.ok && data.success) {
+      const targetEl = document.getElementById('forgotPassTargetEmail');
+      if (targetEl) targetEl.textContent = email;
+      showForgotPassStep(2);
+      if (typeof showCustomToast === 'function') showCustomToast(`📨 OTP sent to ${email}`);
+    } else {
+      alert(data.error || 'Failed to send OTP code');
+    }
+  } catch (err) {
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Verification Code';
+    alert('Error sending OTP code: ' + err.message);
+  }
+}
+
+async function handleResetPasswordSubmit() {
+  const email = forgotPassState.email || document.getElementById('forgotPassEmailInput')?.value.trim();
+  const otp = document.getElementById('forgotPassOtpInput')?.value.trim();
+  const newPass = document.getElementById('forgotPassNewPassword')?.value || '';
+  const confirmPass = document.getElementById('forgotPassConfirmPassword')?.value || '';
+
+  if (!otp || otp.length !== 6) {
+    alert('Please enter the 6-digit OTP code sent to your Gmail inbox.');
+    return;
+  }
+  if (!newPass || newPass.length < 4) {
+    alert('New password must be at least 4 characters long.');
+    return;
+  }
+  if (newPass !== confirmPass) {
+    alert('New password and Confirm password do not match.');
+    return;
+  }
+
+  const btn = document.getElementById('forgotPassResetBtn');
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Resetting...';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp, newPassword: newPass })
+    });
+    const data = await res.json();
+
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Reset & Save Password';
+
+    if (res.ok && data.success) {
+      closeModal(document.getElementById('forgotPasswordModal'));
+      if (typeof showCustomToast === 'function') showCustomToast('🎉 Password reset successfully! You can now log in.');
+      else alert('🎉 Password reset successfully! You can now log in.');
+      
+      const signInPass = document.getElementById('fullSignInPassword');
+      if (signInPass) signInPass.value = newPass;
+      openAuthScreen('signin');
+    } else {
+      alert(data.error || 'Failed to reset password.');
+    }
+  } catch (err) {
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Reset & Save Password';
+    alert('Error resetting password: ' + err.message);
+  }
 }

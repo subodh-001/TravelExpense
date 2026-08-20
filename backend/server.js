@@ -70,7 +70,21 @@ if (fs.existsSync(serviceAccountPath) || process.env.FIREBASE_CONFIG) {
   console.log('ℹ️ No Firebase service account found. Running in LOCAL STORAGE mode.');
 }
 
-// Local JSON helper functions
+// Server-Sent Events (SSE) Real-Time Sync Subscribers Store
+let sseClients = [];
+
+const broadcastEvent = (eventType, data = {}) => {
+  const payload = JSON.stringify({ event: eventType, data, timestamp: new Date().toISOString() });
+  sseClients.forEach(client => {
+    try {
+      client.res.write(`data: ${payload}\n\n`);
+    } catch (e) {
+      // client disconnected
+    }
+  });
+};
+
+// Local JSON helper functions with atomic write support
 const getLocalExpenses = () => {
   try {
     const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
@@ -80,8 +94,17 @@ const getLocalExpenses = () => {
   }
 };
 
-const saveLocalExpenses = (expenses) => {
-  fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(expenses, null, 2));
+const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
+  try {
+    const tempPath = `${LOCAL_DB_FILE}.tmp`;
+    fs.writeFileSync(tempPath, JSON.stringify(expenses, null, 2));
+    fs.renameSync(tempPath, LOCAL_DB_FILE);
+    if (triggerBroadcast) {
+      broadcastEvent('EXPENSES_UPDATED');
+    }
+  } catch (err) {
+    console.error('Error writing LOCAL_DB_FILE:', err);
+  }
 };
 
 const getLocalUsers = () => {
@@ -93,8 +116,17 @@ const getLocalUsers = () => {
   }
 };
 
-const saveLocalUsers = (users) => {
-  fs.writeFileSync(USERS_DB_FILE, JSON.stringify(users, null, 2));
+const saveLocalUsers = (users, triggerBroadcast = true) => {
+  try {
+    const tempPath = `${USERS_DB_FILE}.tmp`;
+    fs.writeFileSync(tempPath, JSON.stringify(users, null, 2));
+    fs.renameSync(tempPath, USERS_DB_FILE);
+    if (triggerBroadcast) {
+      broadcastEvent('USERS_UPDATED');
+    }
+  } catch (err) {
+    console.error('Error writing USERS_DB_FILE:', err);
+  }
 };
 
 // Seed Master Super Admin Account (subodhram3350@gmail.com / nothing05)
@@ -146,7 +178,28 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     mode: useFirebase ? 'Firebase' : 'Local Storage',
+    activeClients: sseClients.length,
     timestamp: new Date().toISOString()
+  });
+});
+
+// ---------- REAL-TIME SSE STREAM ENDPOINT ----------
+app.get('/api/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (res.flushHeaders) res.flushHeaders();
+
+  const clientId = Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+  const newClient = { id: clientId, res };
+  sseClients.push(newClient);
+
+  // Send initial ping to confirm connection
+  res.write(`data: ${JSON.stringify({ event: 'CONNECTED', clientId, timestamp: new Date().toISOString() })}\n\n`);
+
+  req.on('close', () => {
+    sseClients = sseClients.filter(c => c.id !== clientId);
   });
 });
 
@@ -299,6 +352,51 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
+// Change User Password Endpoint
+app.post('/api/auth/change-password', (req, res) => {
+  try {
+    const { userId, email, oldPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 4) {
+      return res.status(400).json({ error: 'New password must be at least 4 characters long' });
+    }
+
+    const users = getLocalUsers();
+    let targetKey = null;
+
+    if (userId && users[userId]) {
+      targetKey = userId;
+    } else if (email) {
+      const cleanEmail = email.toLowerCase().trim();
+      targetKey = Object.keys(users).find(key => users[key].email && users[key].email.toLowerCase() === cleanEmail);
+    }
+
+    if (!targetKey || !users[targetKey]) {
+      return res.status(404).json({ error: 'User account not found' });
+    }
+
+    const user = users[targetKey];
+    const newHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+    
+    if (oldPassword && user.passwordHash) {
+      const oldHash = crypto.createHash('sha256').update(oldPassword).digest('hex');
+      if (user.passwordHash !== oldHash) {
+        return res.status(400).json({ error: 'Current password is incorrect' });
+      }
+    }
+
+    user.passwordHash = newHash;
+    user.password = newPassword;
+    user.updatedAt = new Date().toISOString();
+    users[targetKey] = user;
+    saveLocalUsers(users);
+
+    return res.json({ success: true, message: 'Password updated successfully!' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    return res.status(500).json({ error: 'Server error while changing password' });
+  }
+});
+
 // Send 6-Digit OTP Verification Code
 app.post('/api/auth/send-otp', async (req, res) => {
   try {
@@ -397,6 +495,57 @@ app.post('/api/auth/verify-otp', (req, res) => {
     res.json({ success: true, user: safeUser, hasPassword });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Reset Password with OTP Endpoint
+app.post('/api/auth/reset-password', (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ error: 'Email, OTP Code, and New Password are required' });
+    }
+
+    if (newPassword.length < 4) {
+      return res.status(400).json({ error: 'New password must be at least 4 characters long' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const record = otpStore.get(cleanEmail);
+
+    if (!record) {
+      return res.status(400).json({ error: 'No active OTP requested for this email. Please click Send OTP.' });
+    }
+
+    if (record.expiresAt < Date.now()) {
+      otpStore.delete(cleanEmail);
+      return res.status(400).json({ error: 'OTP Code has expired. Please request a new code.' });
+    }
+
+    if (record.otp !== otp.toString().trim()) {
+      return res.status(400).json({ error: 'Invalid 6-digit OTP Code. Please check your Gmail inbox.' });
+    }
+
+    const users = getLocalUsers();
+    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    if (!users[userId]) {
+      return res.status(404).json({ error: 'No account found for this email address.' });
+    }
+
+    const newHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+    users[userId].passwordHash = newHash;
+    users[userId].password = newPassword;
+    users[userId].updatedAt = new Date().toISOString();
+    saveLocalUsers(users);
+
+    otpStore.delete(cleanEmail);
+
+    console.log(`🔐 Reset password successfully for ${cleanEmail}`);
+    return res.json({ success: true, message: 'Password reset successful! You can now sign in with your new password.' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -1009,6 +1158,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
+      broadcastEvent('EXPENSES_UPDATED', { expenseId: docRef.id, userId });
       return res.status(201).json({
         success: true,
         expenseId: docRef.id,
@@ -1058,6 +1208,7 @@ app.put('/api/expenses/:expenseId', authenticate, async (req, res) => {
       if (paymentStatus) updateData.paymentStatus = paymentStatus;
 
       await db.collection('expenses').doc(expenseId).update(updateData);
+      broadcastEvent('EXPENSES_UPDATED', { expenseId, userId });
       return res.json({ success: true, message: 'Expense updated successfully' });
     } else {
       const expenses = getLocalExpenses();
@@ -1101,6 +1252,7 @@ app.patch('/api/expenses/:expenseId/payment-status', authenticate, async (req, r
         paymentStatus,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
+      broadcastEvent('EXPENSES_UPDATED', { expenseId, paymentStatus });
       return res.json({ success: true, message: `Status updated to ${paymentStatus}` });
     } else {
       const expenses = getLocalExpenses();

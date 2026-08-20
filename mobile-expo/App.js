@@ -80,6 +80,31 @@ export default function App() {
     return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   }
 
+  useEffect(() => {
+    let interval;
+    if (screen === 'dashboard' && currentUser && currentUser.id) {
+      interval = setInterval(() => {
+        fetchExpensesForSilent(currentUser.id);
+      }, 5000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [screen, currentUser, baseUrl]);
+
+  const fetchExpensesForSilent = async (uid) => {
+    if (!uid) return;
+    try {
+      const res = await fetch(`${baseUrl}/expenses`, { headers: { 'user-id': uid } });
+      if (res.ok) {
+        const d = await res.json();
+        setExpenses(d.expenses || []);
+      }
+    } catch (e) {
+      // silent background refresh note
+    }
+  };
+
   function goToDashboard(user) {
     setCurrentUser(user);
     setScreen('dashboard');

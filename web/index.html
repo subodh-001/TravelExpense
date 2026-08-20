@@ -67,10 +67,11 @@
               </button>
               <p class="auth-field-error" id="signInPasswordError" style="display:none;">Password required</p>
             </div>
-            <div style="margin-top:8px; margin-bottom:16px;">
+            <div style="margin-top:8px; margin-bottom:16px; display: flex; justify-content: space-between; align-items: center;">
               <label class="auth-checkbox-label">
                 <input type="checkbox" checked /> Remember for 30 days
               </label>
+              <a href="#" class="auth-link" onclick="openForgotPasswordModal(); return false;" style="font-size: 0.82rem; font-weight: 700; color: #2563eb;">Forgot password?</a>
             </div>
             <button type="submit" class="auth-btn-dark">Sign in</button>
           </form>
@@ -290,152 +291,242 @@
     <!-- Main Content Container -->
     <main class="main-container" style="max-width: 800px; margin: 0 auto; padding: 24px 16px;">
 
-      <!-- ENTRY FORM CONTAINER (Matching Handwritten Paper Sketch) -->
-      <section style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 28px;">
-        <h3 style="margin: 0 0 20px 0; font-size: 1.2rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
-          <i class="fa-solid fa-pen-to-square" style="color: #2563eb;"></i> Add Travel Expense Entry
-        </h3>
+      <!-- DASHBOARD HOME TAB VIEW -->
+      <div id="dashboardHomeTab">
+        <!-- ENTRY FORM CONTAINER (Matching Handwritten Paper Sketch) -->
+        <section style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 28px;">
+          <h3 style="margin: 0 0 20px 0; font-size: 1.2rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+            <i class="fa-solid fa-pen-to-square" style="color: #2563eb;"></i> Add Travel Expense Entry
+          </h3>
 
-        <form id="handwrittenTravelForm" onsubmit="handleUserSubmitExpense(event)">
-          <!-- Camera / Photo Upload Box -->
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 8px;">
-              <i class="fa-solid fa-camera" style="color: #2563eb;"></i> Camera / Photo Uploads
-            </label>
-            <div id="photoDropzoneBox" onclick="document.getElementById('userPhotoFileInput').click()" style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: 14px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
-              <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.2rem; color: #64748b; margin-bottom: 8px; display: block;"></i>
-              <span style="font-weight: 700; color: #0f172a; font-size: 0.95rem; display: block;">Click or Drag to Upload Ticket / Receipt Photo</span>
-              <small style="color: #94a3b8; font-size: 0.8rem; display: block; margin-top: 4px;">Supports JPG, PNG, PDF receipts</small>
-              <input type="file" id="userPhotoFileInput" accept="image/*,application/pdf" style="display: none;" onchange="handleUserPhotoSelect(event)" />
+          <form id="handwrittenTravelForm" onsubmit="handleUserSubmitExpense(event)">
+            <!-- Camera / Photo Upload Box -->
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 8px;">
+                <i class="fa-solid fa-camera" style="color: #2563eb;"></i> Camera / Photo Uploads
+              </label>
+              <div id="photoDropzoneBox" onclick="document.getElementById('userPhotoFileInput').click()" style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: 14px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.2rem; color: #64748b; margin-bottom: 8px; display: block;"></i>
+                <span style="font-weight: 700; color: #0f172a; font-size: 0.95rem; display: block;">Click or Drag to Upload Ticket / Receipt Photo</span>
+                <small style="color: #94a3b8; font-size: 0.8rem; display: block; margin-top: 4px;">Supports JPG, PNG, PDF receipts</small>
+                <input type="file" id="userPhotoFileInput" accept="image/*,application/pdf" style="display: none;" onchange="handleUserPhotoSelect(event)" />
+              </div>
+              <div id="uploadedPhotoPreview" style="margin-top: 10px; display: none; align-items: center; gap: 10px; background: #f1f5f9; padding: 10px; border-radius: 10px;">
+                <i class="fa-solid fa-file-image" style="color: #059669; font-size: 1.2rem;"></i>
+                <span id="uploadedPhotoName" style="font-size: 0.85rem; font-weight: 600; color: #0f172a;">photo.jpg</span>
+              </div>
             </div>
-            <div id="uploadedPhotoPreview" style="margin-top: 10px; display: none; align-items: center; gap: 10px; background: #f1f5f9; padding: 10px; border-radius: 10px;">
-              <i class="fa-solid fa-file-image" style="color: #059669; font-size: 1.2rem;"></i>
-              <span id="uploadedPhotoName" style="font-size: 0.85rem; font-weight: 600; color: #0f172a;">photo.jpg</span>
+
+            <!-- Expense Date Field -->
+            <div class="form-group" style="margin-bottom: 18px;">
+              <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                <i class="fa-solid fa-calendar-days" style="color: #2563eb;"></i> Expense Date (Default: Today)
+              </label>
+              <input type="date" id="userDateInput" required style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.95rem; font-weight: 700; color: #0f172a; background: #ffffff; box-sizing: border-box;" />
+            </div>
+
+            <!-- Item Dropdown (Exact match with paper sketch) -->
+            <div class="form-group" style="margin-bottom: 18px;">
+              <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Item Category</label>
+              <select id="userItemSelect" required style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 0.92rem; color: #0f172a; background: #ffffff; outline: none;">
+                <option value="" disabled selected>Select Travel Item Category...</option>
+                <option value="Metro">🚇 Metro</option>
+                <option value="Local">🚆 Local (Train)</option>
+                <option value="Auto/Rapido">🛺 Auto / Rapido</option>
+                <option value="Ola/Uber">🚗 Ola / Uber</option>
+                <option value="Porter">📦 Porter</option>
+                <option value="Courier">✉️ Courier</option>
+                <option value="Food">🍱 Food</option>
+                <option value="Others">📌 Others</option>
+              </select>
+            </div>
+
+            <!-- Amount Field -->
+            <div class="form-group" style="margin-bottom: 18px;">
+              <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Amount (₹)</label>
+              <input type="number" id="userAmountInput" min="1" step="any" placeholder="Enter amount in ₹ (e.g. 150)" required style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.95rem; font-weight: 700; color: #0f172a; box-sizing: border-box;" />
+            </div>
+
+            <!-- Comment / Description Field -->
+            <div class="form-group" style="margin-bottom: 24px;">
+              <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Comment / Description</label>
+              <input type="text" id="userCommentInput" placeholder="Enter travel details or location notes..." style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.92rem; color: #0f172a; box-sizing: border-box;" />
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="userSubmitExpenseBtn" class="btn btn-primary" style="width: 100%; background: #0f172a; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(15,23,42,0.25);">
+              <i class="fa-solid fa-paper-plane"></i> Submit Travel Expense
+            </button>
+          </form>
+        </section>
+
+        <!-- MY UPLOADED ENTRIES SECTION -->
+        <section id="userEntriesSection" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f1f5f9; background: #f8fafc; flex-wrap: wrap; gap: 10px;">
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-clock-rotate-left" style="color: #059669;"></i> My Uploaded Entries
+            </h3>
+
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <!-- Month Filter Dropdown -->
+              <select id="userMonthFilter" style="padding: 8px 14px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; font-weight: 700; font-size: 0.85rem; color: #0f172a; cursor: pointer;" onchange="applyUserMonthFilter()">
+                <!-- Populated dynamically -->
+              </select>
+
+              <span id="userEntriesCountBadge" style="background: #e2e8f0; color: #0f172a; font-weight: 700; font-size: 0.8rem; padding: 4px 10px; border-radius: 20px;">0 Entries</span>
             </div>
           </div>
 
-          <!-- Item Dropdown (Exact match with paper sketch) -->
-          <div class="form-group" style="margin-bottom: 18px;">
-            <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Item Category</label>
-            <select id="userItemSelect" required style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 0.92rem; color: #0f172a; background: #ffffff; outline: none;">
-              <option value="" disabled selected>Select Travel Item Category...</option>
-              <option value="Metro">🚇 Metro</option>
-              <option value="Local">🚆 Local (Train)</option>
-              <option value="Auto/Rapido">🛺 Auto / Rapido</option>
-              <option value="Ola/Uber">🚗 Ola / Uber</option>
-              <option value="Porter">📦 Porter</option>
-              <option value="Courier">✉️ Courier</option>
-              <option value="Food">🍱 Food</option>
-              <option value="Others">📌 Others</option>
+          <!-- Entries Table Container -->
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+              <thead style="background: #f1f5f9;">
+                <tr>
+                  <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Date & Time</th>
+                  <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Category</th>
+                  <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;" class="col-numeric">Amount</th>
+                  <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Comment</th>
+                  <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Receipt</th>
+                  <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="userEntriesTableBody">
+                <!-- Dynamically populated entries -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- DASHBOARD ACCOUNT TAB VIEW -->
+      <div id="dashboardAccountTab" class="hidden" style="padding-bottom: 60px;">
+        
+        <!-- Profile Summary Card -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 24px; text-align: center;">
+          <div style="position: relative; display: inline-block; margin-bottom: 12px;">
+            <img id="accountProfileAvatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=User" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #0f172a; object-fit: cover;" />
+          </div>
+          <h2 id="accountProfileName" style="margin: 0 0 4px 0; font-size: 1.3rem; font-weight: 800; color: #0f172a;">User Name</h2>
+          <p id="accountProfileEmail" style="margin: 0 0 14px 0; font-size: 0.88rem; color: #64748b;">user@example.com</p>
+          
+          <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <span id="accountRoleBadge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 20px;">
+              <i class="fa-solid fa-user-shield"></i> Member Account
+            </span>
+            <button type="button" onclick="performSignOut()" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 0.8rem; font-weight: 700; padding: 4px 14px; border-radius: 20px; cursor: pointer;">
+              <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </button>
+          </div>
+        </div>
+
+        <!-- Edit Profile & Change Password Card -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 24px;">
+          <h3 style="margin: 0 0 18px 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+            <i class="fa-solid fa-user-gear" style="color: #2563eb;"></i> Profile & Password Settings
+          </h3>
+
+          <!-- Form: Update Name -->
+          <form onsubmit="handleAccountUpdateProfile(event)" style="margin-bottom: 24px;">
+            <div style="margin-bottom: 14px;">
+              <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Your Name / Username</label>
+              <input type="text" id="accountInputName" required style="width: 100%; padding: 11px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 0.92rem; box-sizing: border-box;" />
+            </div>
+            <button type="submit" class="btn btn-secondary" style="padding: 9px 18px; font-weight: 700; font-size: 0.85rem;">
+              <i class="fa-solid fa-floppy-disk"></i> Update Profile Name
+            </button>
+          </form>
+
+          <!-- Form: Change Password (Collapsible Accordion) -->
+          <div style="border-top: 1px dashed #cbd5e1; padding-top: 18px;">
+            <button type="button" onclick="toggleAccountPasswordBox()" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 16px; width: 100%; text-align: left; font-weight: 800; color: #0f172a; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              <span><i class="fa-solid fa-lock" style="color: #6366f1;"></i> Change Password</span>
+              <i id="accountPassArrowIcon" class="fa-solid fa-chevron-down" style="color: #64748b;"></i>
+            </button>
+
+            <form id="accountChangePasswordBox" onsubmit="handleAccountChangePassword(event)" class="hidden" style="margin-top: 14px; background: #fafafa; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px;">
+              <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Current Password</label>
+                <input type="password" id="accountOldPassword" placeholder="Enter current password" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;" />
+              </div>
+
+              <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 4px;">New Password</label>
+                <input type="password" id="accountNewPassword" placeholder="Enter new password" required minlength="4" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;" />
+              </div>
+
+              <div style="margin-bottom: 18px;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Confirm New Password</label>
+                <input type="password" id="accountConfirmPassword" placeholder="Re-enter new password" required minlength="4" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;" />
+              </div>
+
+              <button type="submit" id="accountChangePassBtn" class="btn btn-primary" style="background: #0f172a; color: #ffffff; padding: 10px 20px; font-weight: 800; font-size: 0.88rem; border-radius: 8px; cursor: pointer;">
+                <i class="fa-solid fa-key"></i> Update Password
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Monthly Expense History & Settlement Status Section -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-clock-rotate-left" style="color: #059669;"></i> Expense History & Payment Status
+            </h3>
+
+            <!-- Month Filter Dropdown -->
+            <select id="accountMonthFilter" onchange="renderAccountExpenseHistory()" style="padding: 7px 14px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; font-weight: 700; font-size: 0.85rem; color: #0f172a; cursor: pointer;">
+              <!-- Populated dynamically -->
             </select>
           </div>
 
-          <!-- Amount Field -->
-          <div class="form-group" style="margin-bottom: 18px;">
-            <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Amount (₹)</label>
-            <input type="number" id="userAmountInput" min="1" step="any" placeholder="Enter amount in ₹ (e.g. 150)" required style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.95rem; font-weight: 700; color: #0f172a; box-sizing: border-box;" />
-          </div>
-
-          <!-- Comment / Description Field -->
-          <div class="form-group" style="margin-bottom: 24px;">
-            <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Comment / Description</label>
-            <input type="text" id="userCommentInput" placeholder="Enter travel details or location notes..." style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.92rem; color: #0f172a; box-sizing: border-box;" />
-          </div>
-
-          <!-- Submit Button -->
-          <button type="submit" id="userSubmitExpenseBtn" class="btn btn-primary" style="width: 100%; background: #0f172a; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(15,23,42,0.25);">
-            <i class="fa-solid fa-paper-plane"></i> Submit Travel Expense
-          </button>
-        </form>
-      </section>
-
-      <!-- STATS & SUMMARY WIDGET -->
-      <section id="userStatsSection" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 28px;">
-        <h3 style="margin: 0 0 16px 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
-          <i class="fa-solid fa-chart-simple" style="color: #6366f1;"></i> Expense Summary & Stats
-        </h3>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px;">
-          <!-- Lifetime Total Card -->
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center;">
-            <span style="font-size: 0.78rem; font-weight: 700; color: #64748b; display: block; text-transform: uppercase; margin-bottom: 4px;">Lifetime Total</span>
-            <strong id="userStatsLifetimeTotal" style="font-size: 1.25rem; color: #0f172a; display: block;">₹0</strong>
-          </div>
-          <!-- Paid/Reimbursed Card -->
-          <div style="background: #ecfdf5; border: 1px solid #d1fae5; border-radius: 12px; padding: 14px; text-align: center;">
-            <span style="font-size: 0.78rem; font-weight: 700; color: #047857; display: block; text-transform: uppercase; margin-bottom: 4px;">Paid / Reimbursed</span>
-            <strong id="userStatsPaidTotal" style="font-size: 1.25rem; color: #065f46; display: block;">₹0</strong>
-          </div>
-          <!-- Pending Settlement Card -->
-          <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 14px; text-align: center;">
-            <span style="font-size: 0.78rem; font-weight: 700; color: #b45309; display: block; text-transform: uppercase; margin-bottom: 4px;">Pending Settlement</span>
-            <strong id="userStatsPendingTotal" style="font-size: 1.25rem; color: #92400e; display: block;">₹0</strong>
-          </div>
-        </div>
-      </section>
-
-      <!-- MY UPLOADED ENTRIES SECTION -->
-      <section id="userEntriesSection" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f1f5f9; background: #f8fafc; flex-wrap: wrap; gap: 10px;">
-          <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-            <i class="fa-solid fa-list-check" style="color: #059669;"></i> My Uploaded Entries
-          </h3>
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px;">
-              <i class="fa-solid fa-calendar-days" style="color: #64748b; font-size: 0.85rem;"></i>
-              <select id="userMonthFilter" onchange="applyUserMonthFilter()" style="border: none; background: transparent; font-weight: 700; font-size: 0.82rem; color: #0f172a; outline: none; cursor: pointer;">
-                <option value="all">📅 All Months</option>
-                <option value="2026-08" selected>August 2026</option>
-                <option value="2026-07">July 2026</option>
-                <option value="2026-06">June 2026</option>
-                <option value="2026-05">May 2026</option>
-                <option value="2026-04">April 2026</option>
-                <option value="2026-03">March 2026</option>
-                <option value="2026-02">February 2026</option>
-                <option value="2026-01">January 2026</option>
-              </select>
+          <!-- Monthly Summary Cards -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 20px;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #64748b; display: block; text-transform: uppercase; margin-bottom: 4px;">Total Logged</span>
+              <strong id="accountTotalLoggedSum" style="font-size: 1.2rem; color: #0f172a; display: block;">₹0</strong>
             </div>
-            <span class="badge" id="userEntriesCountBadge" style="background: #e2e8f0; color: #334155; font-weight: 700;">0 Entries</span>
+            <div style="background: #ecfdf5; border: 1px solid #d1fae5; border-radius: 12px; padding: 14px; text-align: center;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #047857; display: block; text-transform: uppercase; margin-bottom: 4px;">Paid / Settled</span>
+              <strong id="accountPaidSum" style="font-size: 1.2rem; color: #065f46; display: block;">₹0</strong>
+            </div>
+            <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 14px; text-align: center;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #b45309; display: block; text-transform: uppercase; margin-bottom: 4px;">Pending Settlement</span>
+              <strong id="accountPendingSum" style="font-size: 1.2rem; color: #92400e; display: block;">₹0</strong>
+            </div>
+          </div>
+
+          <!-- History Table -->
+          <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+              <thead style="background: #f1f5f9;">
+                <tr>
+                  <th style="padding: 10px 14px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Date & Time</th>
+                  <th style="padding: 10px 14px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Category</th>
+                  <th style="padding: 10px 14px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Amount</th>
+                  <th style="padding: 10px 14px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Comment</th>
+                  <th style="padding: 10px 14px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Receipt</th>
+                  <th style="padding: 10px 14px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="accountExpenseHistoryTableBody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div style="overflow-x: auto;">
-          <table class="excel-table" style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="background: #ffffff; border-bottom: 2px solid #f1f5f9; text-align: left;">
-                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Date</th>
-                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Category</th>
-                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;" class="col-numeric">Amount</th>
-                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Comment</th>
-                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Receipt</th>
-                <th style="padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Status</th>
-              </tr>
-            </thead>
-            <tbody id="userEntriesTableBody">
-              <!-- Dynamically populated entries -->
-            </tbody>
-          </table>
-        </div>
-      </section>
+      </div>
     </main>
   </div>
 
-  <!-- Mobile Bottom Navigation Bar -->
-  <nav class="mobile-nav-bar">
-    <button class="nav-item active" id="navHome">
+  <!-- Mobile Bottom Navigation Bar (Home & Account) -->
+  <nav class="mobile-nav-bar" style="display: flex; justify-content: space-around;">
+    <button class="nav-item active" id="navHome" onclick="switchDashboardTab('home')">
       <i class="fa-solid fa-house"></i>
       <span>Home</span>
     </button>
-    <button class="nav-item" id="navReceipts">
-      <i class="fa-solid fa-paperclip"></i>
-      <span>Receipts</span>
-    </button>
-    <button class="nav-item" id="navStats">
-      <i class="fa-solid fa-chart-pie"></i>
-      <span>Stats</span>
-    </button>
-    <button class="nav-item" id="navProfile">
-      <i class="fa-solid fa-user-circle"></i>
+    <button class="nav-item" id="navProfile" onclick="switchDashboardTab('account')">
+      <i class="fa-solid fa-circle-user"></i>
       <span>Account</span>
     </button>
   </nav>
@@ -1035,16 +1126,177 @@
       </div>
 
       <!-- Uploaded Bill / Receipt Photo Preview Box -->
-      <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px; margin-bottom: 16px; text-align: center;">
-        <div id="editMemberBillStatusDisplay" style="font-size: 0.85rem; color: #64748b;">
+      <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px; margin-bottom: 16px; text-align: center;">
+        <div id="editMemberBillStatusDisplay" style="font-size: 0.85rem; color: #64748b; margin-bottom: 6px;">
           Checking uploaded bill...
         </div>
-        <img id="editMemberBillImage" src="" alt="Uploaded Bill" style="display: none; max-height: 220px; width: 100%; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 8px; cursor: pointer;" onclick="openUploadedBillFullSize()" />
+        <div style="position: relative; display: inline-block; width: 100%;">
+          <img id="editMemberBillImage" src="" alt="Uploaded Bill Proof" style="display: none; max-height: 220px; width: 100%; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer;" onclick="openUploadedBillFullSize()" title="Click to view full size photo" />
+        </div>
+        
+        <!-- Photo Management Action Bar -->
+        <div style="display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap;">
+          <input type="file" id="adminReuploadBillInput" accept="image/*,.pdf" style="display: none;" onchange="handleAdminReuploadBillSelect(event)" />
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('adminReuploadBillInput').click()" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">
+            <i class="fa-solid fa-camera"></i> Change / Re-upload Photo
+          </button>
+          <button type="button" class="btn" onclick="handleAdminDeleteBill()" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">
+            <i class="fa-solid fa-trash-can"></i> Delete Photo Proof
+          </button>
+        </div>
+      </div>
+
+      <!-- Member Actions Grid -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+        <button type="button" class="btn btn-secondary" onclick="inspectMemberLogsFromEdit()" style="padding: 10px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <i class="fa-solid fa-list-check" style="color: #2563eb;"></i> Inspect Expenses
+        </button>
+        <button type="button" class="btn" onclick="deleteMemberFromEditModal()" style="padding: 10px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; background: #991b1b; color: #ffffff; border: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <i class="fa-solid fa-user-slash"></i> Delete Member
+        </button>
       </div>
 
       <div style="display: flex; justify-content: flex-end;">
-        <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('editMemberAdminModal'))" style="padding: 8px 20px; border-radius: 8px; font-weight: 700; font-size: 0.88rem;">Close</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('editMemberAdminModal'))" style="padding: 8px 20px; border-radius: 8px; font-weight: 700; font-size: 0.88rem;">Done</button>
       </div>
+    </div>
+  </div>
+
+  <!-- USER INSPECTION DETAIL MODAL (Admin View Only Member Expenses & Monthly Excel Export) -->
+  <div class="modal-overlay" id="inspectUserModal" style="z-index: 10005;">
+    <div class="modal-card" style="max-width: 920px; width: 95%; border-radius: 18px; background: #ffffff; padding: 24px; box-shadow: 0 25px 60px rgba(0,0,0,0.2); max-height: 90vh; display: flex; flex-direction: column;">
+      
+      <!-- Modal Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img id="inspectUserAvatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=User" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #0f172a; object-fit: cover;" />
+          <div>
+            <h3 id="inspectUserNameTitle" style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Member Expenses</h3>
+            <span id="inspectUserEmailSub" style="font-size: 0.82rem; color: #64748b;">user@email.com</span>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 6px;">
+            <i class="fa-solid fa-eye"></i> View Only Mode
+          </span>
+          <button type="button" onclick="closeModal(document.getElementById('inspectUserModal'))" style="border: none; background: none; font-size: 1.2rem; cursor: pointer; color: #64748b; padding: 4px;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Controls & Filter Toolbar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <label style="font-size: 0.85rem; font-weight: 700; color: #334155;">Filter Month:</label>
+          <select id="inspectUserMonthFilter" style="padding: 7px 14px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; font-weight: 700; font-size: 0.85rem; color: #0f172a; cursor: pointer;" onchange="handleInspectUserMonthChange()">
+            <!-- Populated dynamically -->
+          </select>
+          <span id="inspectUserEntriesCountBadge" style="background: #e2e8f0; color: #0f172a; font-weight: 700; font-size: 0.8rem; padding: 4px 10px; border-radius: 20px;">0 Entries</span>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" class="btn" onclick="exportInspectUserExpensesExcel()" style="padding: 9px 18px; background: #059669; color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(5,150,105,0.25);">
+            <i class="fa-solid fa-file-excel"></i> Download Monthly Expenses (Excel)
+          </button>
+        </div>
+      </div>
+
+      <!-- Uploaded Payment Proof Section inside Inspect User Modal -->
+      <div id="inspectUserBillProofContainer" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <span style="font-size: 0.85rem; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Checking payment proof status...</span>
+      </div>
+
+      <!-- Table Container -->
+      <div style="overflow-y: auto; flex: 1; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+          <thead style="background: #f1f5f9; position: sticky; top: 0; z-index: 2;">
+            <tr>
+              <th style="padding: 12px 16px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Date & Time</th>
+              <th style="padding: 12px 16px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Category</th>
+              <th style="padding: 12px 16px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Amount</th>
+              <th style="padding: 12px 16px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Comment</th>
+              <th style="padding: 12px 16px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Receipt</th>
+              <th style="padding: 12px 16px; font-size: 0.78rem; font-weight: 800; color: #475569; text-transform: uppercase;">Status</th>
+            </tr>
+          </thead>
+          <tbody id="inspectUserTableBody">
+            <!-- Rows dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+        <div style="font-size: 0.85rem; color: #475569;">
+          Total Monthly Amount: <strong id="inspectUserTotalAmountSum" style="font-size: 1.05rem; color: #0f172a;">₹0</strong>
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('inspectUserModal'))" style="padding: 8px 20px; border-radius: 8px; font-weight: 700; font-size: 0.88rem;">Close Inspection</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD OTP MODAL -->
+  <div class="modal-overlay" id="forgotPasswordModal" style="z-index: 10006;">
+    <div class="modal-card" style="max-width: 440px; width: 92%; border-radius: 18px; background: #ffffff; padding: 26px; box-shadow: 0 25px 60px rgba(0,0,0,0.25);">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px;">
+        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-key" style="color: #2563eb;"></i> Forgot Password
+        </h3>
+        <button type="button" onclick="closeModal(document.getElementById('forgotPasswordModal'))" style="border: none; background: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Step 1: Send Reset OTP -->
+      <div id="forgotPassStep1">
+        <p style="font-size: 0.88rem; color: #475569; margin-top: 0; margin-bottom: 16px;">
+          Enter your registered Gmail address. We will send a 6-digit OTP code to reset your password.
+        </p>
+
+        <div style="margin-bottom: 18px;">
+          <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Email Address</label>
+          <input type="email" id="forgotPassEmailInput" placeholder="Enter your registered Gmail" required style="width: 100%; padding: 11px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 0.92rem; box-sizing: border-box;" />
+        </div>
+
+        <button type="button" id="forgotPassSendOtpBtn" onclick="handleSendForgotPassOtp()" class="btn btn-primary" style="width: 100%; background: #0f172a; color: #ffffff; border: none; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 0.92rem; cursor: pointer;">
+          <i class="fa-solid fa-paper-plane"></i> Send Verification Code
+        </button>
+      </div>
+
+      <!-- Step 2: Verify OTP & Set New Password -->
+      <div id="forgotPassStep2" style="display: none;">
+        <p style="font-size: 0.85rem; color: #475569; margin-top: 0; margin-bottom: 14px;">
+          Enter the 6-digit OTP code sent to <strong id="forgotPassTargetEmail" style="color: #0f172a;"></strong> and set your new password.
+        </p>
+
+        <div style="margin-bottom: 14px; text-align: center;">
+          <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 6px;">6-Digit OTP Code</label>
+          <input type="text" id="forgotPassOtpInput" maxlength="6" placeholder="000000" style="font-size: 1.8rem; font-weight: 900; letter-spacing: 8px; text-align: center; width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;" />
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 4px;">New Password</label>
+          <input type="password" id="forgotPassNewPassword" placeholder="Enter new password (min 4 chars)" required minlength="4" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;" />
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 4px;">Confirm New Password</label>
+          <input type="password" id="forgotPassConfirmPassword" placeholder="Re-enter new password" required minlength="4" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;" />
+        </div>
+
+        <button type="button" id="forgotPassResetBtn" onclick="handleResetPasswordSubmit()" class="btn btn-primary" style="width: 100%; background: #059669; color: #ffffff; border: none; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 0.92rem; cursor: pointer;">
+          <i class="fa-solid fa-check"></i> Reset & Save Password
+        </button>
+
+        <p style="text-align: center; margin-top: 14px; margin-bottom: 0;">
+          <a href="#" onclick="showForgotPassStep(1); return false;" style="font-size: 0.82rem; color: #64748b; font-weight: 700;">← Change Email</a>
+        </p>
+      </div>
+
     </div>
   </div>
 
