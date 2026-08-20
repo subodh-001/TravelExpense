@@ -1028,21 +1028,36 @@ function renderUserEntriesList() {
   const tbody = document.getElementById('userEntriesTableBody');
   const countBadge = document.getElementById('userEntriesCountBadge');
   const totalValEl = document.getElementById('userTotalSpentHeaderVal');
+  const topBadge = document.getElementById('userTopTotalSpentBadge');
   if (!tbody) return;
 
   const userExpenses = state.expenses || [];
 
-  // Calculate lifetime total spent (sum of all uploaded expenses ever)
-  const lifetimeTotal = userExpenses.reduce((sum, exp) => sum + (exp.total || 0), 0);
-  if (totalValEl) totalValEl.textContent = `₹${lifetimeTotal.toLocaleString('en-IN')}`;
-
   // Calculate detailed stats
+  const lifetimeTotal = userExpenses.reduce((sum, exp) => sum + (exp.total || 0), 0);
   const paidExpenses = userExpenses.filter(exp => exp.paymentStatus === 'paid');
   const paidTotal = paidExpenses.reduce((sum, exp) => sum + (exp.total || 0), 0);
   const pendingExpenses = userExpenses.filter(exp => exp.paymentStatus !== 'paid');
   const pendingTotal = pendingExpenses.reduce((sum, exp) => sum + (exp.total || 0), 0);
 
-  // Render stats cards
+  // Update top-right header status badge based on pending balance
+  if (topBadge) {
+    if (pendingTotal > 0) {
+      topBadge.style.background = '#fffbeb';
+      topBadge.style.border = '1px solid #fef3c7';
+      topBadge.style.color = '#b45309';
+      topBadge.innerHTML = `<i class="fa-solid fa-clock" style="color: #b45309;"></i> Pending: <span style="color: #b45309; font-weight: 800; margin-left: 2px;">₹${pendingTotal.toLocaleString('en-IN')}</span>`;
+    } else {
+      topBadge.style.background = '#ecfdf5';
+      topBadge.style.border = '1px solid #d1fae5';
+      topBadge.style.color = '#047857';
+      topBadge.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #047857;"></i> All Settled: <span style="color: #047857; font-weight: 800; margin-left: 2px;">₹0</span>`;
+    }
+  } else if (totalValEl) {
+    totalValEl.textContent = `₹${pendingTotal.toLocaleString('en-IN')}`;
+  }
+
+  // Render stats cards if present
   const statsLifetime = document.getElementById('userStatsLifetimeTotal');
   const statsPaid = document.getElementById('userStatsPaidTotal');
   const statsPending = document.getElementById('userStatsPendingTotal');
