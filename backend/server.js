@@ -943,17 +943,49 @@ app.post('/api/admin/update-settlement-bill', upload.single('paymentProof'), asy
     });
 
     const users = getLocalUsers();
-    if (users[userId]) {
+    const targetUser = users[userId];
+    if (targetUser) {
       if (action === 'delete') {
-        users[userId].paymentBillUrl = '';
+        targetUser.paymentBillUrl = '';
       } else if (action === 'update' && paymentBillUrl) {
-        users[userId].paymentBillUrl = paymentBillUrl;
+        targetUser.paymentBillUrl = paymentBillUrl;
       }
-      users[userId].updatedAt = new Date().toISOString();
+      targetUser.updatedAt = new Date().toISOString();
       saveLocalUsers(users);
     }
 
     saveLocalExpenses(allExpenses);
+
+    // Send email notification to user on bill update
+    if (action === 'update' && mailTransporter && targetUser && targetUser.email && paymentBillUrl) {
+      try {
+        await mailTransporter.sendMail({
+          from: `"FreeG TravelExpense Admin" <subodhram3350@gmail.com>`,
+          to: targetUser.email,
+          subject: `⚡ Updated Reimbursement Payment Proof Bill - FreeG TravelExpense`,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #0f172a; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px;">
+              <h2 style="color: #059669; margin-top: 0;">Updated Payment Bill Proof Uploaded</h2>
+              <p>Hello <strong>${targetUser.name || 'Member'}</strong>,</p>
+              <p>Your Super Admin has uploaded an <strong>updated payment proof bill</strong> for your travel expense reimbursements (${month || 'Current Month'}).</p>
+              <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin: 16px 0; text-align: center;">
+                <p style="margin-bottom: 8px; font-weight: bold; color: #334155;">Updated Bill Proof Photo:</p>
+                <a href="${paymentBillUrl}" target="_blank" style="display: inline-block; background: #0f172a; color: #ffffff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                  🖼️ View Updated Bill Photo
+                </a>
+              </div>
+              <p style="color: #64748b; font-size: 0.85rem;">You can also view this updated bill inside your app under <strong>Account → Expense History</strong>.</p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+              <p style="font-size: 0.8rem; color: #94a3b8; margin: 0;">FreeG Wifi Travel Expense Management System</p>
+            </div>
+          `
+        });
+        console.log(`📧 Updated payment bill email sent to ${targetUser.email}`);
+      } catch (e) {
+        console.warn(`⚠️ Failed to send updated payment bill email:`, e.message);
+      }
+    }
+
     res.json({
       success: true,
       message: action === 'delete' ? 'Payment bill deleted and status reset to Pending' : 'Payment bill updated successfully',

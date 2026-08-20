@@ -3706,17 +3706,79 @@ async function handleInspectDeleteBill() {
   });
 }
 
-async function handleInspectReuploadBillSelect(e) {
-  const file = e.target.files ? e.target.files[0] : null;
-  const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || 'all';
+let inspectSelectedNewBillFile = null;
 
+function handleInspectReuploadBillSelect(e) {
+  const file = e.target.files ? e.target.files[0] : null;
   if (!file || !currentInspectUserId) return;
+
+  inspectSelectedNewBillFile = file;
+
+  let updateBox = document.getElementById('inspectBillUpdatePreviewBox');
+  const container = document.getElementById('inspectUserBillProofContainer');
+  if (!updateBox && container) {
+    updateBox = document.createElement('div');
+    updateBox.id = 'inspectBillUpdatePreviewBox';
+    container.appendChild(updateBox);
+  }
+
+  if (updateBox) {
+    updateBox.style.display = 'flex';
+    updateBox.style.marginTop = '14px';
+    updateBox.style.width = '100%';
+    updateBox.style.background = '#f0fdf4';
+    updateBox.style.border = '1.5px dashed #16a34a';
+    updateBox.style.borderRadius = '10px';
+    updateBox.style.padding = '12px 16px';
+    updateBox.style.alignItems = 'center';
+    updateBox.style.justifyContent = 'space-between';
+    updateBox.style.gap = '12px';
+    updateBox.style.flexWrap = 'wrap';
+
+    updateBox.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-file-circle-plus" style="font-size: 1.5rem; color: #16a34a;"></i>
+        <div>
+          <span style="font-weight: 800; font-size: 0.88rem; color: #14532d; display: block;">New Bill Photo Selected:</span>
+          <span style="font-size: 0.8rem; color: #166534; font-weight: 600;">${file.name}</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button type="button" class="btn" id="confirmUpdateBillBtn" onclick="confirmAndUpdateBillProof()" style="background: #15803d; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 0.85rem; border: none; cursor: pointer; box-shadow: 0 2px 8px rgba(21,128,61,0.25);">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Update & Send Bill to Member
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="cancelBillProofSelection()" style="padding: 8px 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
+          Cancel
+        </button>
+      </div>
+    `;
+  }
+}
+
+function cancelBillProofSelection() {
+  inspectSelectedNewBillFile = null;
+  const input = document.getElementById('inspectReuploadBillInput');
+  if (input) input.value = '';
+  const updateBox = document.getElementById('inspectBillUpdatePreviewBox');
+  if (updateBox) updateBox.remove();
+}
+
+async function confirmAndUpdateBillProof() {
+  if (!inspectSelectedNewBillFile || !currentInspectUserId) {
+    alert('Please select a photo file first');
+    return;
+  }
+
+  const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || 'all';
+  const btn = document.getElementById('confirmUpdateBillBtn');
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating & Sending Email...';
 
   const formData = new FormData();
   formData.append('userId', currentInspectUserId);
   formData.append('month', selectedMonth);
   formData.append('action', 'update');
-  formData.append('paymentProof', file);
+  formData.append('paymentProof', inspectSelectedNewBillFile);
 
   try {
     const res = await fetch(`${API_BASE_URL}/admin/update-settlement-bill`, {
@@ -3725,14 +3787,20 @@ async function handleInspectReuploadBillSelect(e) {
     });
     const data = await res.json();
     if (res.ok && data.success) {
-      if (typeof showCustomToast === 'function') showCustomToast('Payment proof updated successfully!');
-      else alert('Payment proof updated successfully!');
+      inspectSelectedNewBillFile = null;
+      if (typeof showCustomToast === 'function') {
+        showCustomToast('✅ Payment proof updated & email sent to member!');
+      } else {
+        alert('✅ Payment proof updated & email sent to member!');
+      }
       loadSuperAdminData();
       inspectUserExpenses(currentInspectUserId);
     } else {
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Update & Send Bill to Member';
       alert(data.error || 'Failed to update bill');
     }
   } catch (err) {
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Update & Send Bill to Member';
     alert('Error re-uploading bill: ' + err.message);
   }
 }
