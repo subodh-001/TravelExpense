@@ -1141,7 +1141,7 @@ function renderUserEntriesList() {
   if (filteredExpenses.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="text-align: center; padding: 32px; color: #64748b;">
+        <td colspan="7" style="text-align: center; padding: 32px; color: #64748b;">
           <i class="fa-solid fa-folder-open" style="font-size: 2rem; color: #94a3b8; margin-bottom: 8px; display: block;"></i>
           No uploaded travel entries for the selected month.
         </td>
@@ -1155,6 +1155,17 @@ function renderUserEntriesList() {
     const statusBadge = isPaid
       ? `<span style="background: #ecfdf5; color: #047857; border: 1px solid #d1fae5; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> Paid</span>`
       : `<span style="background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-clock"></i> Pending</span>`;
+
+    const actionButtonsHtml = isPaid
+      ? `<span style="color: #94a3b8; font-size: 0.78rem; font-weight: 600;"><i class="fa-solid fa-lock"></i> Settled</span>`
+      : `<div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+          <button type="button" onclick="openEditExpenseModal('${exp.id}')" title="Edit Expense Entry" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 5px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;">
+            <i class="fa-solid fa-pen-to-square"></i> Edit
+          </button>
+          <button type="button" onclick="deleteExpense('${exp.id}')" title="Delete Expense Entry" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 5px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;">
+            <i class="fa-solid fa-trash-can"></i> Delete
+          </button>
+        </div>`;
 
     const dateTimeDisplay = formatExpenseDateTime(exp);
 
@@ -1173,6 +1184,7 @@ function renderUserEntriesList() {
         <td style="padding: 12px 16px; color: #64748b; font-size: 0.85rem;">${exp.notes || exp.comments || 'N/A'}</td>
         <td style="padding: 12px 16px;">${receiptHtml}</td>
         <td style="padding: 12px 16px;">${statusBadge}</td>
+        <td style="padding: 12px 16px; text-align: center;">${actionButtonsHtml}</td>
       </tr>
     `;
   }).join('');
