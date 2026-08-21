@@ -18,11 +18,13 @@ const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const DATA_DIR = path.join(__dirname, 'data');
 const LOCAL_DB_FILE = path.join(DATA_DIR, 'expenses.json');
 const USERS_DB_FILE = path.join(DATA_DIR, 'users.json');
+const INVITES_DB_FILE = path.join(DATA_DIR, 'invites.json');
 
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(LOCAL_DB_FILE)) fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify([]));
 if (!fs.existsSync(USERS_DB_FILE)) fs.writeFileSync(USERS_DB_FILE, JSON.stringify({}));
+if (!fs.existsSync(INVITES_DB_FILE)) fs.writeFileSync(INVITES_DB_FILE, JSON.stringify({}));
 
 // Serve local uploads statically
 app.use('/uploads', express.static(UPLOADS_DIR));
@@ -126,6 +128,25 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
     }
   } catch (err) {
     console.error('Error writing USERS_DB_FILE:', err);
+  }
+};
+
+const getLocalInvites = () => {
+  try {
+    const raw = fs.readFileSync(INVITES_DB_FILE, 'utf8');
+    return JSON.parse(raw || '{}');
+  } catch (e) {
+    return {};
+  }
+};
+
+const saveLocalInvites = (invites) => {
+  try {
+    const tempPath = `${INVITES_DB_FILE}.tmp`;
+    fs.writeFileSync(tempPath, JSON.stringify(invites, null, 2));
+    fs.renameSync(tempPath, INVITES_DB_FILE);
+  } catch (err) {
+    console.error('Error writing INVITES_DB_FILE:', err);
   }
 };
 
@@ -1680,6 +1701,142 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ---------- ADMIN INVITE & VERIFICATION ROUTES ----------
+app.post('/api/admin/invite-member', async (req, res) => {
+  try {
+    const { name, email, role } = req.body;
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Valid email address is required' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const token = crypto.randomBytes(24).toString('hex');
+    const roleToSet = role === 'admin' ? 'admin' : 'user';
+
+    const invites = getLocalInvites();
+    invites[token] = {
+      token,
+      email: cleanEmail,
+      name: name || cleanEmail.split('@')[0],
+      role: roleToSet,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    };
+    saveLocalInvites(invites);
+
+    const reqOrigin = req.get('origin') || req.get('referer') || `${req.protocol}://${req.get('host')}`;
+    const cleanOrigin = reqOrigin.replace(/\/$/, '');
+    const verifyLink = `${cleanOrigin}/?inviteToken=${token}`;
+
+    const roleTitle = roleToSet === 'admin' ? 'Admin Portal Access' : 'Member Access';
+
+    const mailResult = await sendEmailNotification({
+      to: cleanEmail,
+      subject: `✉️ Complete FGTech ${roleTitle} Setup for ${name || cleanEmail}`,
+      fromName: 'FGTech Admin',
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 20px; background: #ffffff;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <h2 style="color: #0f172a; font-size: 24px; font-weight: 900; margin: 0;">FGTECH</h2>
+            <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Account Invitation & Verification</p>
+          </div>
+          
+          <p style="color: #334155; font-size: 15px; line-height: 1.6;">Hello <strong>${name || cleanEmail}</strong>,</p>
+          <p style="color: #334155; font-size: 15px; line-height: 1.6;">You have been invited by Admin to join FGTech with <strong>${roleTitle}</strong>.</p>
+          <p style="color: #334155; font-size: 15px; line-height: 1.6; margin-bottom: 28px;">Please click the button below to verify your email and set up your account password:</p>
+
+          <div style="text-align: center; margin-bottom: 32px;">
+            <a href="${verifyLink}" target="_blank" style="background: #0047ff; color: #ffffff; padding: 14px 32px; border-radius: 12px; font-weight: 800; font-size: 16px; text-decoration: none; display: inline-block; box-shadow: 0 4px 14px rgba(0,71,255,0.35);">
+              Verify & Set Password →
+            </a>
+          </div>
+
+          <p style="color: #94a3b8; font-size: 12px; line-height: 1.5; text-align: center;">Or copy & paste this link into your browser:<br/><a href="${verifyLink}" style="color: #2563eb;">${verifyLink}</a></p>
+        </div>
+      `
+    });
+
+    if (!mailResult.success) {
+      return res.status(500).json({ error: `Failed to send invite email: ${mailResult.error}` });
+    }
+
+    res.json({
+      success: true,
+      message: `Invitation email sent successfully to ${cleanEmail}!`,
+      verifyLink
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/invite/:token', (req, res) => {
+  try {
+    const { token } = req.params;
+    const invites = getLocalInvites();
+    const inv = invites[token];
+
+    if (!inv) {
+      return res.status(404).json({ error: 'Invalid or expired invitation link' });
+    }
+
+    if (inv.expiresAt && new Date(inv.expiresAt) < new Date()) {
+      return res.status(410).json({ error: 'Invitation link has expired. Please ask Admin to resend.' });
+    }
+
+    res.json({ success: true, invite: inv });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/complete-invite', (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    const invites = getLocalInvites();
+    const inv = invites[token];
+
+    if (!inv) {
+      return res.status(404).json({ error: 'Invalid or expired invitation link' });
+    }
+
+    const cleanEmail = inv.email.toLowerCase().trim();
+    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const users = getLocalUsers();
+    const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+
+    const newUser = {
+      id: userId,
+      name: inv.name || cleanEmail.split('@')[0],
+      email: cleanEmail,
+      role: inv.role || 'user',
+      picture: DEFAULT_USER_AVATAR,
+      passwordHash,
+      verified: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    users[userId] = newUser;
+    saveLocalUsers(users);
+
+    delete invites[token];
+    saveLocalInvites(invites);
+
+    const safeUser = { ...newUser };
+    delete safeUser.passwordHash;
+
+    console.log(`🎉 Account verified & activated for ${cleanEmail} (Role: ${safeUser.role})`);
+    res.json({ success: true, user: safeUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

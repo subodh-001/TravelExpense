@@ -1055,12 +1055,12 @@
     </div>
   </div>
 
-  <!-- ADD NEW MEMBER MODAL -->
+  <!-- ADD / INVITE NEW MEMBER OR ADMIN MODAL -->
   <div class="modal-overlay" id="addMemberModal" style="z-index: 10002;">
-    <div class="modal-card" style="max-width: 450px; border-radius: 20px; background: #ffffff; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+    <div class="modal-card" style="max-width: 460px; border-radius: 20px; background: #ffffff; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 18px;">
         <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-          <i class="fa-solid fa-user-plus" style="color: #2563eb;"></i> Add New Member
+          <i class="fa-solid fa-paper-plane" style="color: #0047ff;"></i> Invite Member or Admin
         </h3>
         <button type="button" class="close-btn" onclick="closeModal(document.getElementById('addMemberModal'))" style="border: none; background: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">
           <i class="fa-solid fa-xmark"></i>
@@ -1069,21 +1069,64 @@
 
       <form id="addMemberForm" onsubmit="handleAddMemberSubmit(event)">
         <div class="form-group" style="margin-bottom: 14px;">
-          <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Member Full Name</label>
-          <input type="text" id="newMemberNameInput" placeholder="e.g. Alex Sharma" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;" />
+          <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Full Name</label>
+          <input type="text" id="newMemberNameInput" placeholder="e.g. Alex Sharma" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 0.92rem;" />
         </div>
 
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Registered Email Address</label>
-          <input type="email" id="newMemberEmailInput" placeholder="e.g. alex@gmail.com" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;" />
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Email Address to Send Verification Link</label>
+          <input type="email" id="newMemberEmailInput" placeholder="e.g. alex@gmail.com" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 0.92rem;" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 22px;">
+          <label style="display: block; font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Account Role & Access Level</label>
+          <select id="newMemberRoleSelect" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 0.92rem; font-weight: 700; color: #0f172a; background: #ffffff; cursor: pointer;">
+            <option value="user">👤 Member (Traveler Log Entry Access)</option>
+            <option value="admin">🛡️ Admin (Super Admin Control Panel Access Only)</option>
+          </select>
         </div>
 
         <div style="display: flex; gap: 12px; justify-content: flex-end;">
           <button type="button" class="btn btn-secondary" onclick="closeModal(document.getElementById('addMemberModal'))" style="padding: 10px 18px; border-radius: 10px; font-weight: 700;">Cancel</button>
-          <button type="submit" id="saveMemberBtn" class="btn btn-primary" style="background: #0f172a; color: #ffffff; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 800;">
-            Save Member
+          <button type="submit" id="saveMemberBtn" class="btn btn-primary" style="background: #0047ff; color: #ffffff; border: none; padding: 10px 22px; border-radius: 10px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-paper-plane"></i> Send Email Verification Link
           </button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- INVITE VERIFICATION & SET PASSWORD MODAL -->
+  <div class="modal-overlay" id="inviteSetupModal" style="z-index: 10005;">
+    <div class="modal-card" style="max-width: 450px; border-radius: 24px; background: #ffffff; padding: 28px; box-shadow: 0 24px 60px rgba(0,0,0,0.3); text-align: center;">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: #eff6ff; border: 2px solid #bfdbfe; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+        <i class="fa-solid fa-user-check" style="font-size: 1.8rem; color: #0047ff;"></i>
+      </div>
+
+      <h2 style="margin: 0 0 6px 0; font-size: 1.35rem; font-weight: 800; color: #0f172a;">Verify Account & Set Password</h2>
+      <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 22px;">Welcome to FGTech <strong id="inviteSetupUserName" style="color: #0f172a;">User</strong>! Set a password to complete your account registration.</p>
+
+      <form id="inviteSetupForm" onsubmit="handleCompleteInviteSubmit(event)">
+        <input type="hidden" id="inviteSetupToken" />
+
+        <div style="text-align: left; margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Email Address</label>
+          <input type="email" id="inviteSetupEmailDisplay" readonly disabled style="width: 100%; padding: 11px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: #f8fafc; color: #475569; font-weight: 700; box-sizing: border-box; font-size: 0.9rem;" />
+        </div>
+
+        <div style="text-align: left; margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Enter Password (min 6 chars)</label>
+          <input type="password" id="inviteNewPassword" placeholder="Create account password" required minlength="6" style="width: 100%; padding: 11px 14px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 0.92rem;" />
+        </div>
+
+        <div style="text-align: left; margin-bottom: 24px;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Re-enter Password</label>
+          <input type="password" id="inviteConfirmPassword" placeholder="Re-enter password to confirm" required minlength="6" style="width: 100%; padding: 11px 14px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 0.92rem;" />
+        </div>
+
+        <button type="submit" id="inviteSubmitBtn" class="btn btn-primary" style="width: 100%; background: #0047ff; color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-weight: 800; font-size: 0.98rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,71,255,0.3);">
+          <i class="fa-solid fa-circle-check"></i> Activate Account & Log In
+        </button>
       </form>
     </div>
   </div>

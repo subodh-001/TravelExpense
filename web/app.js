@@ -318,6 +318,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Setup Mobile Bottom Navigation Listeners
   setupMobileNav();
 
+  // Check if opening via Invite Verification Email Link (?inviteToken=...)
+  checkInviteTokenInUrl();
+
   // Initialize Real-Time Server-Sent Events (SSE) Sync
   initRealTimeSync();
 });
@@ -3358,6 +3361,7 @@ async function handleAddMemberSubmit(e) {
   if (e) e.preventDefault();
   const name = document.getElementById('newMemberNameInput')?.value.trim();
   const email = document.getElementById('newMemberEmailInput')?.value.trim();
+  const role = document.getElementById('newMemberRoleSelect')?.value || 'user';
   const btn = document.getElementById('saveMemberBtn');
 
   if (!email || !email.includes('@')) {
@@ -3365,27 +3369,119 @@ async function handleAddMemberSubmit(e) {
     return;
   }
 
-  if (btn) btn.disabled = true;
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending Invite Email...';
 
   try {
-    const res = await fetch(`${API_BASE_URL}/admin/add-member`, {
+    const res = await fetch(`${API_BASE_URL}/admin/invite-member`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email })
+      body: JSON.stringify({ name, email, role })
     });
     const data = await res.json();
 
     if (res.ok && data.success) {
-      alert(`✅ New member "${data.user.name}" added successfully!`);
+      const roleText = role === 'admin' ? 'Admin' : 'Member';
+      showToast(`✉️ Verification invitation email sent to ${email} (${roleText})!`);
       closeModal(document.getElementById('addMemberModal'));
+      if (document.getElementById('newMemberNameInput')) document.getElementById('newMemberNameInput').value = '';
+      if (document.getElementById('newMemberEmailInput')) document.getElementById('newMemberEmailInput').value = '';
       loadSuperAdminData();
     } else {
-      alert(data.error || 'Failed to add member');
+      alert(data.error || 'Failed to send invite email.');
     }
   } catch (err) {
-    alert('Error adding member: ' + err.message);
+    alert('Error sending invitation email: ' + err.message);
   } finally {
-    if (btn) btn.disabled = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Email Verification Link';
+    }
+  }
+}
+
+async function checkInviteTokenInUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const inviteToken = urlParams.get('inviteToken');
+
+  if (!inviteToken) return;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/invite/${encodeURIComponent(inviteToken)}`);
+    const data = await res.json();
+
+    if (res.ok && data.success && data.invite) {
+      const inv = data.invite;
+      const tokenInput = document.getElementById('inviteSetupToken');
+      const nameEl = document.getElementById('inviteSetupUserName');
+      const emailEl = document.getElementById('inviteSetupEmailDisplay');
+
+      if (tokenInput) tokenInput.value = inviteToken;
+      if (nameEl) nameEl.textContent = inv.name || inv.email;
+      if (emailEl) emailEl.value = inv.email;
+
+      const modal = document.getElementById('inviteSetupModal');
+      if (modal) openModal(modal);
+    } else {
+      alert(data.error || 'Invitation link is invalid or expired.');
+    }
+  } catch (err) {
+    console.error('Error checking invite token:', err);
+  }
+}
+
+async function handleCompleteInviteSubmit(e) {
+  if (e) e.preventDefault();
+  const token = document.getElementById('inviteSetupToken')?.value;
+  const password = document.getElementById('inviteNewPassword')?.value;
+  const confirm = document.getElementById('inviteConfirmPassword')?.value;
+  const btn = document.getElementById('inviteSubmitBtn');
+
+  if (!password || password.length < 6) {
+    alert('Password must be at least 6 characters long.');
+    return;
+  }
+
+  if (password !== confirm) {
+    alert('Passwords do not match. Please re-enter your password.');
+    return;
+  }
+
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Activating Account...';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/complete-invite`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success && data.user) {
+      const user = data.user;
+      saveGoogleUser(user);
+      
+      // Clear inviteToken from URL bar cleanly
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+
+      closeModal(document.getElementById('inviteSetupModal'));
+      showToast(`🎉 Welcome to FGTech, ${user.name}! Your account is now active.`);
+
+      // Redirect based on role
+      if (user.role === 'admin' || (user.email && user.email.toLowerCase().trim() === 'subodhram3350@gmail.com')) {
+        switchAppPage('superadmin');
+      } else {
+        switchAppPage('dashboard');
+      }
+    } else {
+      alert(data.error || 'Failed to complete account activation.');
+    }
+  } catch (err) {
+    alert('Error activating account: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Activate Account & Log In';
+    }
   }
 }
 
