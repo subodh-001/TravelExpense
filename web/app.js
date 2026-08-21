@@ -13,13 +13,15 @@ const CLOUDINARY = {
 };
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/upload`;
 
+const DEFAULT_USER_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23e5e7eb"/><circle cx="100" cy="72" r="44" fill="%239ca3af"/><path d="M 15 190 C 15 130 50 120 100 120 C 150 120 185 130 185 190 Z" fill="%239ca3af"/></svg>`;
+
 // Default Google User Profile
 const DEFAULT_GOOGLE_USER = {
   id: 'google_subodhram3350_gmail_com',
   name: 'Subodh Ram',
   email: 'subodhram3350@gmail.com',
   role: 'super_admin',
-  picture: 'https://ui-avatars.com/api/?name=Subodh+Ram&background=0f172a&color=fff'
+  picture: DEFAULT_USER_AVATAR
 };
 
 const CURRENT_YEAR_MONTH = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
@@ -455,16 +457,16 @@ function updateUserProfileUI() {
   if (state.currentGoogleUser) {
     const user = state.currentGoogleUser;
     const cleanName = (user.name || 'Member').replace(/\s*\(Master Admin\)/gi, '').trim();
-    const defaultPic = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
+    const picToUse = (user.picture && !user.picture.includes('ui-avatars') && !user.picture.includes('dicebear')) ? user.picture : DEFAULT_USER_AVATAR;
 
     if (userNameDisplay) userNameDisplay.textContent = cleanName;
     if (userEmailDisplay) userEmailDisplay.textContent = user.email;
-    if (userAvatarImg) userAvatarImg.src = user.picture || defaultPic;
+    if (userAvatarImg) userAvatarImg.src = picToUse;
 
     if (welcomeName) welcomeName.textContent = cleanName.split(' ')[0] || cleanName;
     if (drawerName) drawerName.textContent = cleanName;
     if (drawerEmail) drawerEmail.textContent = user.email;
-    if (drawerAvatar) drawerAvatar.src = user.picture || defaultPic;
+    if (drawerAvatar) drawerAvatar.src = picToUse;
 
     const isSuperAdmin = user.role === 'super_admin' || (user.email && user.email.toLowerCase().trim() === 'subodhram3350@gmail.com');
     if (adminToggleBtn) adminToggleBtn.style.display = isSuperAdmin ? 'inline-flex' : 'none';
@@ -4219,9 +4221,9 @@ function loadAccountProfileData() {
   const roleBadge = document.getElementById('accountRoleBadge');
 
   let displayName = (user.name || 'Member').replace(/\s*\(Master Admin\)/gi, '').trim();
-  const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0f172a&color=fff&font-size=0.45`;
+  const currentPic = (user.picture && !user.picture.includes('ui-avatars') && !user.picture.includes('dicebear')) ? user.picture : DEFAULT_USER_AVATAR;
 
-  if (avatar) avatar.src = user.picture || defaultAvatar;
+  if (avatar) avatar.src = currentPic;
   if (nameEl) nameEl.textContent = displayName;
   if (emailEl) emailEl.textContent = user.email || 'user@example.com';
   if (inputName) inputName.value = displayName;
@@ -4407,11 +4409,10 @@ async function handleAccountProfilePhotoUpload(e) {
 async function handleAccountRemovePhoto() {
   const user = state.currentUser || getStoredGoogleUser() || {};
   let displayName = (user.name || 'User').replace(/\s*\(Master Admin\)/gi, '').trim();
-  const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0f172a&color=ffffff&font-size=0.45`;
 
-  user.picture = defaultAvatar;
+  user.picture = DEFAULT_USER_AVATAR;
   saveGoogleUser(user);
-  if (state.currentGoogleUser) state.currentGoogleUser.picture = defaultAvatar;
+  if (state.currentGoogleUser) state.currentGoogleUser.picture = DEFAULT_USER_AVATAR;
 
   try {
     await fetch(`${API_BASE_URL}/user/profile`, {
@@ -4421,14 +4422,14 @@ async function handleAccountRemovePhoto() {
         id: user.id || `google_${(user.email || '').replace(/[^a-zA-Z0-9]/g, '_')}`,
         name: displayName,
         email: user.email,
-        picture: defaultAvatar
+        picture: DEFAULT_USER_AVATAR
       })
     });
   } catch (err) {}
 
   loadAccountProfileData();
   updateUserProfileUI();
-  showToast('Profile photo reset to default');
+  showToast('Profile photo reset to default silhouette');
 }
 
 async function handleAccountChangePassword(e) {
