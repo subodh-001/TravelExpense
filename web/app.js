@@ -3394,7 +3394,7 @@ async function handleAddMemberSubmit(e) {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Email Verification Link';
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Email';
     }
   }
 }
