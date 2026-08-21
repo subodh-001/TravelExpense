@@ -226,7 +226,7 @@ function createMailTransporter() {
 }
 
 const gmailUser = (process.env.GMAIL_USER || 'subodhram3350@gmail.com').trim();
-const DEFAULT_USER_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23e5e7eb"/><circle cx="100" cy="72" r="44" fill="%239ca3af"/><path d="M 15 190 C 15 130 50 120 100 120 C 150 120 185 130 185 190 Z" fill="%239ca3af"/></svg>`;
+const DEFAULT_USER_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc1IiByPSI0MiIgZmlsbD0iIzljYTNiZiIvPjxwYXRoIGQ9Ik0gMjAgMTg1IEMgMjAgMTMwIDUwIDEyMCAxMDAgMTIwIEMgMTUwIDEyMCAxODAgMTMwIDE4MCAxODUgWiIgZmlsbD0iIzljYTNiZiIvPjwvc3ZnPg==`;
 
 async function sendEmailNotification({ to, subject, html, fromName = 'TravelExpense Security' }) {
   if (!to) return { success: false, error: 'Recipient email address missing' };
