@@ -4230,9 +4230,12 @@ function loadAccountProfileData() {
 
   const isMasterAdmin = (user.email || '').toLowerCase() === 'subodhram3350@gmail.com' || user.role === 'super_admin' || user.role === 'admin';
   if (roleBadge) {
-    roleBadge.innerHTML = isMasterAdmin 
-      ? '<i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Admin' 
-      : '<i class="fa-solid fa-user"></i> Member Account';
+    if (isMasterAdmin) {
+      roleBadge.style.display = 'inline-block';
+      roleBadge.innerHTML = '<i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Admin';
+    } else {
+      roleBadge.style.display = 'none';
+    }
   }
 
   populateAccountMonthSelector();
