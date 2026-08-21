@@ -226,6 +226,7 @@ function createMailTransporter() {
 }
 
 const gmailUser = (process.env.GMAIL_USER || 'subodhram3350@gmail.com').trim();
+const DEFAULT_USER_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23e5e7eb"/><circle cx="100" cy="72" r="44" fill="%239ca3af"/><path d="M 15 190 C 15 130 50 120 100 120 C 150 120 185 130 185 190 Z" fill="%239ca3af"/></svg>`;
 
 async function sendEmailNotification({ to, subject, html, fromName = 'TravelExpense Security' }) {
   if (!to) return { success: false, error: 'Recipient email address missing' };
@@ -586,7 +587,7 @@ app.post('/api/user/profile', (req, res) => {
       id,
       name: name || 'Traveler',
       email: email || 'user@example.com',
-      picture: picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'Traveler')}`,
+      picture: (picture && !picture.includes('alt=') && !picture.includes('dicebear') && !picture.includes('ui-avatars')) ? picture : DEFAULT_USER_AVATAR,
       passwordHash,
       updatedAt: new Date().toISOString()
     };
@@ -610,7 +611,7 @@ app.get('/api/user/profile/:userId', (req, res) => {
       id: userId,
       name: 'Traveler',
       email: `${userId}@gmail.com`,
-      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userId)}`
+      picture: DEFAULT_USER_AVATAR
     };
     res.json({ success: true, user });
   } catch (err) {

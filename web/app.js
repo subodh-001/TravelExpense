@@ -15,6 +15,19 @@ const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY.clou
 
 const DEFAULT_USER_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23e5e7eb"/><circle cx="100" cy="72" r="44" fill="%239ca3af"/><path d="M 15 190 C 15 130 50 120 100 120 C 150 120 185 130 185 190 Z" fill="%239ca3af"/></svg>`;
 
+function getUserAvatarUrl(user) {
+  if (!user) return DEFAULT_USER_AVATAR;
+  let pic = typeof user === 'string' ? user : (user.picture || user.avatar || '');
+  if (!pic || typeof pic !== 'string') return DEFAULT_USER_AVATAR;
+  if (pic.includes('alt=') || pic.includes('style=') || pic.includes('dicebear') || pic.includes('ui-avatars')) {
+    return DEFAULT_USER_AVATAR;
+  }
+  if (pic.startsWith('http') || pic.startsWith('data:image')) {
+    return pic;
+  }
+  return DEFAULT_USER_AVATAR;
+}
+
 // Default Google User Profile
 const DEFAULT_GOOGLE_USER = {
   id: 'google_subodhram3350_gmail_com',
@@ -384,9 +397,7 @@ function saveGoogleUser(user) {
     id: user.id || `google_${user.email.replace(/[^a-zA-Z0-9]/g, '_')}`,
     name: user.name || user.email.split('@')[0],
     email: user.email,
-    picture: (user.picture && user.picture.length < 1000) 
-      ? user.picture 
-      : `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name || user.email)}`,
+    picture: getUserAvatarUrl(user),
     role: user.role || 'user'
   };
 
@@ -457,7 +468,7 @@ function updateUserProfileUI() {
   if (state.currentGoogleUser) {
     const user = state.currentGoogleUser;
     const cleanName = (user.name || 'Member').replace(/\s*\(Master Admin\)/gi, '').trim();
-    const picToUse = (user.picture && !user.picture.includes('ui-avatars') && !user.picture.includes('dicebear')) ? user.picture : DEFAULT_USER_AVATAR;
+    const picToUse = getUserAvatarUrl(user);
 
     if (userNameDisplay) userNameDisplay.textContent = cleanName;
     if (userEmailDisplay) userEmailDisplay.textContent = user.email;
@@ -474,8 +485,8 @@ function updateUserProfileUI() {
 
     if (googleAuthBtn) {
       googleAuthBtn.innerHTML = `
-        <img src="${user.picture}" class="google-icon" style="border-radius:50%; width:20px; height:20px; object-fit:cover;" alt="Avatar" />
-        <span>${user.name.split(' ')[0]}</span>
+        <img src="${picToUse}" class="google-icon" style="border-radius:50%; width:20px; height:20px; object-fit:cover;" alt="Avatar" />
+        <span>${cleanName.split(' ')[0]}</span>
       `;
     }
     if (headerSignOutBtn) headerSignOutBtn.style.display = 'inline-flex';
@@ -1064,9 +1075,9 @@ function formatExpenseDateTime(exp) {
   }
 
   if (timePart) {
-    return `<strong style="color: #0f172a; display: block;">${datePart}</strong><span style="font-size: 0.78rem; color: #64748b;"><i class="fa-regular fa-clock"></i> ${timePart}</span>`;
+    return `<strong style="color: #0f172a; display: block; white-space: nowrap;">${datePart}</strong><span style="font-size: 0.76rem; color: #64748b; white-space: nowrap;"><i class="fa-regular fa-clock"></i> ${timePart}</span>`;
   }
-  return `<strong style="color: #0f172a; display: block;">${datePart}</strong>`;
+  return `<strong style="color: #0f172a; display: block; white-space: nowrap;">${datePart}</strong>`;
 }
 
 function formatExpenseDateTimeString(exp) {
@@ -1183,13 +1194,13 @@ function renderUserEntriesList() {
 
     return `
       <tr style="border-bottom: 1px solid #f1f5f9;">
-        <td style="padding: 12px 16px; font-weight: 600; color: #334155; font-size: 0.88rem;">${dateTimeDisplay}</td>
-        <td style="padding: 12px 16px; font-weight: 800; color: #0f172a; font-size: 0.92rem;">${categoryItem}</td>
-        <td style="padding: 12px 16px; font-weight: 800; color: #0f172a; font-size: 0.98rem;" class="col-numeric">₹${(exp.total || 0).toLocaleString('en-IN')}</td>
-        <td style="padding: 12px 16px; color: #64748b; font-size: 0.85rem;">${exp.notes || exp.comments || 'N/A'}</td>
-        <td style="padding: 12px 16px;">${receiptHtml}</td>
-        <td style="padding: 12px 16px;">${statusBadge}</td>
-        <td style="padding: 12px 16px; text-align: center;">${actionButtonsHtml}</td>
+        <td style="padding: 10px 12px; font-weight: 600; color: #334155; font-size: 0.86rem; white-space: nowrap;">${dateTimeDisplay}</td>
+        <td style="padding: 10px 12px; font-weight: 800; color: #0f172a; font-size: 0.9rem;">${categoryItem}</td>
+        <td style="padding: 10px 12px; font-weight: 800; color: #0f172a; font-size: 0.95rem;" class="col-numeric">₹${(exp.total || 0).toLocaleString('en-IN')}</td>
+        <td style="padding: 10px 12px; color: #64748b; font-size: 0.85rem;">${exp.notes || exp.comments || 'N/A'}</td>
+        <td style="padding: 10px 12px; white-space: nowrap;">${receiptHtml}</td>
+        <td style="padding: 10px 12px; white-space: nowrap;">${statusBadge}</td>
+        <td style="padding: 10px 12px; text-align: center; white-space: nowrap;">${actionButtonsHtml}</td>
       </tr>
     `;
   }).join('');
@@ -3039,7 +3050,7 @@ function renderAdminUsersTable(users) {
     return `
       <tr style="border-bottom: 1px solid #f1f5f9;">
         <td style="padding: 12px 16px; cursor: pointer;" onclick="inspectUserExpenses('${user.id}')" title="Click to view ${user.name}'s entries & export Excel">
-          <img src="${user.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Member'}" alt="${user.name}" style="width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid #cbd5e1; object-fit: cover;" />
+          <img src="${getUserAvatarUrl(user)}" alt="${user.name || 'Member'}" style="width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid #cbd5e1; object-fit: cover;" />
         </td>
         <td style="padding: 12px 16px; cursor: pointer;" onclick="inspectUserExpenses('${user.id}')" title="Click to view ${user.name}'s entries & export Excel">
           <strong style="color: #0f172a; font-size: 0.92rem; display: block;">${user.name || 'Member'}</strong>
@@ -3142,7 +3153,7 @@ async function openEditMemberModal(userId) {
 
   if (nameDisplay) nameDisplay.textContent = user.name || 'Member';
   if (emailDisplay) emailDisplay.textContent = user.email || '';
-  if (avatarPreview) avatarPreview.src = user.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(user.name || 'Member');
+  if (avatarPreview) avatarPreview.src = getUserAvatarUrl(user);
 
   const statusDisplay = document.getElementById('editMemberBillStatusDisplay');
   const billImg = document.getElementById('editMemberBillImage');
@@ -3686,7 +3697,7 @@ async function inspectUserExpenses(userId) {
   const title = document.getElementById('inspectUserNameTitle');
   const emailSub = document.getElementById('inspectUserEmailSub');
 
-  if (avatar) avatar.src = user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name || 'User')}`;
+  if (avatar) avatar.src = getUserAvatarUrl(user);
   if (title) title.textContent = `${user.name}'s Expense Entries`;
   if (emailSub) emailSub.textContent = user.email || '';
 
@@ -4131,7 +4142,7 @@ function openRealGoogleAuthPopup(defaultEmail = '') {
         const safeEmail = savedUser.email.replace(/'/g, "\\'");
         savedContainer.innerHTML = `
           <div class="google-account-option" onclick="selectGoogleAccount('${safeName}', '${safeEmail}')" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s ease;">
-            <img src="${savedUser.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(savedUser.name || 'User')}" alt="${savedUser.name}" class="google-account-avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #000000;" />
+            <img src="${getUserAvatarUrl(savedUser)}" alt="${savedUser.name}" class="google-account-avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #000000;" />
             <div class="google-account-details" style="flex: 1;">
               <h4 style="font-size: 0.98rem; font-weight: 700; color: #0f172a; margin: 0;">${savedUser.name} <span class="badge-default" style="background: linear-gradient(135deg, #ffc3d0 0%, #e3d5fa 50%, #cbddf9 100%); color: #000000; font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; margin-left: 6px;">Active</span></h4>
               <p style="font-size: 0.82rem; color: #475569; margin: 3px 0 0 0;">${savedUser.email}</p>
@@ -4221,7 +4232,7 @@ function loadAccountProfileData() {
   const roleBadge = document.getElementById('accountRoleBadge');
 
   let displayName = (user.name || 'Member').replace(/\s*\(Master Admin\)/gi, '').trim();
-  const currentPic = (user.picture && !user.picture.includes('ui-avatars') && !user.picture.includes('dicebear')) ? user.picture : DEFAULT_USER_AVATAR;
+  const currentPic = getUserAvatarUrl(user);
 
   if (avatar) avatar.src = currentPic;
   if (nameEl) nameEl.textContent = displayName;
