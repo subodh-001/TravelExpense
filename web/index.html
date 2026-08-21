@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Welcome to FreeG Wifi</title>
+  <title>FGTech Travel Expense</title>
   
   <!-- Google Fonts & FontAwesome Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,13 +22,17 @@
   <div id="fullAuthPage" class="full-auth-page">
     <div class="auth-center-wrapper">
 
-      <!-- Heading Title (Welcome to FreeG Wifi) -->
-      <div class="auth-brand-logo" onclick="switchAppPage('auth')" style="cursor: pointer; text-align: center; flex-direction: column; gap: 8px;">
-        <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 8px 24px rgba(37,99,235,0.3);">
-          <i class="fa-solid fa-wifi" style="color: #ffffff; font-size: 1.8rem;"></i>
-        </div>
-        <h1 class="auth-logo-title" style="font-size: 2rem; font-weight: 800; color: #0f172a; margin-top: 4px;">Welcome to FreeG Wifi</h1>
-        <p style="font-size: 0.9rem; color: #64748b; margin: 0;">Log in or create an account to access FreeG Wifi services</p>
+      <!-- FGTECH Brand Header -->
+      <div class="auth-brand-logo" onclick="switchAppPage('auth')" style="cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 24px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" style="width: 76px; height: 76px; filter: drop-shadow(0 4px 12px rgba(0,82,255,0.25));">
+          <!-- Bottom-left dot -->
+          <rect x="22" y="92" width="11" height="11" rx="3" fill="#0052ff" />
+          <!-- Top-right dot -->
+          <rect x="87" y="17" width="11" height="11" rx="3" fill="#0052ff" />
+          <!-- Main FG curve -->
+          <path d="M 27.5 82 V 46 C 27.5 30 40 17.5 56 17.5 H 80 C 83.6 17.5 86.5 20.4 86.5 24 C 86.5 27.6 83.6 30.5 80 30.5 H 56 C 47.4 30.5 40.5 37.4 40.5 46 V 56 C 40.5 59.6 43.4 62.5 47 62.5 H 74 C 77.6 62.5 80.5 59.6 80.5 56 V 46 C 80.5 42.4 83.4 39.5 87 39.5 C 90.6 39.5 93.5 42.4 93.5 46 V 56 C 93.5 74 79 88.5 61 88.5 H 45 C 35.3 88.5 27.5 80.7 27.5 71 Z" fill="#0052ff" />
+        </svg>
+        <h1 class="auth-logo-title" style="font-size: 2.2rem; font-weight: 900; color: #0f172a; margin: 0; letter-spacing: 2px; font-family: 'Inter', system-ui, -apple-system, sans-serif;">FGTECH</h1>
       </div>
 
       <!-- Auth Card -->
@@ -228,9 +232,13 @@
     <header class="app-header" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100;">
       <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
         <!-- Left: Header Branding & Welcome -->
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="background: #0f172a; color: #ffffff; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-            <i class="fa-solid fa-wifi" style="font-size: 1rem;"></i>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="background: #0f172a; color: #ffffff; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 4px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" style="width: 24px; height: 24px;">
+              <rect x="22" y="92" width="11" height="11" rx="3" fill="#ffffff" />
+              <rect x="87" y="17" width="11" height="11" rx="3" fill="#ffffff" />
+              <path d="M 27.5 82 V 46 C 27.5 30 40 17.5 56 17.5 H 80 C 83.6 17.5 86.5 20.4 86.5 24 C 86.5 27.6 83.6 30.5 80 30.5 H 56 C 47.4 30.5 40.5 37.4 40.5 46 V 56 C 40.5 59.6 43.4 62.5 47 62.5 H 74 C 77.6 62.5 80.5 59.6 80.5 56 V 46 C 80.5 42.4 83.4 39.5 87 39.5 C 90.6 39.5 93.5 42.4 93.5 46 V 56 C 93.5 74 79 88.5 61 88.5 H 45 C 35.3 88.5 27.5 80.7 27.5 71 Z" fill="#ffffff" />
+            </svg>
           </div>
           <div>
             <h1 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0; line-height: 1.1;">Welcome, <span id="userWelcomeHeaderName">Traveler</span></h1>
@@ -550,8 +558,8 @@
             <i class="fa-solid fa-user-shield" style="color: #ffffff; font-size: 1.2rem;"></i>
           </div>
           <div class="brand-text">
-            <h1 style="color: #ffffff;">FreeG Wifi</h1>
-            <p class="subtitle" style="color: #94a3b8;">Super Admin Control Panel</p>
+            <h1 style="color: #ffffff;">FGTech</h1>
+            <p class="subtitle" style="color: #94a3b8;">Admin Control Panel</p>
           </div>
         </div>
 

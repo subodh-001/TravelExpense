@@ -205,13 +205,16 @@ app.get('/api/events', (req, res) => {
 
 const nodemailer = require('nodemailer');
 
-// Setup Gmail SMTP Transporter for OTP Emails
-function createMailTransporter() {
+// Setup Gmail SMTP Transporter for OTP Emails (Forcing IPv4 & Dual-Port Fallback for Render Cloud Containers)
+function createMailTransporter(port = 587) {
   const gmailUser = (process.env.GMAIL_USER || 'subodhram3350@gmail.com').trim();
   const gmailPass = (process.env.GMAIL_APP_PASS || process.env.GMAIL_APP_PASSWORD || 'ozytospihwnjhmbk').replace(/\s+/g, '');
 
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: port,
+    secure: port === 465,
+    requireTLS: port === 587,
     auth: {
       user: gmailUser,
       pass: gmailPass
@@ -219,30 +222,46 @@ function createMailTransporter() {
     tls: {
       rejectUnauthorized: false
     },
-    connectionTimeout: 15000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000
+    family: 4, // Force IPv4 to prevent IPv6 socket connection timeouts on Render
+    connectionTimeout: 10000,
+    greetingTimeout: 8000,
+    socketTimeout: 10000
   });
 }
 
 const gmailUser = (process.env.GMAIL_USER || 'subodhram3350@gmail.com').trim();
 const DEFAULT_USER_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc1IiByPSI0MiIgZmlsbD0iIzljYTNiZiIvPjxwYXRoIGQ9Ik0gMjAgMTg1IEMgMjAgMTMwIDUwIDEyMCAxMDAgMTIwIEMgMTUwIDEyMCAxODAgMTMwIDE4MCAxODUgWiIgZmlsbD0iIzljYTNiZiIvPjwvc3ZnPg==`;
 
-async function sendEmailNotification({ to, subject, html, fromName = 'TravelExpense Security' }) {
+async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Security' }) {
   if (!to) return { success: false, error: 'Recipient email address missing' };
+  
+  // Primary attempt via Port 587 STARTTLS IPv4
   try {
-    const transporter = createMailTransporter();
+    const transporter = createMailTransporter(587);
     const info = await transporter.sendMail({
       from: `"${fromName}" <${gmailUser}>`,
       to,
       subject,
       html
     });
-    console.log(`✉️ Email successfully sent to ${to}: ${info.messageId || 'OK'}`);
+    console.log(`✉️ Email successfully sent to ${to} via Port 587: ${info.messageId || 'OK'}`);
     return { success: true, messageId: info.messageId };
-  } catch (err) {
-    console.error(`⚠️ Failed to send email to ${to}:`, err.message || err);
-    return { success: false, error: err.message || 'SMTP Email delivery failed' };
+  } catch (primaryErr) {
+    console.warn(`⚠️ Primary SMTP (587) attempt failed: ${primaryErr.message}. Retrying via Port 465 (SSL)...`);
+    try {
+      const fallbackTransporter = createMailTransporter(465);
+      const fallbackInfo = await fallbackTransporter.sendMail({
+        from: `"${fromName}" <${gmailUser}>`,
+        to,
+        subject,
+        html
+      });
+      console.log(`✉️ Email successfully sent to ${to} via Fallback Port 465: ${fallbackInfo.messageId || 'OK'}`);
+      return { success: true, messageId: fallbackInfo.messageId };
+    } catch (fallbackErr) {
+      console.error(`❌ All SMTP attempts failed for ${to}:`, fallbackErr.message);
+      return { success: false, error: fallbackErr.message || 'SMTP Email delivery failed' };
+    }
   }
 }
 
