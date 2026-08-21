@@ -405,15 +405,22 @@
         <!-- Profile Summary Card -->
         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 24px; text-align: center;">
           <div style="position: relative; display: inline-block; margin-bottom: 12px;">
-            <img id="accountProfileAvatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=User" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #0f172a; object-fit: cover;" />
+            <img id="accountProfileAvatar" src="https://ui-avatars.com/api/?name=User&background=0f172a&color=fff" style="width: 86px; height: 86px; border-radius: 50%; border: 3px solid #0f172a; object-fit: cover;" />
+            <label for="accountProfilePhotoInput" style="position: absolute; bottom: 0; right: -4px; background: #2563eb; color: #ffffff; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.2);" title="Upload Custom Profile Photo">
+              <i class="fa-solid fa-camera" style="font-size: 0.8rem;"></i>
+            </label>
+            <input type="file" id="accountProfilePhotoInput" accept="image/*" style="display: none;" onchange="handleAccountProfilePhotoUpload(event)" />
           </div>
           <h2 id="accountProfileName" style="margin: 0 0 4px 0; font-size: 1.3rem; font-weight: 800; color: #0f172a;">User Name</h2>
           <p id="accountProfileEmail" style="margin: 0 0 14px 0; font-size: 0.88rem; color: #64748b;">user@example.com</p>
           
-          <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+          <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; align-items: center;">
             <span id="accountRoleBadge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 20px;">
-              <i class="fa-solid fa-user-shield"></i> Member Account
+              <i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Admin
             </span>
+            <button type="button" onclick="handleAccountRemovePhoto()" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 0.78rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; cursor: pointer;" title="Reset to default avatar">
+              <i class="fa-solid fa-trash-can"></i> Remove Photo
+            </button>
             <button type="button" onclick="performSignOut()" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 0.8rem; font-weight: 700; padding: 4px 14px; border-radius: 20px; cursor: pointer;">
               <i class="fa-solid fa-right-from-bracket"></i> Sign Out
             </button>

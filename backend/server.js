@@ -140,7 +140,7 @@ const seedMasterSuperAdmin = () => {
     users[masterUserId] = {
       ...(users[masterUserId] || {}),
       id: masterUserId,
-      name: 'Subodh Ram (Master Admin)',
+      name: 'Subodh Ram',
       email: masterEmail,
       passwordHash,
       role: 'super_admin',
@@ -148,7 +148,7 @@ const seedMasterSuperAdmin = () => {
       updatedAt: new Date().toISOString()
     };
     saveLocalUsers(users);
-    console.log(`👑 Master Super Admin account initialized: ${masterEmail}`);
+    console.log(`👑 Admin account initialized: ${masterEmail}`);
   } catch (err) {
     console.warn('Failed to seed master super admin:', err.message);
   }

@@ -16,10 +16,10 @@ const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY.clou
 // Default Google User Profile
 const DEFAULT_GOOGLE_USER = {
   id: 'google_subodhram3350_gmail_com',
-  name: 'Subodh Ram (Master Admin)',
+  name: 'Subodh Ram',
   email: 'subodhram3350@gmail.com',
   role: 'super_admin',
-  picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh%20Ram%20(Master%20Admin)'
+  picture: 'https://ui-avatars.com/api/?name=Subodh+Ram&background=0f172a&color=fff'
 };
 
 const CURRENT_YEAR_MONTH = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
@@ -454,14 +454,17 @@ function updateUserProfileUI() {
 
   if (state.currentGoogleUser) {
     const user = state.currentGoogleUser;
-    if (userNameDisplay) userNameDisplay.textContent = user.name;
-    if (userEmailDisplay) userEmailDisplay.textContent = user.email;
-    if (userAvatarImg) userAvatarImg.src = user.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(user.name);
+    const cleanName = (user.name || 'Member').replace(/\s*\(Master Admin\)/gi, '').trim();
+    const defaultPic = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=0f172a&color=fff`;
 
-    if (welcomeName) welcomeName.textContent = user.name.split(' ')[0] || user.name;
-    if (drawerName) drawerName.textContent = user.name;
+    if (userNameDisplay) userNameDisplay.textContent = cleanName;
+    if (userEmailDisplay) userEmailDisplay.textContent = user.email;
+    if (userAvatarImg) userAvatarImg.src = user.picture || defaultPic;
+
+    if (welcomeName) welcomeName.textContent = cleanName.split(' ')[0] || cleanName;
+    if (drawerName) drawerName.textContent = cleanName;
     if (drawerEmail) drawerEmail.textContent = user.email;
-    if (drawerAvatar) drawerAvatar.src = user.picture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(user.name);
+    if (drawerAvatar) drawerAvatar.src = user.picture || defaultPic;
 
     const isSuperAdmin = user.role === 'super_admin' || (user.email && user.email.toLowerCase().trim() === 'subodhram3350@gmail.com');
     if (adminToggleBtn) adminToggleBtn.style.display = isSuperAdmin ? 'inline-flex' : 'none';
@@ -4207,7 +4210,7 @@ function switchDashboardTab(tab) {
 }
 
 function loadAccountProfileData() {
-  const user = state.currentUser || getStoredGoogleUser() || { name: 'Member', email: 'user@example.com' };
+  const user = state.currentUser || getStoredGoogleUser() || { name: 'Subodh Ram', email: 'subodhram3350@gmail.com' };
   
   const avatar = document.getElementById('accountProfileAvatar');
   const nameEl = document.getElementById('accountProfileName');
@@ -4215,15 +4218,18 @@ function loadAccountProfileData() {
   const inputName = document.getElementById('accountInputName');
   const roleBadge = document.getElementById('accountRoleBadge');
 
-  if (avatar) avatar.src = user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name || 'User')}`;
-  if (nameEl) nameEl.textContent = user.name || 'Member';
-  if (emailEl) emailEl.textContent = user.email || 'user@example.com';
-  if (inputName) inputName.value = user.name || '';
+  let displayName = (user.name || 'Member').replace(/\s*\(Master Admin\)/gi, '').trim();
+  const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0f172a&color=fff&font-size=0.45`;
 
-  const isMasterAdmin = (user.email || '').toLowerCase() === 'subodhram3350@gmail.com';
+  if (avatar) avatar.src = user.picture || defaultAvatar;
+  if (nameEl) nameEl.textContent = displayName;
+  if (emailEl) emailEl.textContent = user.email || 'user@example.com';
+  if (inputName) inputName.value = displayName;
+
+  const isMasterAdmin = (user.email || '').toLowerCase() === 'subodhram3350@gmail.com' || user.role === 'super_admin' || user.role === 'admin';
   if (roleBadge) {
     roleBadge.innerHTML = isMasterAdmin 
-      ? '<i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Master Super Admin' 
+      ? '<i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Admin' 
       : '<i class="fa-solid fa-user"></i> Member Account';
   }
 
@@ -4354,6 +4360,75 @@ async function handleAccountUpdateProfile(e) {
     loadAccountProfileData();
     if (typeof showCustomToast === 'function') showCustomToast('Profile name updated!');
   }
+}
+
+async function handleAccountProfilePhotoUpload(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const avatarImg = document.getElementById('accountProfileAvatar');
+  if (avatarImg) avatarImg.style.opacity = '0.5';
+
+  try {
+    const photoUrl = await uploadFileToStorage(file);
+    if (!photoUrl) throw new Error('Failed to upload image');
+
+    const user = state.currentUser || getStoredGoogleUser() || {};
+    user.picture = photoUrl;
+    
+    saveGoogleUser(user);
+    if (state.currentGoogleUser) state.currentGoogleUser.picture = photoUrl;
+
+    try {
+      await fetch(`${API_BASE_URL}/user/profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: user.id || `google_${(user.email || '').replace(/[^a-zA-Z0-9]/g, '_')}`,
+          name: user.name,
+          email: user.email,
+          picture: photoUrl
+        })
+      });
+    } catch (err) {
+      console.warn('Backend sync warning for photo:', err);
+    }
+
+    loadAccountProfileData();
+    updateUserProfileUI();
+    showToast('✓ Profile photo updated successfully!');
+  } catch (err) {
+    alert('Error uploading profile photo: ' + err.message);
+  } finally {
+    if (avatarImg) avatarImg.style.opacity = '1';
+  }
+}
+
+async function handleAccountRemovePhoto() {
+  const user = state.currentUser || getStoredGoogleUser() || {};
+  let displayName = (user.name || 'User').replace(/\s*\(Master Admin\)/gi, '').trim();
+  const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0f172a&color=ffffff&font-size=0.45`;
+
+  user.picture = defaultAvatar;
+  saveGoogleUser(user);
+  if (state.currentGoogleUser) state.currentGoogleUser.picture = defaultAvatar;
+
+  try {
+    await fetch(`${API_BASE_URL}/user/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: user.id || `google_${(user.email || '').replace(/[^a-zA-Z0-9]/g, '_')}`,
+        name: displayName,
+        email: user.email,
+        picture: defaultAvatar
+      })
+    });
+  } catch (err) {}
+
+  loadAccountProfileData();
+  updateUserProfileUI();
+  showToast('Profile photo reset to default');
 }
 
 async function handleAccountChangePassword(e) {
