@@ -9,9 +9,6 @@ backend/.env
 # Firebase credentials (NEVER upload!)
 backend/firebase-admin.json
 
-# Local data (reset on deploy anyway)
-backend/data/
-
 # Uploads (use Cloudinary instead)
 backend/uploads/
 
