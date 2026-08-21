@@ -1011,6 +1011,8 @@ async function handleUserSubmitExpense(e) {
       state.editingExpenseId = null;
       const form = document.getElementById('handwrittenTravelForm');
       if (form) form.reset();
+      const dateEl = document.getElementById('userDateInput');
+      if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
       const preview = document.getElementById('uploadedPhotoPreview');
       if (preview) preview.style.display = 'none';
       await loadExpenses();
@@ -1022,6 +1024,65 @@ async function handleUserSubmitExpense(e) {
   } finally {
     if (btn) btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Travel Expense';
   }
+}
+
+function formatExpenseDateTime(exp) {
+  if (!exp) return '';
+  let datePart = '';
+  let timePart = '';
+
+  const rawDate = exp.date || (exp.createdAt ? exp.createdAt.slice(0, 10) : '');
+  if (rawDate) {
+    try {
+      const parts = rawDate.split('T')[0].split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const dObj = new Date(year, month, day);
+        datePart = dObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      } else {
+        datePart = rawDate;
+      }
+    } catch (e) {
+      datePart = rawDate;
+    }
+  } else {
+    datePart = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  if (exp.createdAt) {
+    try {
+      const dTime = new Date(exp.createdAt);
+      timePart = dTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    } catch (e) {}
+  }
+
+  if (timePart) {
+    return `<strong style="color: #0f172a; display: block;">${datePart}</strong><span style="font-size: 0.78rem; color: #64748b;"><i class="fa-regular fa-clock"></i> ${timePart}</span>`;
+  }
+  return `<strong style="color: #0f172a; display: block;">${datePart}</strong>`;
+}
+
+function formatExpenseDateTimeString(exp) {
+  if (!exp) return '';
+  let datePart = exp.date || (exp.createdAt ? exp.createdAt.slice(0, 10) : '');
+  if (datePart && datePart.includes('-')) {
+    try {
+      const parts = datePart.split('T')[0].split('-');
+      if (parts.length === 3) {
+        const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        datePart = dObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+    } catch (e) {}
+  }
+  let timePart = '';
+  if (exp.createdAt) {
+    try {
+      timePart = new Date(exp.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    } catch (e) {}
+  }
+  return timePart ? `${datePart}, ${timePart}` : (datePart || 'N/A');
 }
 
 function renderUserEntriesList() {
@@ -1095,17 +1156,7 @@ function renderUserEntriesList() {
       ? `<span style="background: #ecfdf5; color: #047857; border: 1px solid #d1fae5; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> Paid</span>`
       : `<span style="background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-clock"></i> Pending</span>`;
 
-    let dateTimeDisplay = exp.date || new Date().toISOString().split('T')[0];
-    if (exp.createdAt) {
-      try {
-        const d = new Date(exp.createdAt);
-        const formattedDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-        const formattedTime = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-        dateTimeDisplay = `<strong style="color: #0f172a; display: block;">${formattedDate}</strong><span style="font-size: 0.78rem; color: #64748b;"><i class="fa-regular fa-clock"></i> ${formattedTime}</span>`;
-      } catch (e) {
-        dateTimeDisplay = exp.date;
-      }
-    }
+    const dateTimeDisplay = formatExpenseDateTime(exp);
 
     const categoryItem = exp.location || (exp.entries && exp.entries[0] ? exp.entries[0].type : 'Travel Item');
     const firstReceipt = exp.receipts && exp.receipts[0];
@@ -3031,17 +3082,7 @@ function renderAdminAllExpensesTable(expenses) {
   }
 
   tbody.innerHTML = filtered.map(exp => {
-    let dateTimeDisplay = exp.date;
-    if (exp.createdAt) {
-      try {
-        const d = new Date(exp.createdAt);
-        const formattedDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-        const formattedTime = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-        dateTimeDisplay = `<strong style="color: #0f172a; display: block;">${formattedDate}</strong><span style="font-size: 0.78rem; color: #64748b;"><i class="fa-regular fa-clock"></i> ${formattedTime}</span>`;
-      } catch (e) {
-        dateTimeDisplay = exp.date;
-      }
-    }
+    const dateTimeDisplay = formatExpenseDateTime(exp);
 
     const firstReceipt = exp.receipts && exp.receipts[0];
     const firstReceiptUrl = firstReceipt ? (typeof firstReceipt === 'string' ? firstReceipt : firstReceipt.fileUrl) : null;
@@ -3890,17 +3931,7 @@ function renderInspectUserExpensesTable() {
   }
 
   tbody.innerHTML = filtered.map(exp => {
-    let dateTimeDisplay = exp.date;
-    if (exp.createdAt) {
-      try {
-        const d = new Date(exp.createdAt);
-        const formattedDate = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-        const formattedTime = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-        dateTimeDisplay = `<strong style="color: #0f172a; font-size: 0.88rem; display: block;">${formattedDate}</strong><span style="font-size: 0.78rem; color: #64748b;"><i class="fa-regular fa-clock"></i> ${formattedTime}</span>`;
-      } catch (e) {
-        dateTimeDisplay = exp.date;
-      }
-    }
+    const dateTimeDisplay = formatExpenseDateTime(exp);
 
     const firstReceipt = exp.receipts && exp.receipts[0];
     const firstReceiptUrl = firstReceipt ? (typeof firstReceipt === 'string' ? firstReceipt : firstReceipt.fileUrl) : null;
@@ -3959,17 +3990,7 @@ function exportInspectUserExpensesExcel() {
 
   let tableRows = '';
   filtered.forEach((exp, idx) => {
-    let dateTimeStr = exp.date || '';
-    if (exp.createdAt) {
-      try {
-        const d = new Date(exp.createdAt);
-        const datePart = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-        const timePart = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-        dateTimeStr = `${datePart}, ${timePart}`;
-      } catch (e) {
-        dateTimeStr = exp.date || '';
-      }
-    }
+    const dateTimeStr = formatExpenseDateTimeString(exp);
 
     // Clean Category ONLY (e.g. Metro, Ola/Uber — no prices in brackets!)
     const categoryName = (exp.entries && exp.entries[0] && exp.entries[0].type) 
@@ -4261,17 +4282,7 @@ function renderAccountExpenseHistory() {
   }
 
   tbody.innerHTML = filtered.map(exp => {
-    let dateTimeDisplay = exp.date;
-    if (exp.createdAt) {
-      try {
-        const d = new Date(exp.createdAt);
-        const datePart = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-        const timePart = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-        dateTimeDisplay = `<strong style="color: #0f172a; font-size: 0.85rem; display: block;">${datePart}</strong><span style="font-size: 0.76rem; color: #64748b;"><i class="fa-regular fa-clock"></i> ${timePart}</span>`;
-      } catch (e) {
-        dateTimeDisplay = exp.date;
-      }
-    }
+    const dateTimeDisplay = formatExpenseDateTime(exp);
 
     const firstReceipt = exp.receipts && exp.receipts[0];
     const receiptUrl = firstReceipt ? (typeof firstReceipt === 'string' ? firstReceipt : firstReceipt.fileUrl) : null;

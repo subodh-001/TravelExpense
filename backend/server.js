@@ -206,23 +206,43 @@ app.get('/api/events', (req, res) => {
 const nodemailer = require('nodemailer');
 
 // Setup Gmail SMTP Transporter for OTP Emails
-let mailTransporter = null;
-const gmailUser = (process.env.GMAIL_USER || 'subodhram3350@gmail.com').trim();
-const gmailPass = (process.env.GMAIL_APP_PASS || process.env.GMAIL_APP_PASSWORD || 'ozytospihwnjhmbk').replace(/\s+/g, '');
+function createMailTransporter() {
+  const gmailUser = (process.env.GMAIL_USER || 'subodhram3350@gmail.com').trim();
+  const gmailPass = (process.env.GMAIL_APP_PASS || process.env.GMAIL_APP_PASSWORD || 'ozytospihwnjhmbk').replace(/\s+/g, '');
 
-try {
-  mailTransporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+  return nodemailer.createTransport({
+    service: 'gmail',
     auth: {
       user: gmailUser,
       pass: gmailPass
-    }
+    },
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 15000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
   });
-  console.log(`📧 Gmail SMTP Configured for Real OTP Emails (${gmailUser})`);
-} catch (smtpErr) {
-  console.warn('⚠️ Gmail SMTP setup warning:', smtpErr.message);
+}
+
+const gmailUser = (process.env.GMAIL_USER || 'subodhram3350@gmail.com').trim();
+
+async function sendEmailNotification({ to, subject, html, fromName = 'TravelExpense Security' }) {
+  if (!to) return { success: false, error: 'Recipient email address missing' };
+  try {
+    const transporter = createMailTransporter();
+    const info = await transporter.sendMail({
+      from: `"${fromName}" <${gmailUser}>`,
+      to,
+      subject,
+      html
+    });
+    console.log(`✉️ Email successfully sent to ${to}: ${info.messageId || 'OK'}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`⚠️ Failed to send email to ${to}:`, err.message || err);
+    return { success: false, error: err.message || 'SMTP Email delivery failed' };
+  }
 }
 
 // ---------- USER AUTHENTICATION & PROFILE MANAGEMENT ----------
@@ -412,27 +432,26 @@ app.post('/api/auth/send-otp', async (req, res) => {
     console.log(`🔑 Generated 6-Digit OTP for ${email}: [ ${otp} ]`);
 
     // Send Real Email via Nodemailer Gmail SMTP
-    if (mailTransporter) {
-      try {
-        await mailTransporter.sendMail({
-          from: `"TravelExpense Security" <${gmailUser}>`,
-          to: email,
-          subject: `🔑 ${otp} is your TravelExpense Verification Code`,
-          html: `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e5e5ea; border-radius: 20px; background: #ffffff;">
-              <h2 style="color: #000000; font-size: 20px; font-weight: 800; margin-bottom: 8px;">TravelExpense</h2>
-              <p style="color: #6e6e73; font-size: 14px; margin-bottom: 20px;">Your 6-digit verification code to log in to TravelExpense is:</p>
-              <div style="background: #F4F4F7; padding: 20px; border-radius: 14px; text-align: center; margin-bottom: 20px; border: 1px solid #e5e5ea;">
-                <span style="font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #000000;">${otp}</span>
-              </div>
-              <p style="color: #8e8e93; font-size: 12px; line-height: 1.5; margin: 0;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
-            </div>
-          `
-        });
-        console.log(`✉️ Real OTP Email successfully sent to ${email}`);
-      } catch (mailErr) {
-        console.error(`⚠️ Failed to send OTP email to ${email}:`, mailErr.message);
-      }
+    const mailResult = await sendEmailNotification({
+      to: email,
+      subject: `🔑 ${otp} is your TravelExpense Verification Code`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e5e5ea; border-radius: 20px; background: #ffffff;">
+          <h2 style="color: #000000; font-size: 20px; font-weight: 800; margin-bottom: 8px;">TravelExpense</h2>
+          <p style="color: #6e6e73; font-size: 14px; margin-bottom: 20px;">Your 6-digit verification code to log in to TravelExpense is:</p>
+          <div style="background: #F4F4F7; padding: 20px; border-radius: 14px; text-align: center; margin-bottom: 20px; border: 1px solid #e5e5ea;">
+            <span style="font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #000000;">${otp}</span>
+          </div>
+          <p style="color: #8e8e93; font-size: 12px; line-height: 1.5; margin: 0;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
+        </div>
+      `
+    });
+
+    if (!mailResult.success) {
+      return res.status(500).json({
+        success: false,
+        error: `Failed to send OTP email: ${mailResult.error}`
+      });
     }
 
     res.json({
@@ -658,37 +677,35 @@ app.post('/api/admin/invite-admin', async (req, res) => {
     const host = req.get('host') || 'localhost:3000';
     const approvalLink = `${protocol}://${host}/api/admin/accept-invite?token=${token}`;
 
-    if (mailTransporter) {
-      try {
-        await mailTransporter.sendMail({
-          from: `"FreeG Wifi Admin Security" <${gmailUser}>`,
-          to: cleanEmail,
-          subject: `👑 Invitation: Become a Super Admin on FreeG Wifi`,
-          html: `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 20px; background: #ffffff;">
-              <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-                <span style="font-size: 24px; color: #ffffff;">👑</span>
-              </div>
-              <h2 style="color: #0f172a; font-size: 22px; font-weight: 800; margin-bottom: 8px;">FreeG Wifi — Super Admin Invitation</h2>
-              <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
-                You have been invited to become a <strong>Super Admin</strong> for FreeG Wifi. Accepting this invitation grants you full administrative privileges to view all system users and expense amounts.
-              </p>
-              <div style="text-align: center; margin-bottom: 28px;">
-                <a href="${approvalLink}" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 800; font-size: 16px; display: inline-block; box-shadow: 0 4px 14px rgba(79,70,229,0.35);">
-                  ✓ Accept Super Admin Role
-                </a>
-              </div>
-              <p style="color: #94a3b8; font-size: 12px; line-height: 1.5; margin: 0;">
-                If you did not expect this invitation, please ignore this email. Link expires in 24 hours.<br/>
-                Approval Link: <span style="font-family: monospace;">${approvalLink}</span>
-              </p>
+    try {
+      await sendEmailNotification({
+        to: cleanEmail,
+        fromName: 'FreeG Wifi Admin Security',
+        subject: `👑 Invitation: Become a Super Admin on FreeG Wifi`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 20px; background: #ffffff;">
+            <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+              <span style="font-size: 24px; color: #ffffff;">👑</span>
             </div>
-          `
-        });
-        console.log(`✉️ Super Admin invitation email sent to ${cleanEmail}`);
-      } catch (mailErr) {
-        console.error(`⚠️ Failed to send admin invite email to ${cleanEmail}:`, mailErr.message);
-      }
+            <h2 style="color: #0f172a; font-size: 22px; font-weight: 800; margin-bottom: 8px;">FreeG Wifi — Super Admin Invitation</h2>
+            <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+              You have been invited to become a <strong>Super Admin</strong> for FreeG Wifi. Accepting this invitation grants you full administrative privileges to view all system users and expense amounts.
+            </p>
+            <div style="text-align: center; margin-bottom: 28px;">
+              <a href="${approvalLink}" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 800; font-size: 16px; display: inline-block; box-shadow: 0 4px 14px rgba(79,70,229,0.35);">
+                ✓ Accept Super Admin Role
+              </a>
+            </div>
+            <p style="color: #94a3b8; font-size: 12px; line-height: 1.5; margin: 0;">
+              If you did not expect this invitation, please ignore this email. Link expires in 24 hours.<br/>
+              Approval Link: <span style="font-family: monospace;">${approvalLink}</span>
+            </p>
+          </div>
+        `
+      });
+      console.log(`✉️ Super Admin invitation email sent to ${cleanEmail}`);
+    } catch (mailErr) {
+      console.error(`⚠️ Failed to send admin invite email to ${cleanEmail}:`, mailErr.message);
     }
 
     res.json({
@@ -957,33 +974,28 @@ app.post('/api/admin/update-settlement-bill', upload.single('paymentProof'), asy
     saveLocalExpenses(allExpenses);
 
     // Send email notification to user on bill update
-    if (action === 'update' && mailTransporter && targetUser && targetUser.email && paymentBillUrl) {
-      try {
-        await mailTransporter.sendMail({
-          from: `"FreeG TravelExpense Admin" <subodhram3350@gmail.com>`,
-          to: targetUser.email,
-          subject: `⚡ Updated Reimbursement Payment Proof Bill - FreeG TravelExpense`,
-          html: `
-            <div style="font-family: Arial, sans-serif; padding: 20px; color: #0f172a; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px;">
-              <h2 style="color: #059669; margin-top: 0;">Updated Payment Bill Proof Uploaded</h2>
-              <p>Hello <strong>${targetUser.name || 'Member'}</strong>,</p>
-              <p>Your Super Admin has uploaded an <strong>updated payment proof bill</strong> for your travel expense reimbursements (${month || 'Current Month'}).</p>
-              <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin: 16px 0; text-align: center;">
-                <p style="margin-bottom: 8px; font-weight: bold; color: #334155;">Updated Bill Proof Photo:</p>
-                <a href="${paymentBillUrl}" target="_blank" style="display: inline-block; background: #0f172a; color: #ffffff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold;">
-                  🖼️ View Updated Bill Photo
-                </a>
-              </div>
-              <p style="color: #64748b; font-size: 0.85rem;">You can also view this updated bill inside your app under <strong>Account → Expense History</strong>.</p>
-              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-              <p style="font-size: 0.8rem; color: #94a3b8; margin: 0;">FreeG Wifi Travel Expense Management System</p>
+    if (action === 'update' && targetUser && targetUser.email && paymentBillUrl) {
+      await sendEmailNotification({
+        to: targetUser.email,
+        fromName: 'FreeG TravelExpense Admin',
+        subject: `⚡ Updated Reimbursement Payment Proof Bill - FreeG TravelExpense`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #0f172a; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <h2 style="color: #059669; margin-top: 0;">Updated Payment Bill Proof Uploaded</h2>
+            <p>Hello <strong>${targetUser.name || 'Member'}</strong>,</p>
+            <p>Your Super Admin has uploaded an <strong>updated payment proof bill</strong> for your travel expense reimbursements (${month || 'Current Month'}).</p>
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin: 16px 0; text-align: center;">
+              <p style="margin-bottom: 8px; font-weight: bold; color: #334155;">Updated Bill Proof Photo:</p>
+              <a href="${paymentBillUrl}" target="_blank" style="display: inline-block; background: #0f172a; color: #ffffff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                🖼️ View Updated Bill Photo
+              </a>
             </div>
-          `
-        });
-        console.log(`📧 Updated payment bill email sent to ${targetUser.email}`);
-      } catch (e) {
-        console.warn(`⚠️ Failed to send updated payment bill email:`, e.message);
-      }
+            <p style="color: #64748b; font-size: 0.85rem;">You can also view this updated bill inside your app under <strong>Account → Expense History</strong>.</p>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+            <p style="font-size: 0.8rem; color: #94a3b8; margin: 0;">FreeG Wifi Travel Expense Management System</p>
+          </div>
+        `
+      });
     }
 
     res.json({
@@ -1052,40 +1064,35 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
 
     saveLocalExpenses(allExpenses);
 
-    // Send Reimbursement Confirmation Email to User via Nodemailer
-    if (mailTransporter && targetUser.email) {
-      try {
-        const monthLabel = month && month !== 'all' ? month : 'current month';
-        await mailTransporter.sendMail({
-          from: `"FreeG Wifi Accounts" <${gmailUser}>`,
-          to: targetUser.email,
-          subject: `✅ Reimbursement Paid: ₹${settledTotal.toLocaleString('en-IN')} for ${targetUser.name}`,
-          html: `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 20px; background: #ffffff;">
-              <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-                <span style="font-size: 24px; color: #ffffff;">💳</span>
-              </div>
-              <h2 style="color: #0f172a; font-size: 22px; font-weight: 800; margin-bottom: 8px;">Reimbursement Payment Successful!</h2>
-              <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 16px;">
-                Hello <strong>${targetUser.name}</strong>,<br/>
-                Your travel expense reimbursement of <strong style="color: #059669; font-size: 18px;">₹${settledTotal.toLocaleString('en-IN')}</strong> for <strong>${monthLabel}</strong> has been successfully settled and paid by Super Admin.
-              </p>
-              ${paymentBillUrl ? `
-                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 14px; padding: 16px; margin-bottom: 20px; text-align: center;">
-                  <span style="font-size: 14px; font-weight: 700; color: #334155; display: block; margin-bottom: 8px;">📑 Uploaded Payment Proof / Receipt:</span>
-                  <a href="${paymentBillUrl}" target="_blank" style="background: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block;">
-                    View Uploaded Payment Bill
-                  </a>
-                </div>
-              ` : ''}
-              <p style="color: #94a3b8; font-size: 13px; margin: 0;">FreeG Wifi Expense Management System</p>
+    // Send Reimbursement Confirmation Email to User
+    if (targetUser && targetUser.email) {
+      const monthLabel = month && month !== 'all' ? month : 'current month';
+      await sendEmailNotification({
+        to: targetUser.email,
+        fromName: 'FreeG Wifi Accounts',
+        subject: `✅ Reimbursement Paid: ₹${settledTotal.toLocaleString('en-IN')} for ${targetUser.name}`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 20px; background: #ffffff;">
+            <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+              <span style="font-size: 24px; color: #ffffff;">💳</span>
             </div>
-          `
-        });
-        console.log(`📧 Reimbursement payment email sent to ${targetUser.email}`);
-      } catch (mailErr) {
-        console.warn('Reimbursement email failed:', mailErr.message);
-      }
+            <h2 style="color: #0f172a; font-size: 22px; font-weight: 800; margin-bottom: 8px;">Reimbursement Payment Successful!</h2>
+            <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 16px;">
+              Hello <strong>${targetUser.name}</strong>,<br/>
+              Your travel expense reimbursement of <strong style="color: #059669; font-size: 18px;">₹${settledTotal.toLocaleString('en-IN')}</strong> for <strong>${monthLabel}</strong> has been successfully settled and paid by Super Admin.
+            </p>
+            ${paymentBillUrl ? `
+              <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 14px; padding: 16px; margin-bottom: 20px; text-align: center;">
+                <span style="font-size: 14px; font-weight: 700; color: #334155; display: block; margin-bottom: 8px;">📑 Uploaded Payment Proof / Receipt:</span>
+                <a href="${paymentBillUrl}" target="_blank" style="background: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block;">
+                  View Uploaded Payment Bill
+                </a>
+              </div>
+            ` : ''}
+            <p style="color: #94a3b8; font-size: 13px; margin: 0;">FreeG Wifi Expense Management System</p>
+          </div>
+        `
+      });
     }
 
     res.json({
