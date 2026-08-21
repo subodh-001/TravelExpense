@@ -2446,10 +2446,16 @@ async function sendGoogleOtp(isResend = false) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
     });
-    const data = await res.json();
+
+    let data;
+    try {
+      data = await res.json();
+    } catch (parseErr) {
+      data = { error: `Server HTTP ${res.status} error. Render server may be building or restarting.` };
+    }
 
     if (!res.ok) {
-      if (hintEl) hintEl.innerHTML = `<span style="color:#ef4444">❌ ${data.error || 'Failed to send code'}</span>`;
+      if (hintEl) hintEl.innerHTML = `<span style="color:#ef4444">❌ ${data.error || 'Failed to send verification code'}</span>`;
       if (btnText) btnText.textContent = 'Send Verification Code';
       return;
     }
@@ -2466,7 +2472,7 @@ async function sendGoogleOtp(isResend = false) {
     setTimeout(() => document.getElementById('googleOtpCode')?.focus(), 100);
     showToast(`✉️ Verification code sent to ${email}`);
   } catch (err) {
-    if (hintEl) hintEl.innerHTML = '<span style="color:#ef4444">❌ Server error. Make sure backend is running.</span>';
+    if (hintEl) hintEl.innerHTML = `<span style="color:#ef4444">❌ Error: ${err.message || 'Network connection failed'}</span>`;
     if (btnText) btnText.textContent = 'Send Verification Code';
   }
 }
