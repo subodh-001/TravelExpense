@@ -277,51 +277,7 @@ async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Sec
   
   const { user: gUser } = getGmailCredentials();
 
-  // Attempt 1: Primary Pooled Transporter (Port 465 SSL IPv4)
-  try {
-    const info = await primaryTransporter.sendMail({
-      from: `"${fromName}" <${gUser}>`,
-      to,
-      subject,
-      html
-    });
-    console.log(`✉️ Email successfully sent to ${to} via Primary Gmail Port 465: ${info.messageId || 'OK'}`);
-    return { success: true, messageId: info.messageId };
-  } catch (err1) {
-    console.warn(`⚠️ Primary Gmail 465 attempt failed (${err1.message}). Retrying with direct fallback credentials on Port 465...`);
-  }
-
-  // Attempt 2: Direct Port 465 (SSL) with Master Credentials
-  try {
-    const fallbackTransporter465 = createMailTransporter(465, GMAIL_DEFAULT_USER, GMAIL_DEFAULT_PASS);
-    const info465 = await fallbackTransporter465.sendMail({
-      from: `"${fromName}" <${GMAIL_DEFAULT_USER}>`,
-      to,
-      subject,
-      html
-    });
-    console.log(`✉️ Email successfully sent to ${to} via Fallback Port 465: ${info465.messageId || 'OK'}`);
-    return { success: true, messageId: info465.messageId };
-  } catch (err2) {
-    console.warn(`⚠️ Fallback Port 465 attempt failed (${err2.message}). Retrying via Port 587 (TLS)...`);
-  }
-
-  // Attempt 3: Direct Port 587 (TLS) with Master Credentials
-  try {
-    const fallbackTransporter587 = createMailTransporter(587, GMAIL_DEFAULT_USER, GMAIL_DEFAULT_PASS);
-    const info587 = await fallbackTransporter587.sendMail({
-      from: `"${fromName}" <${GMAIL_DEFAULT_USER}>`,
-      to,
-      subject,
-      html
-    });
-    console.log(`✉️ Email successfully sent to ${to} via Fallback Port 587: ${info587.messageId || 'OK'}`);
-    return { success: true, messageId: info587.messageId };
-  } catch (err3) {
-    console.error(`❌ All Nodemailer SMTP attempts failed for ${to}:`, err3.message);
-  }
-
-  // Attempt 4: Resend HTTPS API (if RESEND_API_KEY set)
+  // Attempt 1: Resend HTTPS API (Port 443 - Bypasses cloud host firewall blocks)
   if (process.env.RESEND_API_KEY) {
     try {
       const resendRes = await fetch('https://api.resend.com/emails', {
@@ -345,6 +301,93 @@ async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Sec
     } catch (resendErr) {
       console.warn(`⚠️ Resend HTTP API attempt failed: ${resendErr.message}`);
     }
+  }
+
+  // Attempt 2: Brevo HTTPS API (Port 443 - Bypasses cloud host firewall blocks)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': process.env.BREVO_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: fromName, email: gUser },
+          to: [{ email: to }],
+          subject,
+          htmlContent: html
+        })
+      });
+      if (brevoRes.ok) {
+        const brevoData = await brevoRes.json();
+        console.log(`✉️ Email successfully sent to ${to} via Brevo HTTP API: ${brevoData.messageId || 'OK'}`);
+        return { success: true, messageId: brevoData.messageId };
+      }
+    } catch (brevoErr) {
+      console.warn(`⚠️ Brevo HTTP API attempt failed: ${brevoErr.message}`);
+    }
+  }
+
+  // Attempt 3: Google Apps Script HTTPS Webhook (Port 443)
+  if (process.env.GMAIL_HTTP_WEBHOOK_URL) {
+    try {
+      const webhookRes = await fetch(process.env.GMAIL_HTTP_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, subject, html, fromName })
+      });
+      if (webhookRes.ok) {
+        console.log(`✉️ Email successfully sent to ${to} via Google Webhook`);
+        return { success: true, messageId: 'WEBHOOK_OK' };
+      }
+    } catch (whErr) {
+      console.warn(`⚠️ Google Webhook attempt failed: ${whErr.message}`);
+    }
+  }
+
+  // Attempt 4: Primary Pooled Gmail SMTP (Port 465 SSL IPv4)
+  try {
+    const info = await primaryTransporter.sendMail({
+      from: `"${fromName}" <${gUser}>`,
+      to,
+      subject,
+      html
+    });
+    console.log(`✉️ Email successfully sent to ${to} via Primary Gmail Port 465: ${info.messageId || 'OK'}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err1) {
+    console.warn(`⚠️ Primary Gmail 465 attempt failed (${err1.message}). Retrying with direct fallback credentials on Port 465...`);
+  }
+
+  // Attempt 5: Direct Port 465 (SSL) with Master Credentials
+  try {
+    const fallbackTransporter465 = createMailTransporter(465, GMAIL_DEFAULT_USER, GMAIL_DEFAULT_PASS);
+    const info465 = await fallbackTransporter465.sendMail({
+      from: `"${fromName}" <${GMAIL_DEFAULT_USER}>`,
+      to,
+      subject,
+      html
+    });
+    console.log(`✉️ Email successfully sent to ${to} via Fallback Port 465: ${info465.messageId || 'OK'}`);
+    return { success: true, messageId: info465.messageId };
+  } catch (err2) {
+    console.warn(`⚠️ Fallback Port 465 attempt failed (${err2.message}). Retrying via Port 587 (TLS)...`);
+  }
+
+  // Attempt 6: Direct Port 587 (TLS) with Master Credentials
+  try {
+    const fallbackTransporter587 = createMailTransporter(587, GMAIL_DEFAULT_USER, GMAIL_DEFAULT_PASS);
+    const info587 = await fallbackTransporter587.sendMail({
+      from: `"${fromName}" <${GMAIL_DEFAULT_USER}>`,
+      to,
+      subject,
+      html
+    });
+    console.log(`✉️ Email successfully sent to ${to} via Fallback Port 587: ${info587.messageId || 'OK'}`);
+    return { success: true, messageId: info587.messageId };
+  } catch (err3) {
+    console.error(`❌ All Nodemailer SMTP attempts failed for ${to}:`, err3.message);
   }
 
   return { success: false, error: 'SMTP/Email delivery unavailable on cloud network host' };
