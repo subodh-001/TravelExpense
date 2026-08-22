@@ -1797,15 +1797,44 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
         console.warn('Backup purge note:', bkErr.message);
       }
 
-      // 5. Delete from Firebase Firestore if Firebase enabled
+      // 5. Delete from Firebase Firestore + write to deleted_users archive
       if (useFirebase) {
         try {
-          if (userId) db.collection('users').doc(userId).delete().catch(() => {});
-          if (userCleanId) db.collection('users').doc(userCleanId).delete().catch(() => {});
+          // Fetch user's expenses from Firestore before deleting (for archive)
+          const expSnap1 = await db.collection('expenses').where('userId', '==', userId).get().catch(() => ({ docs: [] }));
+          const expSnap2 = userCleanId ? await db.collection('expenses').where('userId', '==', userCleanId).get().catch(() => ({ docs: [] })) : { docs: [] };
+          const archivedExpenses = [...expSnap1.docs, ...expSnap2.docs].map(d => d.data());
+
+          // Write permanent archive to deleted_users collection in Firestore
+          const archiveId = `deleted_${Date.now()}_${(matchedTarget?.email || userId).replace(/[^a-zA-Z0-9]/g, '_')}`;
+          await db.collection('deleted_users').doc(archiveId).set({
+            originalId:    userId,
+            cleanId:       userCleanId || '',
+            name:          matchedTarget?.name  || '',
+            email:         matchedTarget?.email || '',
+            role:          matchedTarget?.role  || 'user',
+            picture:       matchedTarget?.picture || '',
+            verified:      !!matchedTarget?.verified,
+            joinedAt:      matchedTarget?.updatedAt || '',
+            deletedAt:     new Date().toISOString(),
+            deletedBy:     'admin',
+            totalExpenses: archivedExpenses.length,
+            lifetimeAmount: archivedExpenses.reduce((s, e) => s + (e.total || 0), 0),
+            expenseHistory: archivedExpenses,   // full expense log preserved
+            note: 'Permanently deleted by admin. This record is for audit purposes only.'
+          });
+
+          // Now delete from Firestore users collection
+          if (userId)           db.collection('users').doc(userId).delete().catch(() => {});
+          if (userCleanId)      db.collection('users').doc(userCleanId).delete().catch(() => {});
           if (matchedTarget?.id) db.collection('users').doc(matchedTarget.id).delete().catch(() => {});
-          
-          const snap = await db.collection('expenses').where('userId', '==', userId).get();
-          snap.forEach(d => d.ref.delete());
+
+          // Delete all expenses from Firestore
+          const deleteBatch = db.batch();
+          [...expSnap1.docs, ...expSnap2.docs].forEach(d => deleteBatch.delete(d.ref));
+          await deleteBatch.commit();
+
+          console.log(`🗃️ Firestore archive written: deleted_users/${archiveId}`);
         } catch (fbErr) {
           console.warn('Firebase user deletion note:', fbErr.message);
         }
