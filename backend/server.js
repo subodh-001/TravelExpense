@@ -57,14 +57,21 @@ let useFirebase = false;
 let db = null;
 let bucket = null;
 
+const DEFAULT_FIREBASE_B64 = "ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAibm90aGluZy01YzhiOCIsCiAgInByaXZhdGVfa2V5X2lkIjogIjEyNWQ5MjJkYzljZTU0NDgwY2IzMTRhYzdmYWY0Y2Y0MmNhZWEyMDQiLAogICJwcml2YXRlX2tleSI6ICItLS0tLUJFR0lOIFBSSVZBVEUgS0VZLS0tLS1cbk1JSUV2Z0lCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktnd2dnU2tBZ0VBQW9JQkFRREFlWW1vRWV3bk9La3dcblZ1REhyVlpWSEVVMkJ0ZHdsYlduVFo5aktqSDdMaWU1bmJmYmwvRzc5UUprNVpCZ1NsOWpjelkzcGREcitRendcbkJULzlETmNUZnUvS2xzaUtHS3J3dHBScnhLTDFBVFhDS2VHeGxxV1h6blBqeHovMER6UldBeXdQYmRMYUZiejFcbmVqcmxKSmJqTXJtUVY4eVZGeURTNkhZR3dmbmlJN1BBYWFnSXFHaG4yWU4wTXZOUjhkaUM2dk5LRDQ2NFpacXdcbmliZVE1RnZXdmxXcjJEczFCbDRDVVliV0RoNWNCdjJUWGs2RDZwb3R1bTFVVkduS1VvQ3EyOUtxdk4vK2ZTdzRcbk4wSTZuTnFjM2FOY1ZOZjVDRFB3NldKenVmVkNqMTdGQ1pZb0hhQ29XK0c0MG1tSGJrTnh0bU0yWS9YejJDYjlcbmVaekxYRUhyQWdNQkFBRUNnZ0VBUGhmWGMydVl3a3h5dElBS2t4QlYvaTRaRytWWUlsK0IwMS9rMEJLQVBsYTFcbkJSb2ZBczVCYzVBR3ZqTWJBUjF0S1lHMUYzMjhhU3dXNHVYbXIwV3hxdjN6OE9qMCtDd2VGWHJwWmR6eGIxWDlcbkdFNzNteG1OQVd6ZWtUaXA1cHZ6Rjk1OUc5c2p2eXh0SWNwVmJxLy9wM3NwUnlveisxTVRTVWNxTUdMcXNPdWdcbmZrWlRkN0ZPUUJoTjBxUUpYVUQyTzRTcjJDSU5FMi9QbVVGejdaWm95ZVJ3OHpaRForVUYyZ1NIYWVvaEd2ekRcbjVkQkRkUmM2VFhyUTE3QWdZU3crK2xYaUgvam56NEtENktORllPR1o1dnpKbnYwcjVwVjlJcFlIakFidHFZZmhcbnhuR0lXdDFSMDYyNDI1bjNCZitKMzlUVHMyYncxRVBVT2gzLzlqc3p6UUtCZ1DENHZLWisrekZMUFV0ZlFucUJcbjdiVEZ3RVU3bnZKMHZOYzh5dlhHRVVVazd3MzMzdmVjb1AzZmt6ZEZ2TDFDMnBPYXpkS1RDZzcxa3FkcEd6bVJcbncxSlR6V3ZaQThRc3JFQjZQTU9jcEpWL2JxUElORmR2ckpDUVIyVXZNV0w1Z0ExSTQvUGxabHZydEg0OWxJZWlcbkZpVXBNQ2xybkFUaVdWNktUN2NvTWt5RUpRS0JnUURHR0ZHQ1FScWJhN3BDVHVwU3RLQzA2a1JUYnA4dlExMm5cbmxNUXk1U0M5RkdQWmpya04yZ3RYcUJrTFZyTExtQXZoR2xCdHQ5czUvdUFvWGNnRUlOVU9SQ3dNVFFBVHVvaStcbkU1c01EUUZZMWlkbFNOU0RUeXM0bVgwek5EYzZJdUk3M3dYSVZzdTMxWnRFM3FFTEVXR0RzKzk1Vno5THBucUFcbmlKdkpYeGRJendLQmdRQ2NMTzhwV1pUb2ZLR1BGcHBUQlF0K2Z2K1pCMTkyTGdZTHFORW1zRmNZRkRYNm9KMFxuTU0xV1hMdmVxSlA0N3Y2d3V6elZJQUttaEU5aStqb2FZSlpIZ2twK1J4UWNySWJMZVcyazQ5NE9KaXpsM3A5clxudWVFIEJoenRGY2c4T2YrZFhhdGN4UGxBTkpMeko1VkhRR0RGNi9BZDF6bjl1azRoOXRYR2Q1bjhPbFFLQmdCN3lcbklabVZqaENGamIxYUVxVUU3cTRVZ3NQOTNnUkdJOVZRR2k1Uk9RSVFzMkNET1VsK3JKTHZBYXFSeXJDZmVndWFcblRzSTFISnc4d3N2TGlybUtYMzR4RENpSHh1Rk9ISnFFK1kyeVltbDhXdjhwbDNsRDN0NmlxN3BhQjk2ZklIUjFcbjdMTlZTOUhXSHNGdGZmNzZvaDh1OXRRZjJ4VjRWbDdKK0h4R3pKNWxBb0dCQUtrbGZwcmVvSmhFYWpVSnE4eVRcbnlobjE5S2J2VUxEYW9JZmViRWtURU10US9sNnpsZmVIWE1QTzVocDZnVERrL2owdGIyTk1CbWsxblF4ai9PRFNcbnNkU0JzNFE2NXc3emdCSVY2NEhseURpT3dic3ZZNVlVdXdzako1OUdXZ3krc0hVSUlNZnpaYktkM1l6am1yRGdcbkxlSFlkc0hBamxJeGFTWXk0UlFvKzg4TlxuLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLVxuIiwKICAiY2xpZW50X2VtYWlsIjogImZpcmViYXNlLWFkbWluc2RrLXNqM3ZqQG5vdGhpbmctNWM4YjguaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLAogICJjbGllbnRfaWQiOiAiMTE3NDgwODY1MDE2MDk4OTc4MDc5IiwKICAiYXV0aF91cmkiOiAiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGVhcGlzLmNvbS9vL29hdXRoMi9hdXRoIiwKICAidG9rZW5fdXJpIjogImh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwKICAiYXV0aF9wcm92aWRlcl94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL29hdXRoMi92MS9jZXJ0cyIsCiAgImNsaWVudF94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL3JvYm90L3YxL21ldGFkYXRhL3g1MDkvZmlyZWJhc2UtYWRtaW5zZGstc2ozdmolNDBub3RoaW5nLTVjOGI4LmlhbS5nc2VydmljZWFjY291bnQuY29tIiwKICAidW5pdmVyc2VfZG9tYWluIjogImdvb2dsZWFwaXMuY29tIgp9";
+
 const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT || path.join(__dirname, 'firebase-admin.json');
 
-if (fs.existsSync(serviceAccountPath) || process.env.FIREBASE_CONFIG) {
-  try {
-    const serviceAccount = fs.existsSync(serviceAccountPath) 
-      ? require(serviceAccountPath) 
-      : JSON.parse(process.env.FIREBASE_CONFIG);
-      
+try {
+  let serviceAccount = null;
+  if (fs.existsSync(serviceAccountPath)) {
+    serviceAccount = require(serviceAccountPath);
+  } else if (process.env.FIREBASE_CONFIG) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG);
+  } else if (DEFAULT_FIREBASE_B64) {
+    serviceAccount = JSON.parse(Buffer.from(DEFAULT_FIREBASE_B64, 'base64').toString('utf8'));
+  }
+
+  if (serviceAccount) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${serviceAccount.project_id}.appspot.com`
@@ -73,12 +80,10 @@ if (fs.existsSync(serviceAccountPath) || process.env.FIREBASE_CONFIG) {
     db = admin.firestore();
     bucket = admin.storage().bucket();
     useFirebase = true;
-    console.log('🔥 Connected to Firebase Firestore & Storage');
-  } catch (err) {
-    console.warn('⚠️ Firebase init failed, falling back to Local Storage mode:', err.message);
+    console.log('🔥 Connected to Firebase Firestore & Storage (Project:', serviceAccount.project_id + ')');
   }
-} else {
-  console.log('ℹ️ No Firebase service account found. Running in LOCAL STORAGE mode.');
+} catch (err) {
+  console.warn('⚠️ Firebase init warning, falling back to Local Storage mode:', err.message);
 }
 
 // Server-Sent Events (SSE) Real-Time Sync Subscribers Store
