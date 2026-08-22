@@ -476,6 +476,38 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
+// ☁️ Cloudinary Upload Helper (same account as Web)
+const CLOUDINARY_CLOUD_NAME = 'vrxb6o67';
+const CLOUDINARY_UPLOAD_PRESET = 'expense_receipts'; // must be unsigned preset
+
+const uploadToCloudinary = async (fileBuffer, mimeType, folder = 'payment_bills') => {
+  const httpFetch = globalThis.fetch || (async (...args) => {
+    const { default: f } = await import('node-fetch');
+    return f(...args);
+  });
+
+  const base64 = fileBuffer.toString('base64');
+  const dataUri = `data:${mimeType};base64,${base64}`;
+
+  const form = new URLSearchParams();
+  form.append('file', dataUri);
+  form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  form.append('folder', folder);
+
+  const res = await httpFetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
+    { method: 'POST', body: form }
+  );
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Cloudinary upload failed: ${errText}`);
+  }
+
+  const data = await res.json();
+  return data.secure_url; // permanent HTTPS URL
+};
+
 const authenticate = (req, res, next) => {
   let userId = req.headers['user-id'] || req.query.userId;
   if (!userId || userId === 'user_123' || userId === 'google_user') {
@@ -1518,13 +1550,19 @@ app.post('/api/admin/update-settlement-bill', upload.single('paymentProof'), asy
     let paymentBillUrl = '';
 
     if (action === 'update' && req.file) {
-      const ext = path.extname(req.file.originalname) || '.png';
-      const fileName = `bill_${Date.now()}_${uuidv4().substring(0, 8)}${ext}`;
-      const filePath = path.join(UPLOADS_DIR, fileName);
-      fs.writeFileSync(filePath, req.file.buffer);
-      const protocol = req.protocol || 'http';
-      const host = req.get('host') || 'localhost:3000';
-      paymentBillUrl = `${protocol}://${host}/uploads/${fileName}`;
+      try {
+        paymentBillUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, 'payment_bills');
+      } catch (cloudErr) {
+        // Fallback to local disk if Cloudinary fails
+        const ext = path.extname(req.file.originalname) || '.png';
+        const fileName = `bill_${Date.now()}_${uuidv4().substring(0, 8)}${ext}`;
+        const filePath = path.join(UPLOADS_DIR, fileName);
+        fs.writeFileSync(filePath, req.file.buffer);
+        const protocol = req.protocol || 'https';
+        const host = req.get('host') || 'travelexpense-52gp.onrender.com';
+        paymentBillUrl = `${protocol}://${host}/uploads/${fileName}`;
+        console.warn('Cloudinary fallback to local:', cloudErr.message);
+      }
     }
 
     let modifiedCount = 0;
@@ -1617,13 +1655,19 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
 
     let paymentBillUrl = '';
     if (req.file) {
-      const ext = path.extname(req.file.originalname) || '.png';
-      const fileName = `bill_${Date.now()}_${uuidv4().substring(0, 8)}${ext}`;
-      const filePath = path.join(UPLOADS_DIR, fileName);
-      fs.writeFileSync(filePath, req.file.buffer);
-      const protocol = req.protocol || 'http';
-      const host = req.get('host') || 'localhost:3000';
-      paymentBillUrl = `${protocol}://${host}/uploads/${fileName}`;
+      try {
+        paymentBillUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, 'payment_bills');
+      } catch (cloudErr) {
+        // Fallback to local disk if Cloudinary fails
+        const ext = path.extname(req.file.originalname) || '.png';
+        const fileName = `bill_${Date.now()}_${uuidv4().substring(0, 8)}${ext}`;
+        const filePath = path.join(UPLOADS_DIR, fileName);
+        fs.writeFileSync(filePath, req.file.buffer);
+        const protocol = req.protocol || 'https';
+        const host = req.get('host') || 'travelexpense-52gp.onrender.com';
+        paymentBillUrl = `${protocol}://${host}/uploads/${fileName}`;
+        console.warn('Cloudinary fallback to local:', cloudErr.message);
+      }
     }
 
     const userCleanId = targetUser.email ? `google_${targetUser.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
@@ -2231,21 +2275,28 @@ app.post('/api/expenses/:expenseId/receipts',
           message: 'Receipt uploaded to Firebase Storage!'
         });
       } else {
-        // Local upload
-        const userFolder = path.join(UPLOADS_DIR, userId, expenseId);
-        if (!fs.existsSync(userFolder)) fs.mkdirSync(userFolder, { recursive: true });
-
-        const localPath = path.join(userFolder, safeFileName);
-        fs.writeFileSync(localPath, file.buffer);
-
-        const protocol = req.protocol;
-        const host = req.get('host');
-        fileUrl = `${protocol}://${host}/uploads/${userId}/${expenseId}/${safeFileName}`;
+        // Cloudinary upload fallback (when Firebase Storage not connected)
+        try {
+          fileUrl = await uploadToCloudinary(
+            file.buffer, file.mimetype,
+            `receipts/${userId}/${expenseId}`
+          );
+        } catch (cloudErr) {
+          // Last resort: local disk
+          const userFolder = path.join(UPLOADS_DIR, userId, expenseId);
+          if (!fs.existsSync(userFolder)) fs.mkdirSync(userFolder, { recursive: true });
+          fs.writeFileSync(path.join(userFolder, safeFileName), file.buffer);
+          const protocol = req.protocol;
+          const host = req.get('host');
+          fileUrl = `${protocol}://${host}/uploads/${userId}/${expenseId}/${safeFileName}`;
+          console.warn('Cloudinary receipt fallback to local:', cloudErr.message);
+        }
 
         const receiptData = {
           fileName: safeFileName,
           originalName: file.originalname,
           fileUrl: fileUrl,
+          provider: 'Cloudinary',
           uploadedAt: new Date().toISOString()
         };
 
@@ -2265,7 +2316,7 @@ app.post('/api/expenses/:expenseId/receipts',
         return res.json({
           success: true,
           receipt: receiptData,
-          message: 'Receipt uploaded to local storage!'
+          message: 'Receipt uploaded to Cloudinary!'
         });
       }
     } catch (error) {
