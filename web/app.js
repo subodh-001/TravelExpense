@@ -2279,7 +2279,11 @@ async function requestOtpCode() {
       document.getElementById('otpStep1').style.display = 'none';
       document.getElementById('otpStep2').style.display = 'block';
 
-      showToast(`✉️ 6-Digit OTP code sent to ${email}`);
+      if (data.otp) {
+        showToast(`🔑 Verification Code: ${data.otp}`);
+      } else {
+        showToast(`✉️ 6-Digit OTP code sent to ${email}`);
+      }
     } else {
       customAlert(`OTP request failed: ${data.error}`);
     }
@@ -4714,7 +4718,11 @@ async function handleSendForgotPassOtp() {
       const targetEl = document.getElementById('forgotPassTargetEmail');
       if (targetEl) targetEl.textContent = email;
       showForgotPassStep(2);
-      if (typeof showCustomToast === 'function') showCustomToast(`📨 OTP sent to ${email}`);
+      if (data.otp) {
+        if (typeof showCustomToast === 'function') showCustomToast(`🔑 Verification Code: ${data.otp}`);
+      } else {
+        if (typeof showCustomToast === 'function') showCustomToast(`📨 OTP sent to ${email}`);
+      }
     } else {
       alert(data.error || 'Failed to send OTP code');
     }
