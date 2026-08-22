@@ -216,6 +216,27 @@ const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
     if (triggerBroadcast) {
       broadcastEvent('EXPENSES_UPDATED');
     }
+    // 🔥 Auto-sync to Firestore in background
+    if (useFirebase && db && Array.isArray(expenses)) {
+      setImmediate(async () => {
+        try {
+          for (let i = 0; i < expenses.length; i += 450) {
+            const batch = db.batch();
+            expenses.slice(i, i + 450).forEach(e => {
+              if (!e.id) return;
+              batch.set(db.collection('expenses').doc(e.id), {
+                id: e.id, userId: e.userId || '', date: e.date || '',
+                location: e.location || '', notes: e.notes || '',
+                total: e.total || 0, paymentStatus: e.paymentStatus || 'pending',
+                paymentBillUrl: e.paymentBillUrl || '', settledAt: e.settledAt || '',
+                createdAt: e.createdAt || new Date().toISOString()
+              }, { merge: true });
+            });
+            await batch.commit();
+          }
+        } catch (fbErr) { /* silent — Firestore is secondary storage */ }
+      });
+    }
   } catch (err) {
     console.error('Error writing LOCAL_DB_FILE:', err);
   }
@@ -272,6 +293,24 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
     createDataBackup();
     if (triggerBroadcast) {
       broadcastEvent('USERS_UPDATED');
+    }
+    // 🔥 Auto-sync to Firestore in background
+    if (useFirebase && db && users && typeof users === 'object') {
+      setImmediate(async () => {
+        try {
+          const batch = db.batch();
+          Object.entries(users).forEach(([uid, u]) => {
+            if (!uid) return;
+            batch.set(db.collection('users').doc(uid), {
+              id: u.id || uid, name: u.name || '', email: u.email || '',
+              role: u.role || 'user', verified: !!u.verified,
+              picture: u.picture || '', paymentBillUrl: u.paymentBillUrl || '',
+              updatedAt: u.updatedAt || new Date().toISOString()
+            }, { merge: true });
+          });
+          await batch.commit();
+        } catch (fbErr) { /* silent — Firestore is secondary storage */ }
+      });
     }
   } catch (err) {
     console.error('Error writing USERS_DB_FILE:', err);
