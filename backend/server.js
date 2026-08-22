@@ -132,9 +132,16 @@ const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT || path.join(__d
 
 try {
   let serviceAccount = null;
-  if (fs.existsSync(serviceAccountPath)) {
-    serviceAccount = require(serviceAccountPath);
-  } else if (process.env.FIREBASE_CONFIG) {
+  // Try multiple paths: local backend/, parent dir, then env var
+  const possiblePaths = [
+    serviceAccountPath,
+    path.join(__dirname, '../backend/firebase-admin.json'),
+    path.join(__dirname, 'firebase-admin.json'),
+  ];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) { serviceAccount = JSON.parse(fs.readFileSync(p, 'utf8')); break; }
+  }
+  if (!serviceAccount && process.env.FIREBASE_CONFIG) {
     try {
       serviceAccount = typeof process.env.FIREBASE_CONFIG === 'string' 
         ? JSON.parse(process.env.FIREBASE_CONFIG) 
@@ -573,11 +580,14 @@ app.post('/api/sync/import', (req, res) => {
 
 // ---------- HEALTH CHECK ----------
 app.get('/api/health', (req, res) => {
+  const users = getLocalUsers();
   res.json({
-    status: 'online',
-    mode: useFirebase ? 'Firebase' : 'Local Storage',
+    status:        'online',
+    mode:          useFirebase ? 'Firebase + Local Storage' : 'Local Storage',
+    firebase:      useFirebase,
+    userCount:     Object.keys(users).length,
     activeClients: sseClients.length,
-    timestamp: new Date().toISOString()
+    timestamp:     new Date().toISOString()
   });
 });
 
