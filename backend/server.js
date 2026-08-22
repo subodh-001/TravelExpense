@@ -433,19 +433,55 @@ app.post('/api/sync/import', (req, res) => {
     let usersChanged = false;
     let expensesChanged = false;
 
+    // 1. Process and record deleted users blacklist
+    if (Array.isArray(deletedUsers) && deletedUsers.length > 0) {
+      deletedUsers.forEach(delId => {
+        addDeletedUser(delId);
+        const clean = (delId || '').toLowerCase().trim();
+        Object.keys(lUsers).forEach(k => {
+          const u = lUsers[k];
+          if (
+            k.toLowerCase() === clean ||
+            (u && u.id && u.id.toLowerCase() === clean) ||
+            (u && u.email && u.email.toLowerCase() === clean)
+          ) {
+            delete lUsers[k];
+            usersChanged = true;
+          }
+        });
+
+        const initialLength = lExpenses.length;
+        lExpenses = lExpenses.filter(e => {
+          const eUid = (e.userId || '').toLowerCase().trim();
+          return eUid !== clean;
+        });
+        if (lExpenses.length !== initialLength) expensesChanged = true;
+      });
+    }
+
+    const activeBlacklist = getDeletedUsers();
+
+    // 2. Merge active users (excluding blacklisted ones)
     if (users && typeof users === 'object') {
       Object.keys(users).forEach(uid => {
-        if (!lUsers[uid]) {
-          lUsers[uid] = users[uid];
-          usersChanged = true;
+        const u = users[uid];
+        const kClean = uid.toLowerCase().trim();
+        const eClean = (u && u.email) ? u.email.toLowerCase().trim() : '';
+        if (!activeBlacklist.includes(kClean) && !activeBlacklist.includes(eClean)) {
+          if (!lUsers[uid]) {
+            lUsers[uid] = users[uid];
+            usersChanged = true;
+          }
         }
       });
     }
 
+    // 3. Merge active expenses (excluding blacklisted ones)
     if (Array.isArray(expenses)) {
       const existingIds = new Set(lExpenses.map(e => e.id));
       expenses.forEach(exp => {
-        if (!existingIds.has(exp.id)) {
+        const eUid = (exp.userId || '').toLowerCase().trim();
+        if (!activeBlacklist.includes(eUid) && !existingIds.has(exp.id)) {
           lExpenses.unshift(exp);
           expensesChanged = true;
         }
