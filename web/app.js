@@ -3369,7 +3369,10 @@ async function handleAddMemberSubmit(e) {
     return;
   }
 
-  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending Invite Email...';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing Invite...';
+  }
 
   try {
     const res = await fetch(`${API_BASE_URL}/admin/invite-member`, {
@@ -3380,14 +3383,19 @@ async function handleAddMemberSubmit(e) {
     const data = await res.json();
 
     if (res.ok && data.success) {
-      const roleText = role === 'admin' ? 'Admin' : 'Member';
-      showToast(`✉️ Verification invitation email sent to ${email} (${roleText})!`);
       closeModal(document.getElementById('addMemberModal'));
       if (document.getElementById('newMemberNameInput')) document.getElementById('newMemberNameInput').value = '';
       if (document.getElementById('newMemberEmailInput')) document.getElementById('newMemberEmailInput').value = '';
+
+      if (data.verifyLink) {
+        showInviteLinkModal(email, data.verifyLink, data.emailSent);
+      } else {
+        showToast(`✉️ Verification invitation link created for ${email}!`);
+      }
+
       loadSuperAdminData();
     } else {
-      alert(data.error || 'Failed to send invite email.');
+      alert(data.error || 'Failed to generate member invitation.');
     }
   } catch (err) {
     alert('Error sending invitation email: ' + err.message);
@@ -3395,6 +3403,44 @@ async function handleAddMemberSubmit(e) {
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Email';
+    }
+  }
+}
+
+function showInviteLinkModal(email, link, emailSent) {
+  const modal = document.getElementById('inviteResultModal');
+  const emailEl = document.getElementById('inviteResultEmail');
+  const linkInput = document.getElementById('inviteResultLinkInput');
+  const statusEl = document.getElementById('inviteResultStatusText');
+
+  if (emailEl) emailEl.textContent = email;
+  if (linkInput) linkInput.value = link;
+  if (statusEl) {
+    if (emailSent) {
+      statusEl.innerHTML = `<span style="color: #059669; font-weight: 700;"><i class="fa-solid fa-paper-plane"></i> Invitation email sent to inbox!</span> Verification link is also provided below as backup.`;
+    } else {
+      statusEl.innerHTML = `<span style="color: #d97706; font-weight: 700;"><i class="fa-solid fa-link"></i> Invitation link generated!</span> (Server SMTP delivery skipped on cloud host. Copy and share the link below directly with the member).`;
+    }
+  }
+
+  if (modal) openModal(modal);
+}
+
+function copyInviteResultLink() {
+  const input = document.getElementById('inviteResultLinkInput');
+  if (input && input.value) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(input.value).then(() => {
+        showToast('📋 Invitation link copied to clipboard!');
+      }).catch(() => {
+        input.select();
+        document.execCommand('copy');
+        showToast('📋 Invitation link copied to clipboard!');
+      });
+    } else {
+      input.select();
+      document.execCommand('copy');
+      showToast('📋 Invitation link copied to clipboard!');
     }
   }
 }
