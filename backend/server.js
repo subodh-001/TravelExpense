@@ -336,16 +336,20 @@ const triggerCloudSync = async () => {
       deletedUsers: getDeletedUsers()
     };
 
+    const httpFetch = globalThis.fetch || (async (...args) => {
+      const { default: fetch } = await import('node-fetch');
+      return fetch(...args);
+    });
+
     // 1. Push local changes to remote host
-    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-    await fetch(`${remoteTarget}/api/sync/import`, {
+    await httpFetch(`${remoteTarget}/api/sync/import`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(localPayload)
     }).catch(() => {});
 
     // 2. Fetch remote changes to merge into local host
-    const res = await fetch(`${remoteTarget}/api/sync/export`).catch(() => null);
+    const res = await httpFetch(`${remoteTarget}/api/sync/export`).catch(() => null);
     if (res && res.ok) {
       const data = await res.json();
       if (data && (data.expenses || data.users)) {
