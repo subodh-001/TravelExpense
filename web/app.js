@@ -991,6 +991,8 @@ async function handleUserSubmitExpense(e) {
   }
 
   const isEditMode = Boolean(state.editingExpenseId);
+  const existingExp = isEditMode ? state.expenses.find(e => e.id === state.editingExpenseId) : null;
+
   if (btn) btn.innerHTML = isEditMode 
     ? '<i class="fa-solid fa-spinner fa-spin"></i> Updating...' 
     : '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
@@ -1016,6 +1018,8 @@ async function handleUserSubmitExpense(e) {
 
   if (receiptUrl) {
     payload.receipts = [receiptUrl];
+  } else if (isEditMode && existingExp && existingExp.receipts) {
+    payload.receipts = existingExp.receipts;
   }
 
   try {
@@ -1565,12 +1569,27 @@ function openEditExpenseModal(expenseId) {
   const commentEl = document.getElementById('userCommentInput');
   const dateEl = document.getElementById('userDateInput');
   const btn = document.getElementById('userSubmitExpenseBtn');
+  const preview = document.getElementById('uploadedPhotoPreview');
+  const nameEl = document.getElementById('uploadedPhotoName');
+  const photoInput = document.getElementById('userPhotoInput');
+
+  if (photoInput) photoInput.value = '';
 
   const cat = exp.location || (exp.entries && exp.entries[0] ? exp.entries[0].type : 'Others');
   if (selectEl) selectEl.value = cat;
   if (amountEl) amountEl.value = exp.total || (exp.entries && exp.entries[0] ? exp.entries[0].amount : 0);
   if (commentEl) commentEl.value = exp.notes || '';
   if (dateEl) dateEl.value = exp.date || (exp.createdAt ? exp.createdAt.slice(0, 10) : new Date().toISOString().split('T')[0]);
+
+  if (preview && nameEl) {
+    if (exp.receipts && exp.receipts.length > 0) {
+      nameEl.textContent = 'Existing Ticket / Receipt Attached ✓';
+      preview.style.display = 'flex';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
   if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Update Travel Expense';
 
   scrollToExpenseForm();

@@ -1389,7 +1389,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
 app.put('/api/expenses/:expenseId', authenticate, async (req, res) => {
   try {
     const { expenseId } = req.params;
-    const { date, location, entries, paymentStatus } = req.body;
+    const { date, location, entries, paymentStatus, receipts, notes } = req.body;
     const userId = req.userId;
 
     const cleanEntries = (entries || []).map(e => ({
@@ -1408,6 +1408,8 @@ app.put('/api/expenses/:expenseId', authenticate, async (req, res) => {
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
       if (paymentStatus) updateData.paymentStatus = paymentStatus;
+      if (receipts !== undefined) updateData.receipts = receipts;
+      if (notes !== undefined) updateData.notes = notes;
 
       await db.collection('expenses').doc(expenseId).update(updateData);
       broadcastEvent('EXPENSES_UPDATED', { expenseId, userId });
@@ -1424,6 +1426,8 @@ app.put('/api/expenses/:expenseId', authenticate, async (req, res) => {
         ...expenses[idx],
         date: date || expenses[idx].date,
         location: location || expenses[idx].location,
+        notes: notes !== undefined ? notes : (expenses[idx].notes || location),
+        receipts: receipts !== undefined ? receipts : (expenses[idx].receipts || []),
         entries: cleanEntries,
         total,
         paymentStatus: paymentStatus || expenses[idx].paymentStatus || 'pending',
