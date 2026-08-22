@@ -18,60 +18,6 @@
     "updatedAt": "2026-08-22T11:15:00.000Z"
   },
   {
-    "id": "exp_dheeraj_180",
-    "userId": "google_sonidheeraj961_gmail_com",
-    "date": "2026-08-22",
-    "location": "Ola/Uber",
-    "notes": "Client meeting commute",
-    "entries": [
-      {
-        "type": "Ola/Uber",
-        "amount": 180
-      }
-    ],
-    "total": 180,
-    "paymentStatus": "pending",
-    "receipts": [],
-    "createdAt": "2026-08-22T11:08:30.000Z",
-    "updatedAt": "2026-08-22T11:08:30.000Z"
-  },
-  {
-    "id": "exp_borofa_60",
-    "userId": "google_borofa1759_prodbits_com",
-    "date": "2026-08-22",
-    "location": "Metro",
-    "notes": "Metro commute",
-    "entries": [
-      {
-        "type": "Metro",
-        "amount": 60
-      }
-    ],
-    "total": 60,
-    "paymentStatus": "pending",
-    "receipts": [],
-    "createdAt": "2026-08-22T10:48:00.000Z",
-    "updatedAt": "2026-08-22T10:48:00.000Z"
-  },
-  {
-    "id": "exp_testuser_95",
-    "userId": "google_testuser99_gmail_com",
-    "date": "2026-08-22",
-    "location": "Local",
-    "notes": "Local travel",
-    "entries": [
-      {
-        "type": "Local",
-        "amount": 95
-      }
-    ],
-    "total": 95,
-    "paymentStatus": "pending",
-    "receipts": [],
-    "createdAt": "2026-08-22T10:50:00.000Z",
-    "updatedAt": "2026-08-22T10:50:00.000Z"
-  },
-  {
     "id": "exp_c20d6670",
     "userId": "google_nothingsubodh_gmail_com",
     "date": "2026-07-16",
