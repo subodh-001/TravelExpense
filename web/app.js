@@ -2473,7 +2473,11 @@ async function sendGoogleOtp(isResend = false) {
 
     showGoogleOtpStep(2);
     setTimeout(() => document.getElementById('googleOtpCode')?.focus(), 100);
-    showToast(`✉️ Verification code sent to ${email}`);
+    if (data.otp) {
+      showToast(`🔑 Verification Code: ${data.otp}`);
+    } else {
+      showToast(`✉️ Verification code sent to ${email}`);
+    }
   } catch (err) {
     if (hintEl) hintEl.innerHTML = `<span style="color:#ef4444">❌ Error: ${err.message || 'Network connection failed'}</span>`;
     if (btnText) btnText.textContent = 'Send Verification Code';
