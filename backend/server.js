@@ -418,10 +418,10 @@ const triggerCloudSync = async () => {
   }
 };
 
+// Cloud sync disabled — Local DB and Live (Render) operate independently
+// setInterval(triggerCloudSync, 15000);
+// setTimeout(triggerCloudSync, 2000);
 
-// Trigger cloud sync periodically every 15 seconds
-setInterval(triggerCloudSync, 15000);
-setTimeout(triggerCloudSync, 2000);
 
 
 // ==================== MIDDLEWARE ====================
