@@ -29,6 +29,7 @@ const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const LOCAL_DB_FILE = path.join(DATA_DIR, 'expenses.json');
 const USERS_DB_FILE = path.join(DATA_DIR, 'users.json');
 const INVITES_DB_FILE = path.join(DATA_DIR, 'invites.json');
+const DELETED_USERS_FILE = path.join(DATA_DIR, 'deleted_users.json');
 
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -36,6 +37,49 @@ if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
 if (!fs.existsSync(LOCAL_DB_FILE)) fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify([]));
 if (!fs.existsSync(USERS_DB_FILE)) fs.writeFileSync(USERS_DB_FILE, JSON.stringify({}));
 if (!fs.existsSync(INVITES_DB_FILE)) fs.writeFileSync(INVITES_DB_FILE, JSON.stringify({}));
+if (!fs.existsSync(DELETED_USERS_FILE)) fs.writeFileSync(DELETED_USERS_FILE, JSON.stringify([]));
+
+// Helpers for persistent user deletion blacklist
+const getDeletedUsers = () => {
+  try {
+    const raw = fs.readFileSync(DELETED_USERS_FILE, 'utf8');
+    const parsed = JSON.parse(raw || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+const addDeletedUser = (userOrId) => {
+  try {
+    const deleted = getDeletedUsers();
+    const addIfNew = (str) => {
+      if (!str) return;
+      const clean = str.toLowerCase().trim();
+      if (!deleted.includes(clean)) deleted.push(clean);
+      const cleanGoogle = `google_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      if (!deleted.includes(cleanGoogle)) deleted.push(cleanGoogle);
+    };
+
+    if (typeof userOrId === 'string') {
+      addIfNew(userOrId);
+    } else if (userOrId && typeof userOrId === 'object') {
+      addIfNew(userOrId.id);
+      addIfNew(userOrId.email);
+    }
+    fs.writeFileSync(DELETED_USERS_FILE, JSON.stringify(deleted, null, 2));
+  } catch (e) {
+    console.error('Error recording deleted user:', e);
+  }
+};
+
+const isUserDeleted = (userIdOrEmail) => {
+  if (!userIdOrEmail) return false;
+  const deleted = getDeletedUsers();
+  const clean = userIdOrEmail.toLowerCase().trim();
+  const cleanGoogle = `google_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  return deleted.includes(clean) || deleted.includes(cleanGoogle);
+};
 
 // Daily automated snapshot backup function
 const createDataBackup = () => {
@@ -178,10 +222,11 @@ const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
 };
 
 const getLocalUsers = () => {
+  let users = {};
   try {
     const raw = fs.readFileSync(USERS_DB_FILE, 'utf8');
     const parsed = JSON.parse(raw || '{}');
-    return (parsed && typeof parsed === 'object') ? parsed : {};
+    users = (parsed && typeof parsed === 'object') ? parsed : {};
   } catch (e) {
     console.error('⚠️ Error reading USERS_DB_FILE, checking auto-backups:', e.message);
     try {
@@ -193,15 +238,30 @@ const getLocalUsers = () => {
           const recovered = JSON.parse(backupRaw);
           if (recovered && typeof recovered === 'object') {
             console.log(`🛡️ Recovered users from backup (${files[0]})`);
-            return recovered;
+            users = recovered;
           }
         }
       }
     } catch (recErr) {
       console.error('❌ User backup recovery note:', recErr.message);
     }
-    return {};
   }
+
+  // Filter out any blacklisted deleted users
+  const deleted = getDeletedUsers();
+  if (deleted.length > 0) {
+    Object.keys(users).forEach(key => {
+      const u = users[key];
+      const kClean = key.toLowerCase().trim();
+      const eClean = (u && u.email) ? u.email.toLowerCase().trim() : '';
+      const idClean = (u && u.id) ? u.id.toLowerCase().trim() : '';
+      if (deleted.includes(kClean) || deleted.includes(eClean) || deleted.includes(idClean)) {
+        delete users[key];
+      }
+    });
+  }
+
+  return users;
 };
 
 const saveLocalUsers = (users, triggerBroadcast = true) => {
@@ -274,6 +334,9 @@ const authenticate = (req, res, next) => {
   let userId = req.headers['user-id'] || req.query.userId;
   if (!userId || userId === 'user_123' || userId === 'google_user') {
     return res.status(401).json({ error: 'Unauthorized: Missing or invalid user-id header' });
+  }
+  if (isUserDeleted(userId)) {
+    return res.status(401).json({ error: 'Unauthorized: Account deleted by Administrator' });
   }
   req.userId = userId;
   next();
@@ -1429,12 +1492,86 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
     const targetUser = users[userId];
 
     if (action === 'delete_user') {
-      delete users[userId];
+      const matchedTarget = users[userId] || Object.values(users).find(u => u.id === userId || u.email === userId);
+      const userCleanId = (matchedTarget && matchedTarget.email) ? `google_${matchedTarget.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+
+      // 1. Add to permanent deletion blacklist
+      addDeletedUser(userId);
+      if (matchedTarget) addDeletedUser(matchedTarget);
+      if (userCleanId) addDeletedUser(userCleanId);
+
+      // 2. Delete ALL matching user keys from users.json
+      Object.keys(users).forEach(key => {
+        const u = users[key];
+        const isMatch = (
+          key.toLowerCase() === (userId || '').toLowerCase().trim() ||
+          (matchedTarget && (key.toLowerCase() === (matchedTarget.id || '').toLowerCase().trim() || (u && u.email && u.email.toLowerCase().trim() === (matchedTarget.email || '').toLowerCase().trim()))) ||
+          (userCleanId && key.toLowerCase() === userCleanId.toLowerCase())
+        );
+        if (isMatch) delete users[key];
+      });
       saveLocalUsers(users);
+
+      // 3. Delete ALL expenses of this user from expenses.json
       let allExpenses = getLocalExpenses();
-      allExpenses = allExpenses.filter(e => e.userId !== userId);
+      allExpenses = allExpenses.filter(e => {
+        const eUid = (e.userId || '').toLowerCase().trim();
+        const isTargetUser = (
+          eUid === (userId || '').toLowerCase().trim() ||
+          (matchedTarget && (eUid === (matchedTarget.id || '').toLowerCase().trim() || eUid === (matchedTarget.email || '').toLowerCase().trim())) ||
+          (userCleanId && eUid === userCleanId.toLowerCase())
+        );
+        return !isTargetUser;
+      });
       saveLocalExpenses(allExpenses);
-      return res.json({ success: true, message: 'Member deleted' });
+
+      // 4. Purge deleted user from existing backup files in BACKUP_DIR
+      try {
+        if (fs.existsSync(BACKUP_DIR)) {
+          const files = fs.readdirSync(BACKUP_DIR);
+          files.forEach(f => {
+            const fPath = path.join(BACKUP_DIR, f);
+            if (f.startsWith('users_')) {
+              try {
+                const bUsers = JSON.parse(fs.readFileSync(fPath, 'utf8'));
+                if (bUsers && typeof bUsers === 'object') {
+                  Object.keys(bUsers).forEach(k => {
+                    const u = bUsers[k];
+                    const isMatch = (
+                      k.toLowerCase() === (userId || '').toLowerCase().trim() ||
+                      (matchedTarget && (k.toLowerCase() === (matchedTarget.id || '').toLowerCase().trim() || (u && u.email && u.email.toLowerCase().trim() === (matchedTarget.email || '').toLowerCase().trim()))) ||
+                      (userCleanId && k.toLowerCase() === userCleanId.toLowerCase())
+                    );
+                    if (isMatch) delete bUsers[k];
+                  });
+                  fs.writeFileSync(fPath, JSON.stringify(bUsers, null, 2));
+                }
+              } catch (e) {}
+            } else if (f.startsWith('expenses_')) {
+              try {
+                let bExp = JSON.parse(fs.readFileSync(fPath, 'utf8'));
+                if (Array.isArray(bExp)) {
+                  bExp = bExp.filter(e => {
+                    const eUid = (e.userId || '').toLowerCase().trim();
+                    const isTargetUser = (
+                      eUid === (userId || '').toLowerCase().trim() ||
+                      (matchedTarget && (eUid === (matchedTarget.id || '').toLowerCase().trim() || eUid === (matchedTarget.email || '').toLowerCase().trim())) ||
+                      (userCleanId && eUid === userCleanId.toLowerCase())
+                    );
+                    return !isTargetUser;
+                  });
+                  fs.writeFileSync(fPath, JSON.stringify(bExp, null, 2));
+                }
+              } catch (e) {}
+            }
+          });
+        }
+      } catch (bkErr) {
+        console.warn('Backup purge note:', bkErr.message);
+      }
+
+      console.log(`🗑️ Permanently deleted member account: ${userId} (${matchedTarget?.email || ''})`);
+      return res.json({ success: true, message: 'Member deleted permanently' });
     }
 
     // Reset payment status back to pending
