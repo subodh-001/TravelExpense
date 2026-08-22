@@ -405,6 +405,15 @@ function saveGoogleUser(user) {
   };
 
   state.currentGoogleUser = safeUser;
+  state.isReadOnlySharedView = false;
+  state.sharedMode = false;
+
+  // Clean share query parameters from URL bar so URL remains clean
+  if (window.location.search && (window.location.search.includes('share=') || window.location.search.includes('userId='))) {
+    const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + window.location.hash;
+    window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+  }
+
   try {
     localStorage.setItem('google_user', JSON.stringify(safeUser));
   } catch (e) {
@@ -440,6 +449,12 @@ function performSignOut() {
     onConfirm: () => {
       localStorage.removeItem('google_user');
       state.currentGoogleUser = null;
+      state.isReadOnlySharedView = false;
+      state.sharedMode = false;
+
+      // Clean URL bar on sign out
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
 
       switchAppPage('landing');
 
@@ -1775,14 +1790,29 @@ async function checkSharedViewUrl() {
   }
 
   if (sharedUserId) {
+    const loggedInUser = getStoredGoogleUser();
+    // If a user is already logged in as themselves, do not enter shared read-only mode
+    if (loggedInUser && (loggedInUser.id === sharedUserId || loggedInUser.email === sharedUserId || loggedInUser.id === `google_${sharedUserId.replace(/[^a-zA-Z0-9]/g, '_')}`)) {
+      state.isReadOnlySharedView = false;
+      state.sharedMode = false;
+      state.currentGoogleUser = loggedInUser;
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + window.location.hash;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+      updateUserProfileUI();
+      return;
+    }
+
     state.isReadOnlySharedView = true;
     state.sharedMode = true;
 
+    const rawName = sharedUserId.replace('google_', '').split('_')[0];
+    const cleanName = rawName ? (rawName.charAt(0).toUpperCase() + rawName.slice(1)) : 'Member';
+
     state.currentGoogleUser = {
       id: sharedUserId,
-      name: sharedUserId.includes('subodh') ? 'Subodh Kumar' : sharedUserId.replace('google_', '').replace('_', ' '),
-      email: sharedUserId.includes('subodh') ? 'subodh.travels@gmail.com' : (sharedUserId.includes('@') ? sharedUserId : `${sharedUserId}@gmail.com`),
-      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${sharedUserId}`
+      name: cleanName,
+      email: sharedUserId.includes('@') ? sharedUserId : `${sharedUserId}@gmail.com`,
+      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(sharedUserId)}`
     };
 
     // Hide admin action controls for viewer mode
@@ -4379,7 +4409,7 @@ function switchDashboardTab(tab) {
 }
 
 function loadAccountProfileData() {
-  const user = state.currentUser || getStoredGoogleUser() || { name: 'Subodh Ram', email: 'subodhram3350@gmail.com' };
+  const user = state.currentGoogleUser || getStoredGoogleUser() || { name: 'Member', email: '' };
   
   const avatar = document.getElementById('accountProfileAvatar');
   const nameEl = document.getElementById('accountProfileName');
