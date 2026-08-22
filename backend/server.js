@@ -287,16 +287,18 @@ async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Sec
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: `${fromName} <onboarding@resend.dev>`,
+          from: `FGTech Security <onboarding@resend.dev>`,
           to: [to],
           subject,
           html
         })
       });
-      if (resendRes.ok) {
-        const resendData = await resendRes.json();
+      const resendData = await resendRes.json();
+      if (resendRes.ok && resendData.id) {
         console.log(`✉️ Email successfully sent to ${to} via Resend HTTP API: ${resendData.id}`);
         return { success: true, messageId: resendData.id };
+      } else {
+        console.warn(`⚠️ Resend HTTP API response: ${JSON.stringify(resendData)}`);
       }
     } catch (resendErr) {
       console.warn(`⚠️ Resend HTTP API attempt failed: ${resendErr.message}`);
