@@ -2412,6 +2412,34 @@ img.landing-logo-img, img.auth-logo-img, .landing-logo img, .auth-brand-logo img
 
 /* ==================== ULTRA-RESPONSIVE & MOBILE OPTIMIZATIONS ==================== */
 @media (max-width: 768px) {
+  /* Disable heavy GPU backdrop-filter blur on mobile to fix grey box artifacts and lag */
+  .modal-overlay, .glass-card, .mobile-nav-bar, .mobile-header, .header, .sub-card, .admin-panel {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .modal-overlay {
+    background: rgba(15, 23, 42, 0.88) !important;
+    padding: 14px 10px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .modal-card {
+    max-width: 94vw !important;
+    width: 94vw !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 20px 16px !important;
+    margin: auto !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+    transform: translateZ(0) !important;
+  }
+
   .mobile-nav-bar {
     display: flex !important;
     position: fixed !important;
@@ -2459,17 +2487,10 @@ img.landing-logo-img, img.auth-logo-img, .landing-logo img, .auth-brand-logo img
   }
 
   /* Form & inputs mobile fix - prevent zoom on iOS */
-  input[type="text"], input[type="number"], input[type="date"], select, textarea {
+  input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="date"], select, textarea {
     font-size: 16px !important;
     box-sizing: border-box !important;
     max-width: 100% !important;
-  }
-
-  .modal-card {
-    max-width: 95vw !important;
-    width: 95vw !important;
-    padding: 16px !important;
-    margin: 10px auto !important;
   }
 
   table {

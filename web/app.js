@@ -328,9 +328,16 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==================== REAL-TIME SSE SYNC ====================
 let sseSource = null;
 
+let sseReconnectTimer = null;
+
 function initRealTimeSync() {
   if (sseSource) {
     try { sseSource.close(); } catch (e) {}
+    sseSource = null;
+  }
+  if (sseReconnectTimer) {
+    clearTimeout(sseReconnectTimer);
+    sseReconnectTimer = null;
   }
 
   try {
@@ -360,8 +367,19 @@ function initRealTimeSync() {
     };
 
     sseSource.onerror = (err) => {
-      console.warn('⚡ SSE connection lost, reconnecting...');
       updateRealTimeStatus(false);
+      if (sseSource) {
+        try { sseSource.close(); } catch (e) {}
+        sseSource = null;
+      }
+      if (!sseReconnectTimer) {
+        sseReconnectTimer = setTimeout(() => {
+          sseReconnectTimer = null;
+          if (state.currentGoogleUser || state.sharedMode) {
+            initRealTimeSync();
+          }
+        }, 5000);
+      }
     };
   } catch (e) {
     console.warn('SSE init failed:', e);
