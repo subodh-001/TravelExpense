@@ -352,25 +352,57 @@ const triggerCloudSync = async () => {
     const res = await httpFetch(`${remoteTarget}/api/sync/export`).catch(() => null);
     if (res && res.ok) {
       const data = await res.json();
-      if (data && (data.expenses || data.users)) {
+      if (data) {
         let lUsers = getLocalUsers();
         let lExpenses = getLocalExpenses();
         let usersChanged = false;
         let expensesChanged = false;
 
+        // ✅ FIX: Apply deletedUsers from remote — purge locally if deleted on Live
+        if (Array.isArray(data.deletedUsers) && data.deletedUsers.length > 0) {
+          data.deletedUsers.forEach(delId => {
+            addDeletedUser(delId);
+            const clean = (delId || '').toLowerCase().trim();
+            Object.keys(lUsers).forEach(k => {
+              const u = lUsers[k];
+              if (
+                k.toLowerCase() === clean ||
+                (u && u.id && u.id.toLowerCase() === clean) ||
+                (u && u.email && u.email.toLowerCase() === clean)
+              ) {
+                delete lUsers[k];
+                usersChanged = true;
+              }
+            });
+            const before = lExpenses.length;
+            lExpenses = lExpenses.filter(e => (e.userId || '').toLowerCase().trim() !== clean);
+            if (lExpenses.length !== before) expensesChanged = true;
+          });
+        }
+
+        const activeBlacklist = getDeletedUsers();
+
+        // Merge new users (excluding blacklisted)
         if (data.users && typeof data.users === 'object') {
           Object.keys(data.users).forEach(uid => {
-            if (!lUsers[uid]) {
-              lUsers[uid] = data.users[uid];
-              usersChanged = true;
+            const u = data.users[uid];
+            const kClean = uid.toLowerCase().trim();
+            const eClean = (u && u.email) ? u.email.toLowerCase().trim() : '';
+            if (!activeBlacklist.includes(kClean) && !activeBlacklist.includes(eClean)) {
+              if (!lUsers[uid]) {
+                lUsers[uid] = data.users[uid];
+                usersChanged = true;
+              }
             }
           });
         }
 
+        // Merge new expenses (excluding blacklisted)
         if (Array.isArray(data.expenses)) {
           const existingIds = new Set(lExpenses.map(e => e.id));
           data.expenses.forEach(exp => {
-            if (!existingIds.has(exp.id)) {
+            const eUid = (exp.userId || '').toLowerCase().trim();
+            if (!activeBlacklist.includes(eUid) && !existingIds.has(exp.id)) {
               lExpenses.unshift(exp);
               expensesChanged = true;
             }
@@ -385,6 +417,7 @@ const triggerCloudSync = async () => {
     // Silent background sync
   }
 };
+
 
 // Trigger cloud sync periodically every 15 seconds
 setInterval(triggerCloudSync, 15000);
