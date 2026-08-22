@@ -25,15 +25,42 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Ensure local directories exist for fallback storage
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const DATA_DIR = path.join(__dirname, 'data');
+const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const LOCAL_DB_FILE = path.join(DATA_DIR, 'expenses.json');
 const USERS_DB_FILE = path.join(DATA_DIR, 'users.json');
 const INVITES_DB_FILE = path.join(DATA_DIR, 'invites.json');
 
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
 if (!fs.existsSync(LOCAL_DB_FILE)) fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify([]));
 if (!fs.existsSync(USERS_DB_FILE)) fs.writeFileSync(USERS_DB_FILE, JSON.stringify({}));
 if (!fs.existsSync(INVITES_DB_FILE)) fs.writeFileSync(INVITES_DB_FILE, JSON.stringify({}));
+
+// Daily automated snapshot backup function
+const createDataBackup = () => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const expBackupPath = path.join(BACKUP_DIR, `expenses_${today}.json`);
+    const usersBackupPath = path.join(BACKUP_DIR, `users_${today}.json`);
+
+    if (fs.existsSync(LOCAL_DB_FILE)) {
+      const data = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
+      if (data && data.trim().length > 2) {
+        fs.writeFileSync(expBackupPath, data);
+      }
+    }
+    if (fs.existsSync(USERS_DB_FILE)) {
+      const data = fs.readFileSync(USERS_DB_FILE, 'utf8');
+      if (data && data.trim().length > 2) {
+        fs.writeFileSync(usersBackupPath, data);
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Data backup note:', err.message);
+  }
+};
+createDataBackup();
 
 // Serve local uploads statically
 app.use('/uploads', express.static(UPLOADS_DIR));
@@ -108,12 +135,30 @@ const broadcastEvent = (eventType, data = {}) => {
   });
 };
 
-// Local JSON helper functions with atomic write support
+// Local JSON helper functions with atomic write support & backup recovery
 const getLocalExpenses = () => {
   try {
     const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
-    return JSON.parse(raw || '[]');
+    const parsed = JSON.parse(raw || '[]');
+    return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
+    console.error('⚠️ Error reading LOCAL_DB_FILE, checking auto-backups:', e.message);
+    try {
+      if (fs.existsSync(BACKUP_DIR)) {
+        const files = fs.readdirSync(BACKUP_DIR).filter(f => f.startsWith('expenses_')).sort().reverse();
+        if (files.length > 0) {
+          const backupPath = path.join(BACKUP_DIR, files[0]);
+          const backupRaw = fs.readFileSync(backupPath, 'utf8');
+          const recovered = JSON.parse(backupRaw);
+          if (Array.isArray(recovered)) {
+            console.log(`🛡️ Recovered ${recovered.length} expenses from backup (${files[0]})`);
+            return recovered;
+          }
+        }
+      }
+    } catch (recErr) {
+      console.error('❌ Backup recovery note:', recErr.message);
+    }
     return [];
   }
 };
@@ -123,6 +168,7 @@ const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
     const tempPath = `${LOCAL_DB_FILE}.tmp`;
     fs.writeFileSync(tempPath, JSON.stringify(expenses, null, 2));
     fs.renameSync(tempPath, LOCAL_DB_FILE);
+    createDataBackup();
     if (triggerBroadcast) {
       broadcastEvent('EXPENSES_UPDATED');
     }
@@ -134,8 +180,26 @@ const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
 const getLocalUsers = () => {
   try {
     const raw = fs.readFileSync(USERS_DB_FILE, 'utf8');
-    return JSON.parse(raw || '{}');
+    const parsed = JSON.parse(raw || '{}');
+    return (parsed && typeof parsed === 'object') ? parsed : {};
   } catch (e) {
+    console.error('⚠️ Error reading USERS_DB_FILE, checking auto-backups:', e.message);
+    try {
+      if (fs.existsSync(BACKUP_DIR)) {
+        const files = fs.readdirSync(BACKUP_DIR).filter(f => f.startsWith('users_')).sort().reverse();
+        if (files.length > 0) {
+          const backupPath = path.join(BACKUP_DIR, files[0]);
+          const backupRaw = fs.readFileSync(backupPath, 'utf8');
+          const recovered = JSON.parse(backupRaw);
+          if (recovered && typeof recovered === 'object') {
+            console.log(`🛡️ Recovered users from backup (${files[0]})`);
+            return recovered;
+          }
+        }
+      }
+    } catch (recErr) {
+      console.error('❌ User backup recovery note:', recErr.message);
+    }
     return {};
   }
 };
@@ -145,6 +209,7 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
     const tempPath = `${USERS_DB_FILE}.tmp`;
     fs.writeFileSync(tempPath, JSON.stringify(users, null, 2));
     fs.renameSync(tempPath, USERS_DB_FILE);
+    createDataBackup();
     if (triggerBroadcast) {
       broadcastEvent('USERS_UPDATED');
     }
@@ -1263,6 +1328,10 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
 
     const userCleanId = targetUser.email ? `google_${targetUser.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
 
+    let allExpenses = getLocalExpenses();
+    let settledCount = 0;
+    let settledTotal = 0;
+
     allExpenses = allExpenses.map(e => {
       const eUid = (e.userId || '').toLowerCase().trim();
       const isTargetUser = (
@@ -1299,6 +1368,12 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
       }
       return e;
     });
+
+    if (paymentBillUrl) {
+      targetUser.paymentBillUrl = paymentBillUrl;
+      targetUser.updatedAt = new Date().toISOString();
+      saveLocalUsers(users);
+    }
 
     saveLocalExpenses(allExpenses);
 
@@ -1351,6 +1426,8 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
     if (!userId) return res.status(400).json({ error: 'User ID required' });
 
     const users = getLocalUsers();
+    const targetUser = users[userId];
+
     if (action === 'delete_user') {
       delete users[userId];
       saveLocalUsers(users);
@@ -1362,8 +1439,19 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
 
     // Reset payment status back to pending
     let allExpenses = getLocalExpenses();
+    const userCleanId = (targetUser && targetUser.email) ? `google_${targetUser.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+
     allExpenses = allExpenses.map(e => {
-      if (e.userId === userId && (!month || month === 'all' || (e.date && e.date.startsWith(month)))) {
+      const eUid = (e.userId || '').toLowerCase().trim();
+      const isTargetUser = (
+        eUid === (userId || '').toLowerCase().trim() ||
+        (targetUser && eUid === (targetUser.id || '').toLowerCase().trim()) ||
+        (targetUser && eUid === (targetUser.email || '').toLowerCase().trim()) ||
+        (userCleanId && eUid === userCleanId.toLowerCase())
+      );
+      const isTargetMonth = (!month || month === 'all' || (e.date && e.date.startsWith(month)));
+
+      if (isTargetUser && isTargetMonth) {
         return {
           ...e,
           paymentStatus: 'pending',
@@ -1374,6 +1462,12 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
       return e;
     });
     saveLocalExpenses(allExpenses);
+
+    if (targetUser) {
+      targetUser.paymentBillUrl = '';
+      targetUser.updatedAt = new Date().toISOString();
+      saveLocalUsers(users);
+    }
 
     res.json({ success: true, message: 'Settlement reset back to Pending' });
   } catch (err) {
