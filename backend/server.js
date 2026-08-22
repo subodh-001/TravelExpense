@@ -1740,7 +1740,12 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
       }
 
       console.log(`🗑️ Permanently deleted member account: ${userId} (${matchedTarget?.email || ''})`);
+      
+      // ✅ AUTO-SYNC: Immediately broadcast deletion to Render Live Host
+      triggerCloudSync().catch(() => {});
+      
       return res.json({ success: true, message: 'Member deleted permanently' });
+
     }
 
     // Reset payment status back to pending
