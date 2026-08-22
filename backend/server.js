@@ -478,34 +478,57 @@ const upload = multer({
 
 // ☁️ Cloudinary Upload Helper (same account as Web)
 const CLOUDINARY_CLOUD_NAME = 'vrxb6o67';
-const CLOUDINARY_UPLOAD_PRESET = 'expense_receipts'; // must be unsigned preset
+const CLOUDINARY_UPLOAD_PRESET = 'expense_receipts'; // unsigned preset
 
 const uploadToCloudinary = async (fileBuffer, mimeType, folder = 'payment_bills') => {
-  const httpFetch = globalThis.fetch || (async (...args) => {
-    const { default: f } = await import('node-fetch');
-    return f(...args);
+  const https = require('https');
+  return new Promise((resolve, reject) => {
+    // Build multipart/form-data manually (compatible with Node.js built-in https)
+    const boundary = `----FormBoundary${Date.now()}`;
+    const nl = '\r\n';
+
+    const buildPart = (name, value) =>
+      `--${boundary}${nl}Content-Disposition: form-data; name="${name}"${nl}${nl}${value}${nl}`;
+
+    const ext = mimeType.split('/')[1] || 'png';
+    const fileName = `upload_${Date.now()}.${ext}`;
+
+    let body = '';
+    body += buildPart('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    body += buildPart('folder', folder);
+    body += `--${boundary}${nl}`;
+    body += `Content-Disposition: form-data; name="file"; filename="${fileName}"${nl}`;
+    body += `Content-Type: ${mimeType}${nl}${nl}`;
+
+    const bodyStart = Buffer.from(body, 'utf8');
+    const bodyEnd   = Buffer.from(`${nl}--${boundary}--${nl}`, 'utf8');
+    const fullBody  = Buffer.concat([bodyStart, fileBuffer, bodyEnd]);
+
+    const options = {
+      hostname: 'api.cloudinary.com',
+      path: `/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
+      method: 'POST',
+      headers: {
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        'Content-Length': fullBody.length
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if (json.secure_url) resolve(json.secure_url);
+          else reject(new Error(json.error?.message || 'Cloudinary upload failed'));
+        } catch (e) { reject(new Error('Cloudinary response parse error')); }
+      });
+    });
+    req.on('error', reject);
+    req.write(fullBody);
+    req.end();
   });
-
-  const base64 = fileBuffer.toString('base64');
-  const dataUri = `data:${mimeType};base64,${base64}`;
-
-  const form = new URLSearchParams();
-  form.append('file', dataUri);
-  form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-  form.append('folder', folder);
-
-  const res = await httpFetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
-    { method: 'POST', body: form }
-  );
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Cloudinary upload failed: ${errText}`);
-  }
-
-  const data = await res.json();
-  return data.secure_url; // permanent HTTPS URL
 };
 
 const authenticate = (req, res, next) => {
