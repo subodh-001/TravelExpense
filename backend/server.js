@@ -1029,12 +1029,16 @@ app.get('/api/admin/users', async (req, res) => {
     let totalSystemPaid = 0;
 
     const usersList = Object.values(usersObj).map(user => {
-      const cleanEmailBase = user.email ? user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '_') : '';
-      const userExpenses = allExpenses.filter(e => 
-        e.userId === user.id || 
-        e.userId === user.email || 
-        (e.userId && cleanEmailBase && e.userId.toLowerCase().includes(cleanEmailBase.toLowerCase()))
-      );
+      const userCleanId = user.email ? `google_${user.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+      const userExpenses = allExpenses.filter(e => {
+        if (!e || !e.userId) return false;
+        const eUid = e.userId.toLowerCase().trim();
+        return (
+          eUid === (user.id || '').toLowerCase().trim() ||
+          eUid === (user.email || '').toLowerCase().trim() ||
+          (userCleanId && eUid === userCleanId.toLowerCase())
+        );
+      });
       
       const pendingAmount = userExpenses
         .filter(e => e.paymentStatus === 'pending' || !e.paymentStatus)
@@ -1257,31 +1261,15 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
       paymentBillUrl = `${protocol}://${host}/uploads/${fileName}`;
     }
 
-    const cleanEmailBase = targetUser.email ? targetUser.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '_') : '';
-
-    if (paymentBillUrl) {
-      targetUser.paymentBillUrl = paymentBillUrl;
-      targetUser.updatedAt = new Date().toISOString();
-      saveLocalUsers(users);
-      if (useFirebase) {
-        try {
-          await db.collection('users').doc(userId).set({ paymentBillUrl, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-        } catch (fbErr) {
-          console.warn('Firebase user bill update note:', fbErr.message);
-        }
-      }
-    }
-
-    let allExpenses = getLocalExpenses();
-    let settledCount = 0;
-    let settledTotal = 0;
+    const userCleanId = targetUser.email ? `google_${targetUser.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
 
     allExpenses = allExpenses.map(e => {
+      const eUid = (e.userId || '').toLowerCase().trim();
       const isTargetUser = (
-        e.userId === userId || 
-        e.userId === targetUser.id || 
-        e.userId === targetUser.email || 
-        (e.userId && cleanEmailBase && e.userId.toLowerCase().includes(cleanEmailBase.toLowerCase()))
+        eUid === (userId || '').toLowerCase().trim() ||
+        eUid === (targetUser.id || '').toLowerCase().trim() ||
+        eUid === (targetUser.email || '').toLowerCase().trim() ||
+        (userCleanId && eUid === userCleanId.toLowerCase())
       );
       const isTargetMonth = (!month || month === 'all' || (e.date && e.date.startsWith(month)));
 
