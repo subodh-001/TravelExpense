@@ -92,7 +92,6 @@ try {
   }
 } catch (err) {
   console.warn('⚠️ Firebase init warning, falling back to Local Storage mode:', err.message);
-}age);
 }
 
 // Server-Sent Events (SSE) Real-Time Sync Subscribers Store
@@ -745,9 +744,9 @@ app.post('/api/auth/reset-password', (req, res) => {
   }
 });
 
-app.post('/api/user/profile', (req, res) => {
+app.post('/api/user/profile', async (req, res) => {
   try {
-    const { id, name, email, picture, password } = req.body;
+    const { id, name, email, picture, password, role } = req.body;
     if (!id) return res.status(400).json({ error: 'User ID is required' });
 
     const users = getLocalUsers();
@@ -758,18 +757,29 @@ app.post('/api/user/profile', (req, res) => {
       passwordHash = crypto.createHash('sha256').update(password).digest('hex');
     }
 
-    users[id] = {
+    const userData = {
       ...existingUser,
       id,
-      name: name || 'Traveler',
-      email: email || 'user@example.com',
-      picture: (picture && !picture.includes('alt=') && !picture.includes('dicebear') && !picture.includes('ui-avatars')) ? picture : DEFAULT_USER_AVATAR,
+      name: name || existingUser.name || 'Traveler',
+      email: email || existingUser.email || 'user@example.com',
+      picture: (picture && !picture.includes('alt=') && !picture.includes('dicebear') && !picture.includes('ui-avatars')) ? picture : (existingUser.picture || DEFAULT_USER_AVATAR),
+      role: role || existingUser.role || 'user',
       passwordHash,
       updatedAt: new Date().toISOString()
     };
+
+    users[id] = userData;
     saveLocalUsers(users);
 
-    const safeUser = { ...users[id] };
+    if (useFirebase) {
+      try {
+        await db.collection('users').doc(id).set(userData, { merge: true });
+      } catch (fbErr) {
+        console.warn('Firebase profile sync note:', fbErr.message);
+      }
+    }
+
+    const safeUser = { ...userData };
     delete safeUser.passwordHash;
 
     console.log(`👤 Updated profile for ${id}: ${name} (Password updated: ${!!password})`);
@@ -779,17 +789,51 @@ app.post('/api/user/profile', (req, res) => {
   }
 });
 
-app.get('/api/user/profile/:userId', (req, res) => {
+app.get('/api/user/profile/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+
+    if (useFirebase) {
+      try {
+        const doc = await db.collection('users').doc(userId).get();
+        if (doc.exists) {
+          const uData = doc.data();
+          delete uData.passwordHash;
+          return res.json({ success: true, user: uData });
+        }
+      } catch (fbErr) {
+        console.warn('Firebase profile fetch note:', fbErr.message);
+      }
+    }
+
     const users = getLocalUsers();
-    const user = users[userId] || {
-      id: userId,
-      name: 'Traveler',
-      email: `${userId}@gmail.com`,
-      picture: DEFAULT_USER_AVATAR
-    };
-    res.json({ success: true, user });
+    let user = users[userId];
+
+    if (!user) {
+      for (const key in users) {
+        if (users[key] && (key.toLowerCase() === userId.toLowerCase() || (users[key].email && users[key].email.toLowerCase() === userId.toLowerCase()))) {
+          user = users[key];
+          break;
+        }
+      }
+    }
+
+    if (!user) {
+      const cleanEmail = userId.includes('@') ? userId : `${userId.replace('google_', '')}@gmail.com`;
+      const cleanName = userId.replace('google_', '').split('_')[0];
+      const capName = cleanName ? (cleanName.charAt(0).toUpperCase() + cleanName.slice(1)) : 'Traveler';
+      user = {
+        id: userId,
+        name: capName,
+        email: cleanEmail,
+        picture: DEFAULT_USER_AVATAR
+      };
+    }
+
+    const safeUser = { ...user };
+    delete safeUser.passwordHash;
+
+    res.json({ success: true, user: safeUser });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
