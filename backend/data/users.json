@@ -4,10 +4,28 @@
     "name": "Subodh Ram",
     "email": "subodhram3350@gmail.com",
     "picture": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc1IiByPSI0MiIgZmlsbD0iIzljYTNiZiIvPjxwYXRoIGQ9Ik0gMjAgMTg1IEMgMjAgMTMwIDUwIDEyMCAxMDAgMTIwIEMgMTUwIDEyMCAxODAgMTMwIDE4MCAxODUgWiIgZmlsbD0iIzljYTNiZiIvPjwvc3ZnPg==",
-    "updatedAt": "2026-08-22T10:17:08.131Z",
+    "updatedAt": "2026-08-22T11:08:28.873Z",
     "passwordHash": "9b6a509cfcd5a026fd2fedbe3b8f7cd7a020c1db4819fab7a6e12be887c09d83",
     "role": "super_admin",
     "verified": true
+  },
+  "google_ks5093654_gmail_com": {
+    "id": "google_ks5093654_gmail_com",
+    "name": "Demo",
+    "email": "ks5093654@gmail.com",
+    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Demo",
+    "role": "user",
+    "verified": true,
+    "updatedAt": "2026-08-22T11:15:00.000Z"
+  },
+  "google_sonidheeraj961_gmail_com": {
+    "id": "google_sonidheeraj961_gmail_com",
+    "name": "Dheeraj Soni",
+    "email": "sonidheeraj961@gmail.com",
+    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Dheeraj%20Soni",
+    "role": "user",
+    "verified": true,
+    "updatedAt": "2026-08-22T11:08:30.000Z"
   },
   "google_nothingsubodh_gmail_com": {
     "id": "google_nothingsubodh_gmail_com",
@@ -17,5 +35,21 @@
     "updatedAt": "2026-08-21T17:29:58.464Z",
     "passwordHash": "efdb648ca67f87e8d8a81da8d645984c8868539b8f6a194dbd6464214b5d7cfb",
     "paymentBillUrl": "http://localhost:3000/uploads/bill_1787250770079_9c22ca51.png"
+  },
+  "google_testuser99_gmail_com": {
+    "id": "google_testuser99_gmail_com",
+    "name": "Test User",
+    "email": "testuser99@gmail.com",
+    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Test%20User",
+    "verified": true,
+    "updatedAt": "2026-08-22T10:50:01.494Z"
+  },
+  "google_borofa1759_prodbits_com": {
+    "id": "google_borofa1759_prodbits_com",
+    "name": "Borofa",
+    "email": "borofa1759@prodbits.com",
+    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Borofa",
+    "verified": true,
+    "updatedAt": "2026-08-22T10:48:00.000Z"
   }
 }
