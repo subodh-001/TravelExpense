@@ -324,6 +324,69 @@ const seedMasterSuperAdmin = () => {
 seedMasterSuperAdmin();
 
 
+// Automatic Bi-directional Sync between Local Machine and Render Cloud Host
+const triggerCloudSync = async () => {
+  try {
+    const isRender = !!process.env.RENDER;
+    const remoteTarget = isRender ? 'http://localhost:3000' : 'https://travelexpense-52gp.onrender.com';
+    
+    const localPayload = {
+      users: getLocalUsers(),
+      expenses: getLocalExpenses(),
+      deletedUsers: getDeletedUsers()
+    };
+
+    // 1. Push local changes to remote host
+    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+    await fetch(`${remoteTarget}/api/sync/import`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(localPayload)
+    }).catch(() => {});
+
+    // 2. Fetch remote changes to merge into local host
+    const res = await fetch(`${remoteTarget}/api/sync/export`).catch(() => null);
+    if (res && res.ok) {
+      const data = await res.json();
+      if (data && (data.expenses || data.users)) {
+        let lUsers = getLocalUsers();
+        let lExpenses = getLocalExpenses();
+        let usersChanged = false;
+        let expensesChanged = false;
+
+        if (data.users && typeof data.users === 'object') {
+          Object.keys(data.users).forEach(uid => {
+            if (!lUsers[uid]) {
+              lUsers[uid] = data.users[uid];
+              usersChanged = true;
+            }
+          });
+        }
+
+        if (Array.isArray(data.expenses)) {
+          const existingIds = new Set(lExpenses.map(e => e.id));
+          data.expenses.forEach(exp => {
+            if (!existingIds.has(exp.id)) {
+              lExpenses.unshift(exp);
+              expensesChanged = true;
+            }
+          });
+        }
+
+        if (usersChanged) saveLocalUsers(lUsers, false);
+        if (expensesChanged) saveLocalExpenses(lExpenses, false);
+      }
+    }
+  } catch (e) {
+    // Silent background sync
+  }
+};
+
+// Trigger cloud sync periodically every 15 seconds
+setInterval(triggerCloudSync, 15000);
+setTimeout(triggerCloudSync, 2000);
+
+
 // ==================== MIDDLEWARE ====================
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -341,6 +404,58 @@ const authenticate = (req, res, next) => {
   req.userId = userId;
   next();
 };
+
+// ==================== BI-DIRECTIONAL SYNC ENDPOINTS ====================
+app.get('/api/sync/export', (req, res) => {
+  try {
+    res.json({
+      success: true,
+      users: getLocalUsers(),
+      expenses: getLocalExpenses(),
+      deletedUsers: getDeletedUsers(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/sync/import', (req, res) => {
+  try {
+    const { users, expenses, deletedUsers } = req.body;
+    let lUsers = getLocalUsers();
+    let lExpenses = getLocalExpenses();
+
+    let usersChanged = false;
+    let expensesChanged = false;
+
+    if (users && typeof users === 'object') {
+      Object.keys(users).forEach(uid => {
+        if (!lUsers[uid]) {
+          lUsers[uid] = users[uid];
+          usersChanged = true;
+        }
+      });
+    }
+
+    if (Array.isArray(expenses)) {
+      const existingIds = new Set(lExpenses.map(e => e.id));
+      expenses.forEach(exp => {
+        if (!existingIds.has(exp.id)) {
+          lExpenses.unshift(exp);
+          expensesChanged = true;
+        }
+      });
+    }
+
+    if (usersChanged) saveLocalUsers(lUsers, true);
+    if (expensesChanged) saveLocalExpenses(lExpenses, true);
+
+    res.json({ success: true, usersChanged, expensesChanged });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ==================== API ENDPOINTS ====================
 
