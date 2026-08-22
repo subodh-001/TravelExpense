@@ -1081,15 +1081,14 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border-color);
-  z-index: 999;
+  height: 68px;
+  background: #0f172a !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+  z-index: 10000 !important;
   justify-content: space-around;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 16px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
 }
 /* Show nav only when user is logged in */
 .mobile-nav-bar.nav-visible {
@@ -1098,38 +1097,58 @@ body {
 .nav-item {
   background: transparent;
   border: none;
-  color: var(--text-dim);
+  color: #94a3b8 !important;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
   flex: 1;
-  transition: var(--transition-fast);
+  padding: 8px 0;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+.nav-item span {
+  color: #cbd5e1 !important;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 .nav-item i {
-  font-size: 1.15rem;
+  font-size: 1.3rem !important;
+  color: #94a3b8 !important;
+  transition: all 0.2s ease;
 }
 .nav-item.active {
-  color: var(--accent-primary);
+  color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.12) !important;
+}
+.nav-item.active span {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+.nav-item.active i {
+  color: #38bdf8 !important;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.7));
+  transform: translateY(-1px);
 }
 .nav-add-icon {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple));
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #38bdf8, #3b82f6);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-  margin-top: -16px;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.5);
+  margin-top: -18px;
 }
 .nav-add-icon i {
-  font-size: 1.2rem;
+  font-size: 1.25rem !important;
+  color: #ffffff !important;
 }
 
 /* Mobile Floating Action Button (FAB) */

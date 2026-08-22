@@ -808,9 +808,9 @@ const styles = StyleSheet.create({
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F4F4F7' },
   receiptCountText: { fontSize: 12, color: '#6E6E73' },
   bottomDockContainer: { position: 'absolute', bottom: 20, left: 20, right: 20, alignItems: 'center' },
-  bottomDockGlow: { backgroundColor: 'rgba(255,195,208,0.95)', borderRadius: 36, padding: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', elevation: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)' },
-  dockCircleBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.85)', justifyContent: 'center', alignItems: 'center' },
-  blackPillDockBtn: { backgroundColor: '#000000', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 26, flex: 1, marginHorizontal: 8, alignItems: 'center' },
+  bottomDockGlow: { backgroundColor: '#0F172A', borderRadius: 36, padding: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', elevation: 10, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)' },
+  dockCircleBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
+  blackPillDockBtn: { backgroundColor: '#38BDF8', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 26, flex: 1, marginHorizontal: 8, alignItems: 'center' },
 
   // MODALS
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
