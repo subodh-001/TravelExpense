@@ -71,16 +71,19 @@ function start_expo() {
 
 function start_all() {
     echo -e "${CYAN}==============================================================================${NC}"
-    echo -e "  🚀 Launching Backend API + Expo Mobile Server"
+    echo -e "  🚀 Launching Backend REST API + Web Dashboard + Expo Mobile Server"
     echo -e "${CYAN}==============================================================================${NC}"
 
     stop_server > /dev/null 2>&1
+
+    # Cleanup handler for Ctrl+C
+    trap 'echo -e "\n${YELLOW}🛑 Shutting down server...${NC}"; stop_server > /dev/null 2>&1; exit 0' INT TERM EXIT
 
     # Start backend in background
     node "$SCRIPT_DIR/backend/server.js" &
     BACKEND_PID=$!
 
-    echo -e "${GREEN}🟢 Backend started (PID: $BACKEND_PID) on http://localhost:3000${NC}"
+    echo -e "${GREEN}🟢 Backend REST API & Web Dashboard started (PID: $BACKEND_PID) on http://localhost:3000${NC}"
     sleep 2
 
     # Start Expo
@@ -106,15 +109,15 @@ case "$ACTION" in
         ;;
     restart)
         stop_server
+        start_all
+        ;;
+    backend|web)
         start_server
         ;;
     expo|mobile)
         start_expo
         ;;
-    all)
+    start|all|*)
         start_all
-        ;;
-    start|*)
-        start_server
         ;;
 esac
