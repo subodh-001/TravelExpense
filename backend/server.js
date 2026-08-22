@@ -1030,7 +1030,12 @@ app.get('/api/admin/users', async (req, res) => {
     let totalSystemPaid = 0;
 
     const usersList = Object.values(usersObj).map(user => {
-      const userExpenses = allExpenses.filter(e => e.userId === user.id);
+      const cleanEmailBase = user.email ? user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '_') : '';
+      const userExpenses = allExpenses.filter(e => 
+        e.userId === user.id || 
+        e.userId === user.email || 
+        (e.userId && cleanEmailBase && e.userId.toLowerCase().includes(cleanEmailBase.toLowerCase()))
+      );
       
       const pendingAmount = userExpenses
         .filter(e => e.paymentStatus === 'pending' || !e.paymentStatus)
