@@ -1570,6 +1570,20 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
         console.warn('Backup purge note:', bkErr.message);
       }
 
+      // 5. Delete from Firebase Firestore if Firebase enabled
+      if (useFirebase) {
+        try {
+          if (userId) db.collection('users').doc(userId).delete().catch(() => {});
+          if (userCleanId) db.collection('users').doc(userCleanId).delete().catch(() => {});
+          if (matchedTarget?.id) db.collection('users').doc(matchedTarget.id).delete().catch(() => {});
+          
+          const snap = await db.collection('expenses').where('userId', '==', userId).get();
+          snap.forEach(d => d.ref.delete());
+        } catch (fbErr) {
+          console.warn('Firebase user deletion note:', fbErr.message);
+        }
+      }
+
       console.log(`🗑️ Permanently deleted member account: ${userId} (${matchedTarget?.email || ''})`);
       return res.json({ success: true, message: 'Member deleted permanently' });
     }
