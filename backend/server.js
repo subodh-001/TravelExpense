@@ -1257,10 +1257,19 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
       paymentBillUrl = `${protocol}://${host}/uploads/${fileName}`;
     }
 
+    const cleanEmailBase = targetUser.email ? targetUser.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '_') : '';
+
     if (paymentBillUrl) {
       targetUser.paymentBillUrl = paymentBillUrl;
       targetUser.updatedAt = new Date().toISOString();
       saveLocalUsers(users);
+      if (useFirebase) {
+        try {
+          await db.collection('users').doc(userId).set({ paymentBillUrl, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        } catch (fbErr) {
+          console.warn('Firebase user bill update note:', fbErr.message);
+        }
+      }
     }
 
     let allExpenses = getLocalExpenses();
@@ -1268,7 +1277,12 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
     let settledTotal = 0;
 
     allExpenses = allExpenses.map(e => {
-      const isTargetUser = (e.userId === userId);
+      const isTargetUser = (
+        e.userId === userId || 
+        e.userId === targetUser.id || 
+        e.userId === targetUser.email || 
+        (e.userId && cleanEmailBase && e.userId.toLowerCase().includes(cleanEmailBase.toLowerCase()))
+      );
       const isTargetMonth = (!month || month === 'all' || (e.date && e.date.startsWith(month)));
 
       if (isTargetUser && isTargetMonth) {
@@ -1276,13 +1290,24 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
           settledCount++;
           settledTotal += (e.total || 0);
         }
-        return {
+        const updatedExp = {
           ...e,
           paymentStatus: 'paid',
           settledAt: new Date().toISOString(),
           paymentBillUrl: paymentBillUrl || e.paymentBillUrl || '',
           settlementNotes: notes || e.settlementNotes || 'Paid by Super Admin'
         };
+
+        if (useFirebase && e.id) {
+          db.collection('expenses').doc(e.id).update({
+            paymentStatus: 'paid',
+            settledAt: admin.firestore.FieldValue.serverTimestamp(),
+            paymentBillUrl: updatedExp.paymentBillUrl,
+            settlementNotes: updatedExp.settlementNotes
+          }).catch(fbErr => console.warn('Firebase settlement update note:', fbErr.message));
+        }
+
+        return updatedExp;
       }
       return e;
     });

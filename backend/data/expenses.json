@@ -160,12 +160,13 @@
       }
     ],
     "total": 80,
-    "paymentStatus": "pending",
+    "paymentStatus": "paid",
     "receipts": [
       "http://localhost:3000/uploads/temp/1787332508398_923b68.pdf"
     ],
     "createdAt": "2026-08-21T17:15:08.412Z",
-    "updatedAt": "2026-08-21T17:17:19.790Z"
+    "updatedAt": "2026-08-22T12:00:00.000Z",
+    "settledAt": "2026-08-22T12:00:00.000Z"
   },
   {
     "id": "exp_1fc78789",
