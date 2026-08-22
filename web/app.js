@@ -2328,11 +2328,7 @@ async function requestOtpCode() {
       document.getElementById('otpStep1').style.display = 'none';
       document.getElementById('otpStep2').style.display = 'block';
 
-      if (data.otp) {
-        showToast(`🔑 Verification Code: ${data.otp}`);
-      } else {
-        showToast(`✉️ 6-Digit OTP code sent to ${email}`);
-      }
+      showToast(`✉️ 6-Digit OTP code sent to your email (${email})`);
     } else {
       customAlert(`OTP request failed: ${data.error}`);
     }
@@ -2526,11 +2522,7 @@ async function sendGoogleOtp(isResend = false) {
 
     showGoogleOtpStep(2);
     setTimeout(() => document.getElementById('googleOtpCode')?.focus(), 100);
-    if (data.otp) {
-      showToast(`🔑 Verification Code: ${data.otp}`);
-    } else {
-      showToast(`✉️ Verification code sent to ${email}`);
-    }
+    showToast(`✉️ Verification code sent to your email (${email})`);
   } catch (err) {
     if (hintEl) hintEl.innerHTML = `<span style="color:#ef4444">❌ Error: ${err.message || 'Network connection failed'}</span>`;
     if (btnText) btnText.textContent = 'Send Verification Code';
@@ -2843,11 +2835,7 @@ async function handleSignUpStep1(e) {
     document.getElementById('signUpStep1').style.display = 'none';
     document.getElementById('signUpStep2').style.display = 'block';
     setTimeout(() => document.getElementById('signUpOtpCode')?.focus(), 100);
-    if (data.otp) {
-      showToast(`🔑 Verification Code: ${data.otp}`);
-    } else {
-      showToast(`✉️ Verification code sent to ${email}`);
-    }
+    showToast(`✉️ Verification code sent to your email (${email})`);
   } catch (err) {
     showFieldError('signUpEmailError', 'Server error. Please try again.');
     if (btn) btn.querySelector('span').textContent = 'Continue';
@@ -4767,11 +4755,7 @@ async function handleSendForgotPassOtp() {
       const targetEl = document.getElementById('forgotPassTargetEmail');
       if (targetEl) targetEl.textContent = email;
       showForgotPassStep(2);
-      if (data.otp) {
-        if (typeof showCustomToast === 'function') showCustomToast(`🔑 Verification Code: ${data.otp}`);
-      } else {
-        if (typeof showCustomToast === 'function') showCustomToast(`📨 OTP sent to ${email}`);
-      }
+      if (typeof showCustomToast === 'function') showCustomToast(`📨 OTP sent to your email (${email})`);
     } else {
       alert(data.error || 'Failed to send OTP code');
     }
