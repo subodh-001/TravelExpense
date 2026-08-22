@@ -7,9 +7,15 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 
 // ==================== CONFIG ====================
-const RENDER_URL  = 'https://travelexpense-52gp.onrender.com/api';
-const EMULATOR_URL = 'http://10.0.2.2:3000/api';
-const LOCALHOST_URL = 'http://localhost:3000/api';
+const RENDER_URL     = 'https://travelexpense-52gp.onrender.com/api';
+const LOCAL_WIFI_URL = 'http://192.168.1.8:3000/api';
+const EMULATOR_URL   = 'http://10.0.2.2:3000/api';
+const LOCALHOST_URL  = 'http://localhost:3000/api';
+
+function getTodayDate() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+}
 
 // ==================== SCREENS ====================
 // 'auth'      → Login / Signup
@@ -74,11 +80,6 @@ export default function App() {
   ]);
   const [savingExpense, setSavingExpense]     = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
-
-  function getTodayDate() {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  }
 
   useEffect(() => {
     let interval;
@@ -658,7 +659,7 @@ export default function App() {
               <Text style={styles.modalTitle}>⚙️ Backend Server</Text>
               <TouchableOpacity onPress={() => setSettingsVisible(false)}><Text style={{ fontSize: 20, color: '#6E6E73' }}>✕</Text></TouchableOpacity>
             </View>
-            {[{ label: '🌐 Render Live Production', url: RENDER_URL }, { label: '📱 Android Emulator', url: EMULATOR_URL }, { label: '💻 Localhost', url: LOCALHOST_URL }].map(opt => (
+            {[{ label: '🌐 Render Live Production', url: RENDER_URL }, { label: '📶 Local Wi-Fi (192.168.1.8)', url: LOCAL_WIFI_URL }, { label: '📱 Android Emulator', url: EMULATOR_URL }, { label: '💻 Localhost', url: LOCALHOST_URL }].map(opt => (
               <TouchableOpacity key={opt.url} style={[styles.optionBox, baseUrl === opt.url && styles.optionSelected]} onPress={() => setBaseUrl(opt.url)}>
                 <Text style={styles.optionTitle}>{opt.label}</Text>
                 <Text style={styles.optionSubtitle}>{opt.url}</Text>
