@@ -272,12 +272,36 @@ let primaryTransporter = createMailTransporter(465);
 
 const DEFAULT_USER_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc1IiByPSI0MiIgZmlsbD0iIzljYTNiZiIvPjxwYXRoIGQ9Ik0gMjAgMTg1IEMgMjAgMTMwIDUwIDEyMCAxMDAgMTIwIEMgMTUwIDEyMCAxODAgMTMwIDE4MCAxODUgWiIgZmlsbD0iIzljYTNiZiIvPjwvc3ZnPg==`;
 
+const DEFAULT_GMAIL_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxE4NPu_khaxKDdEkrleAcCbYH4WszPYV8QoIyJLjPXL2VXZBoIrICMTt2j4mvQuP86/exec';
+
 async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Security' }) {
   if (!to) return { success: false, error: 'Recipient email address missing' };
   
   const { user: gUser } = getGmailCredentials();
+  const webhookUrl = process.env.GMAIL_HTTP_WEBHOOK_URL || DEFAULT_GMAIL_WEBHOOK;
 
-  // Attempt 1: Resend HTTPS API (Port 443 - Bypasses cloud host firewall blocks)
+  // Attempt 1: Google Apps Script HTTPS Webhook (Sends directly from subodhram3350@gmail.com to ALL recipients, bypasses cloud firewall)
+  if (webhookUrl) {
+    try {
+      const webhookRes = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, subject, html, fromName }),
+        redirect: 'follow'
+      });
+      const webhookData = await webhookRes.json();
+      if (webhookRes.ok && webhookData.success) {
+        console.log(`✉️ Email successfully sent to ${to} from subodhram3350@gmail.com via Google Webhook`);
+        return { success: true, messageId: 'GOOGLE_WEBHOOK_OK' };
+      } else {
+        console.warn(`⚠️ Google Webhook response: ${JSON.stringify(webhookData)}`);
+      }
+    } catch (whErr) {
+      console.warn(`⚠️ Google Webhook attempt failed (${whErr.message}). Retrying via alternate methods...`);
+    }
+  }
+
+  // Attempt 2: Resend HTTPS API (if RESEND_API_KEY set)
   if (process.env.RESEND_API_KEY) {
     try {
       const resendRes = await fetch('https://api.resend.com/emails', {
@@ -305,7 +329,7 @@ async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Sec
     }
   }
 
-  // Attempt 2: Brevo HTTPS API (Port 443 - Bypasses cloud host firewall blocks)
+  // Attempt 3: Brevo HTTPS API (if BREVO_API_KEY set)
   if (process.env.BREVO_API_KEY) {
     try {
       const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -328,23 +352,6 @@ async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Sec
       }
     } catch (brevoErr) {
       console.warn(`⚠️ Brevo HTTP API attempt failed: ${brevoErr.message}`);
-    }
-  }
-
-  // Attempt 3: Google Apps Script HTTPS Webhook (Port 443)
-  if (process.env.GMAIL_HTTP_WEBHOOK_URL) {
-    try {
-      const webhookRes = await fetch(process.env.GMAIL_HTTP_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to, subject, html, fromName })
-      });
-      if (webhookRes.ok) {
-        console.log(`✉️ Email successfully sent to ${to} via Google Webhook`);
-        return { success: true, messageId: 'WEBHOOK_OK' };
-      }
-    } catch (whErr) {
-      console.warn(`⚠️ Google Webhook attempt failed: ${whErr.message}`);
     }
   }
 
