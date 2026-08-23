@@ -288,9 +288,29 @@ export default function App() {
       if (res.ok) { const d = await res.json(); setExpenses(d.expenses || []); }
       else throw new Error(`Server: ${res.status}`);
     } catch (e) {
-      setErrorMessage(e.name === 'AbortError'
-        ? `Timeout. Switch to Local or Emulator server in Settings.`
-        : `Cannot connect to server.`);
+      let recovered = false;
+      const candidates = [LOCALHOST_URL, EMULATOR_URL, LOCAL_WIFI_URL, RENDER_URL];
+      for (const altUrl of candidates) {
+        if (altUrl === baseUrl) continue;
+        try {
+          const testCtrl = new AbortController();
+          const testTid = setTimeout(() => testCtrl.abort(), 3000);
+          const altRes = await fetch(`${altUrl}/expenses`, { headers: { 'user-id': uid }, signal: testCtrl.signal });
+          clearTimeout(testTid);
+          if (altRes.ok) {
+            const altData = await altRes.json();
+            setBaseUrl(altUrl);
+            setExpenses(altData.expenses || []);
+            recovered = true;
+            break;
+          }
+        } catch (altErr) {}
+      }
+      if (!recovered) {
+        setErrorMessage(e.name === 'AbortError'
+          ? `Timeout. Switch to Local or Emulator server in Settings.`
+          : `Cannot connect to server.`);
+      }
     } finally { setLoading(false); setRefreshing(false); }
   };
 
@@ -739,7 +759,7 @@ export default function App() {
               <ScrollView style={{ maxHeight: 120, marginVertical: 8 }}>
                 {selectedExpense.receipts?.length > 0
                   ? selectedExpense.receipts.map((r, i) => (
-                    <View key={i} style={styles.receiptItem}><Text style={{ fontSize: 12 }}>📄 {r.fileName || 'Receipt'}</Text></View>
+                    <View key={i} style={styles.receiptItem}><Text style={{ fontSize: 12 }}>📄 {typeof r === 'string' ? 'Receipt Photo' : (r.fileName || 'Receipt')}</Text></View>
                   ))
                   : <Text style={{ color: '#8E8E93', fontSize: 13, marginVertical: 8 }}>No receipts uploaded yet.</Text>}
               </ScrollView>

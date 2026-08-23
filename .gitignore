@@ -28,5 +28,9 @@ mobile/.flutter-plugins-dependencies
 
 # Local database backups & temp files
 backend/data/backups/
+backend/data/baileys_auth_info/
+mobile-expo/dist/
+mobile-expo/.expo/
 *.tmp
+
 

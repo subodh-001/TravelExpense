@@ -1082,36 +1082,73 @@ async function handleUserSubmitExpense(e) {
   }
 }
 
+function parseExpenseTime(createdAt) {
+  if (!createdAt) return '';
+  try {
+    let parsedVal;
+    if (typeof createdAt === 'number') {
+      parsedVal = createdAt;
+    } else if (typeof createdAt === 'string') {
+      parsedVal = !isNaN(createdAt) ? Number(createdAt) : createdAt;
+    } else if (createdAt._seconds) {
+      parsedVal = createdAt._seconds * 1000;
+    } else if (createdAt.seconds) {
+      parsedVal = createdAt.seconds * 1000;
+    } else {
+      parsedVal = createdAt;
+    }
+    const dTime = new Date(parsedVal);
+    if (!isNaN(dTime.getTime())) {
+      const formatted = dTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      if (formatted && formatted !== 'Invalid Date') {
+        return formatted;
+      }
+    }
+  } catch (e) {}
+  return '';
+}
+
 function formatExpenseDateTime(exp) {
   if (!exp) return '';
   let datePart = '';
-  let timePart = '';
+  let timePart = parseExpenseTime(exp.createdAt);
 
-  const rawDate = exp.date || (exp.createdAt ? exp.createdAt.slice(0, 10) : '');
-  if (rawDate) {
+  let rawDate = exp.date;
+  if (!rawDate && exp.createdAt) {
+    if (typeof exp.createdAt === 'string') {
+      rawDate = exp.createdAt.slice(0, 10);
+    } else {
+      const timeVal = parseExpenseTime(exp.createdAt);
+      if (timeVal) {
+        const dObj = new Date(exp.createdAt._seconds ? exp.createdAt._seconds * 1000 : exp.createdAt);
+        if (!isNaN(dObj.getTime())) {
+          rawDate = dObj.toISOString().slice(0, 10);
+        }
+      }
+    }
+  }
+
+  if (rawDate && rawDate !== 'Invalid Date') {
     try {
-      const parts = rawDate.split('T')[0].split('-');
+      const parts = String(rawDate).split('T')[0].split('-');
       if (parts.length === 3) {
         const year = parseInt(parts[0], 10);
         const month = parseInt(parts[1], 10) - 1;
         const day = parseInt(parts[2], 10);
         const dObj = new Date(year, month, day);
-        datePart = dObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        if (!isNaN(dObj.getTime())) {
+          datePart = dObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        } else {
+          datePart = String(rawDate);
+        }
       } else {
-        datePart = rawDate;
+        datePart = String(rawDate);
       }
     } catch (e) {
-      datePart = rawDate;
+      datePart = String(rawDate);
     }
   } else {
     datePart = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-  }
-
-  if (exp.createdAt) {
-    try {
-      const dTime = new Date(exp.createdAt);
-      timePart = dTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-    } catch (e) {}
   }
 
   if (timePart) {
@@ -1122,20 +1159,20 @@ function formatExpenseDateTime(exp) {
 
 function formatExpenseDateTimeString(exp) {
   if (!exp) return '';
-  let datePart = exp.date || (exp.createdAt ? exp.createdAt.slice(0, 10) : '');
-  if (datePart && datePart.includes('-')) {
+  let timePart = parseExpenseTime(exp.createdAt);
+  let datePart = exp.date;
+  if (!datePart && exp.createdAt && typeof exp.createdAt === 'string') {
+    datePart = exp.createdAt.slice(0, 10);
+  }
+  if (datePart && String(datePart).includes('-')) {
     try {
-      const parts = datePart.split('T')[0].split('-');
+      const parts = String(datePart).split('T')[0].split('-');
       if (parts.length === 3) {
         const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-        datePart = dObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        if (!isNaN(dObj.getTime())) {
+          datePart = dObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
       }
-    } catch (e) {}
-  }
-  let timePart = '';
-  if (exp.createdAt) {
-    try {
-      timePart = new Date(exp.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
     } catch (e) {}
   }
   return timePart ? `${datePart}, ${timePart}` : (datePart || 'N/A');
@@ -2995,10 +3032,9 @@ window.addEventListener('popstate', (e) => {
   if (e.state && e.state.page) {
     switchAppPage(e.state.page, false);
   } else if (state.currentGoogleUser) {
-    const u = state.currentGoogleUser;
-    const isSuperAdmin = (u && (u.role === 'super_admin' || (u.email && u.email.toLowerCase().trim() === 'subodhram3350@gmail.com'))) || window.location.hash === '#superadmin';
-    if (isSuperAdmin) {
-      switchAppPage('superadmin', false);
+    const hash = (window.location.hash || '').replace('#', '');
+    if (hash === 'superadmin' || hash === 'dashboard') {
+      switchAppPage(hash, false);
     } else {
       switchAppPage('dashboard', false);
     }
@@ -4829,5 +4865,70 @@ async function handleResetPasswordSubmit() {
   } catch (err) {
     if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Reset & Save Password';
     alert('Error resetting password: ' + err.message);
+  }
+}
+
+// ---------- WHATSAPP BOT FUNCTIONS ----------
+function openWhatsAppModal() {
+  const modal = document.getElementById('whatsappBotModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    checkWhatsAppBotStatus();
+  }
+}
+
+function closeWhatsAppModal() {
+  const modal = document.getElementById('whatsappBotModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function checkWhatsAppBotStatus() {
+  const badge = document.getElementById('waStatusBadge');
+  const connSec = document.getElementById('waConnectedSection');
+  const qrSec = document.getElementById('waQrCodeSection');
+  const qrDisplay = document.getElementById('waQrDisplay');
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/whatsapp/status`);
+    const data = await res.json();
+
+    if (data.connected) {
+      if (badge) {
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#15803d';
+        badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Connected & Online';
+      }
+      if (connSec) connSec.style.display = 'block';
+      if (qrSec) qrSec.style.display = 'none';
+    } else if (data.qr) {
+      if (badge) {
+        badge.style.background = '#e0e7ff';
+        badge.style.color = '#3730a3';
+        badge.innerHTML = '<i class="fa-solid fa-qrcode"></i> Scan QR to Pair WhatsApp';
+      }
+      if (connSec) connSec.style.display = 'none';
+      if (qrSec) qrSec.style.display = 'block';
+      if (qrDisplay) {
+        if (data.qr.startsWith('data:image')) {
+          qrDisplay.innerHTML = `<img src="${data.qr}" style="width: 220px; height: 220px; border-radius: 8px; display: block; margin: 0 auto;" />`;
+        } else {
+          qrDisplay.innerHTML = `<div style="font-size: 0.8rem; font-weight: 700; color: #1e293b;">Terminal pairing code ready</div>`;
+        }
+      }
+    } else {
+      if (badge) {
+        badge.style.background = '#fef3c7';
+        badge.style.color = '#92400e';
+        badge.innerHTML = '<i class="fa-solid fa-signal"></i> Active & Ready';
+      }
+      if (connSec) connSec.style.display = 'block';
+      if (qrSec) qrSec.style.display = 'none';
+    }
+  } catch (err) {
+    if (badge) {
+      badge.style.background = '#fef3c7';
+      badge.style.color = '#92400e';
+      badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Bot Ready';
+    }
   }
 }

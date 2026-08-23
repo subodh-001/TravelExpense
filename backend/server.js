@@ -1966,9 +1966,30 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
 
 app.get('/api/admin/all-expenses', async (req, res) => {
   try {
-    const allExpenses = getLocalExpenses();
-    const usersObj = getLocalUsers();
+    let allExpenses = getLocalExpenses();
+    if (useFirebase && db) {
+      try {
+        const snapshot = await db.collection('expenses').get();
+        const fbExpenses = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          let createdAtStr = data.createdAt;
+          if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            createdAtStr = data.createdAt.toDate().toISOString();
+          } else if (data.createdAt && data.createdAt._seconds) {
+            createdAtStr = new Date(data.createdAt._seconds * 1000).toISOString();
+          }
+          fbExpenses.push({ id: doc.id, ...data, createdAt: createdAtStr });
+        });
+        if (fbExpenses.length > 0) {
+          allExpenses = fbExpenses;
+        }
+      } catch (e) {
+        console.warn('Firebase admin expenses fetch warning:', e.message);
+      }
+    }
 
+    const usersObj = getLocalUsers();
     const expensesWithUser = allExpenses.map(exp => ({
       ...exp,
       userName: usersObj[exp.userId]?.name || 'User',
@@ -1998,6 +2019,7 @@ app.post('/api/expenses', authenticate, async (req, res) => {
     }));
 
     const total = cleanEntries.reduce((sum, e) => sum + e.amount, 0);
+    const nowIso = new Date().toISOString();
 
     const expenseData = {
       userId,
@@ -2008,8 +2030,8 @@ app.post('/api/expenses', authenticate, async (req, res) => {
       total,
       paymentStatus: paymentStatus || 'pending', // 'pending' or 'paid'
       receipts: receipts || [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: nowIso,
+      updatedAt: nowIso
     };
 
     if (useFirebase) {
@@ -2018,11 +2040,16 @@ app.post('/api/expenses', authenticate, async (req, res) => {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
+      const newExpense = { id: docRef.id, ...expenseData };
+      const expenses = getLocalExpenses();
+      expenses.unshift(newExpense);
+      saveLocalExpenses(expenses);
+
       broadcastEvent('EXPENSES_UPDATED', { expenseId: docRef.id, userId });
       return res.status(201).json({
         success: true,
         expenseId: docRef.id,
-        data: { id: docRef.id, ...expenseData }
+        data: newExpense
       });
     } else {
       const expenseId = `exp_${uuidv4().substring(0, 8)}`;
@@ -2160,7 +2187,20 @@ app.get('/api/expenses', async (req, res) => {
 
       const expenses = [];
       snapshot.forEach(doc => {
-        expenses.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        let createdAtStr = data.createdAt;
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+          createdAtStr = data.createdAt.toDate().toISOString();
+        } else if (data.createdAt && data.createdAt._seconds) {
+          createdAtStr = new Date(data.createdAt._seconds * 1000).toISOString();
+        }
+        let updatedAtStr = data.updatedAt;
+        if (data.updatedAt && typeof data.updatedAt.toDate === 'function') {
+          updatedAtStr = data.updatedAt.toDate().toISOString();
+        } else if (data.updatedAt && data.updatedAt._seconds) {
+          updatedAtStr = new Date(data.updatedAt._seconds * 1000).toISOString();
+        }
+        expenses.push({ id: doc.id, ...data, createdAt: createdAtStr, updatedAt: updatedAtStr });
       });
 
       expenses.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
@@ -2670,6 +2710,19 @@ app.get('/api/stats', authenticate, async (req, res) => {
   }
 });
 
+// ---------- WHATSAPP BOT ENDPOINTS ----------
+const { startWhatsAppBot, getWhatsAppStatus, parseExpenseMessage } = require('./whatsapp-bot');
+
+app.get('/api/whatsapp/status', (req, res) => {
+  res.json(getWhatsAppStatus());
+});
+
+app.post('/api/whatsapp/parse', (req, res) => {
+  const { text } = req.body;
+  const parsed = parseExpenseMessage(text || '');
+  res.json({ success: true, parsed });
+});
+
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
@@ -2678,4 +2731,31 @@ app.listen(PORT, () => {
   console.log(`📊 Mode: ${useFirebase ? 'Firebase Firestore + Storage' : 'Local File Storage'}`);
   console.log(`🌐 Web Client: http://localhost:${PORT}`);
   console.log(`====================================================`);
+
+  // Helper to persist WhatsApp expenses to Firestore & Local DB
+  const saveExpenseToDb = async (newExpense) => {
+    try {
+      if (useFirebase) {
+        await db.collection('expenses').doc(newExpense.id).set({
+          ...newExpense,
+          date: newExpense.date,
+          createdAt: newExpense.createdAt
+        });
+      }
+      const expenses = getLocalExpenses();
+      expenses.unshift(newExpense);
+      saveLocalExpenses(expenses, true);
+    } catch (err) {
+      console.warn('⚠️ Error writing WhatsApp expense to Firestore/DB:', err.message);
+    }
+  };
+
+  // Launch WhatsApp Bot Engine
+  startWhatsAppBot({
+    getLocalExpenses,
+    saveLocalExpenses,
+    getLocalUsers,
+    uploadToCloudinary,
+    saveExpenseToDb
+  });
 });

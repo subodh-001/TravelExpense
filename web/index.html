@@ -283,6 +283,10 @@
             <i class="fa-solid fa-list-check" style="color: #059669;"></i> My Uploaded Entries
           </button>
 
+          <button type="button" onclick="toggleUserSideDrawer(); openWhatsAppModal();" style="width: 100%; text-align: left; padding: 12px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; font-weight: 700; color: #166534; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-brands fa-whatsapp" style="color: #25d366; font-size: 1.1rem;"></i> WhatsApp Expense Bot
+          </button>
+
           <button type="button" id="drawerAdminBtn" onclick="toggleUserSideDrawer(); switchAppPage('superadmin');" style="width: 100%; text-align: left; padding: 12px 14px; background: #e0e7ff; border: 1px solid #c7d2fe; border-radius: 10px; font-weight: 700; color: #3730a3; cursor: pointer; display: none; align-items: center; gap: 10px;">
             <i class="fa-solid fa-shield-halved"></i> Super Admin Portal
           </button>
@@ -1390,6 +1394,59 @@
         <p style="text-align: center; margin-top: 14px; margin-bottom: 0;">
           <a href="#" onclick="showForgotPassStep(1); return false;" style="font-size: 0.82rem; color: #64748b; font-weight: 700;">← Change Email</a>
         </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- WHATSAPP BOT MODAL -->
+  <div id="whatsappBotModal" class="modal" style="display: none; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 10000; position: fixed; inset: 0; padding: 16px;">
+    <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 480px; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; position: relative;">
+      
+      <!-- Modal Header -->
+      <div style="background: linear-gradient(135deg, #075e54 0%, #128c7e 50%, #25d366 100%); padding: 20px 24px; color: #ffffff; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+            <i class="fa-brands fa-whatsapp"></i>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800;">WhatsApp Expense Bot</h3>
+            <p style="margin: 2px 0 0 0; font-size: 0.78rem; opacity: 0.9;">Log travel expenses directly over WhatsApp</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeWhatsAppModal()" style="background: none; border: none; color: #ffffff; font-size: 1.4rem; cursor: pointer; opacity: 0.8;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div style="padding: 24px;">
+        <!-- Bot Status Badge -->
+        <div id="waStatusBadgeContainer" style="margin-bottom: 20px; text-align: center;">
+          <span id="waStatusBadge" style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 30px; font-weight: 800; font-size: 0.85rem; background: #fef3c7; color: #92400e;">
+            <i class="fa-solid fa-spinner fa-spin"></i> Checking Bot Status...
+          </span>
+        </div>
+
+        <!-- How to Use Box -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-bolt" style="color: #25d366;"></i> Instant WhatsApp Messages
+          </h4>
+          <ul style="margin: 0; padding-left: 18px; font-size: 0.84rem; color: #475569; display: flex; flex-direction: column; gap: 6px;">
+            <li>Type: <strong style="color: #0f172a;">Metro 150</strong></li>
+            <li>Type: <strong style="color: #0f172a;">Uber 280 Andheri to BKC</strong></li>
+            <li>Type: <strong style="color: #0f172a;">Food 120 Lunch</strong></li>
+            <li>Send a <strong style="color: #0f172a;">Photo of Receipt</strong> with caption <strong style="color: #0f172a;">Local 40</strong></li>
+            <li>Type <strong style="color: #0f172a;">summary</strong> to view monthly total & pending balance</li>
+          </ul>
+        </div>
+
+        <!-- Connected Section -->
+        <div id="waConnectedSection" style="text-align: center; display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 16px;">
+          <p style="margin: 0; font-size: 0.88rem; font-weight: 800; color: #166534;">
+            🎉 WhatsApp Bot is Active & Ready!
+          </p>
+          <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #15803d;" id="waConnectedUserText">Send any travel entry message directly on WhatsApp!</p>
+        </div>
       </div>
 
     </div>

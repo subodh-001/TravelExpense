@@ -92,14 +92,24 @@ class Receipt {
     required this.uploadedAt,
   });
 
-  factory Receipt.fromJson(Map<String, dynamic> json) {
-    return Receipt(
-      fileName: json['fileName'] ?? json['originalName'] ?? 'receipt',
-      fileUrl: json['fileUrl'] ?? '',
-      uploadedAt: json['uploadedAt'] != null
-          ? DateTime.tryParse(json['uploadedAt']) ?? DateTime.now()
-          : DateTime.now(),
-    );
+  factory Receipt.fromJson(dynamic json) {
+    if (json is String) {
+      return Receipt(
+        fileName: 'Receipt Photo',
+        fileUrl: json,
+        uploadedAt: DateTime.now(),
+      );
+    }
+    if (json is Map<String, dynamic>) {
+      return Receipt(
+        fileName: json['fileName'] ?? json['originalName'] ?? 'receipt',
+        fileUrl: json['fileUrl'] ?? json['url'] ?? '',
+        uploadedAt: json['uploadedAt'] != null
+            ? DateTime.tryParse(json['uploadedAt'].toString()) ?? DateTime.now()
+            : DateTime.now(),
+      );
+    }
+    return Receipt(fileName: 'receipt', fileUrl: '', uploadedAt: DateTime.now());
   }
 }
 

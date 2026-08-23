@@ -55,10 +55,23 @@ function start_server() {
     exec node backend/server.js
 }
 
+function stop_expo() {
+    PID_8081=$(lsof -ti:8081 2>/dev/null)
+    if [ -n "$PID_8081" ]; then
+        kill -9 $PID_8081 2>/dev/null || true
+    fi
+    PID_8082=$(lsof -ti:8082 2>/dev/null)
+    if [ -n "$PID_8082" ]; then
+        kill -9 $PID_8082 2>/dev/null || true
+    fi
+}
+
 function start_expo() {
     echo -e "${CYAN}==============================================================================${NC}"
     echo -e "  📱 Starting Expo Mobile Server for Expo Go (Instant Phone Testing)"
     echo -e "${CYAN}==============================================================================${NC}"
+
+    stop_expo > /dev/null 2>&1
 
     if [ ! -d "$SCRIPT_DIR/mobile-expo/node_modules" ]; then
         echo -e "${YELLOW}📦 Installing Expo app dependencies...${NC}"
@@ -66,7 +79,8 @@ function start_expo() {
     fi
 
     echo -e "${GREEN}📲 Open the Expo Go app on your phone and scan the QR code below!${NC}"
-    cd "$SCRIPT_DIR/mobile-expo" && npx expo start
+    echo -e "${YELLOW}🌐 Tunnel mode active: Works across mobile data & any Wi-Fi network.${NC}"
+    cd "$SCRIPT_DIR/mobile-expo" && (npx expo start --tunnel --clear || npx expo start --lan --clear)
 }
 
 function start_all() {
