@@ -190,12 +190,14 @@ async function handleWhatsAppMessage(msg) {
       textContent = msg.message.imageMessage.caption;
     }
 
-    // Ignore bot's own outgoing auto-replies to prevent loops
-    if (msg.key.fromMe && (textContent.startsWith('👋') || textContent.startsWith('🤖') || textContent.startsWith('✅') || textContent.startsWith('📊') || textContent.startsWith('📜') || textContent.startsWith('⚠️'))) {
-      return;
-    }
+    // Ignore bot's own outgoing auto-replies or any fromMe messages that aren't valid expense commands
+    const textOnly = textContent && textContent.trim();
+    const parsed = parseExpenseMessage(textOnly);
 
-    const senderNumber = remoteJid.replace(/[^0-9]/g, '');
+    if (msg.key.fromMe) {
+      // If message is from bot itself or self-chat, only process if it is a valid expense or command
+      if (!parsed && !isImage) return;
+    }
 
     // Match sender to system user by phone number (10-digit suffix matching for +91 / local formats)
     const usersObj = getUsersFn ? getUsersFn() : {};
@@ -247,8 +249,6 @@ async function handleWhatsAppMessage(msg) {
       }
     }
 
-    const textOnly = textContent && textContent.trim();
-    const parsed = parseExpenseMessage(textOnly);
     const now = Date.now();
     const userContext = userContextStore.get(userId);
 
@@ -452,10 +452,12 @@ ${categoryEmoji} *Category:* ${parsed.category}
       return;
     }
 
-    // Default response for unparsed text
-    await waSock.sendMessage(remoteJid, {
-      text: `🤖 Hi! Send an expense like \`Metro 150\` or \`Uber 250 Andheri\` to log it, or type \`help\` for options.`
-    });
+    // Default response for unparsed text (only for incoming messages from users, never from bot/self)
+    if (!msg.key.fromMe) {
+      await waSock.sendMessage(remoteJid, {
+        text: `🤖 Hi! Send an expense like \`Metro 150\` or \`Uber 250 Andheri\` to log it, or type \`help\` for options.`
+      });
+    }
 
   } catch (err) {
     console.error('Error handling WhatsApp message:', err);
