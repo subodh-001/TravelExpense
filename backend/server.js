@@ -223,27 +223,6 @@ const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
     if (triggerBroadcast) {
       broadcastEvent('EXPENSES_UPDATED');
     }
-    // 🔥 Auto-sync to Firestore in background
-    if (useFirebase && db && Array.isArray(expenses)) {
-      setImmediate(async () => {
-        try {
-          for (let i = 0; i < expenses.length; i += 450) {
-            const batch = db.batch();
-            expenses.slice(i, i + 450).forEach(e => {
-              if (!e.id) return;
-              batch.set(db.collection('expenses').doc(e.id), {
-                id: e.id, userId: e.userId || '', date: e.date || '',
-                location: e.location || '', notes: e.notes || '',
-                total: e.total || 0, paymentStatus: e.paymentStatus || 'pending',
-                paymentBillUrl: e.paymentBillUrl || '', settledAt: e.settledAt || '',
-                createdAt: e.createdAt || new Date().toISOString()
-              }, { merge: true });
-            });
-            await batch.commit();
-          }
-        } catch (fbErr) { /* silent — Firestore is secondary storage */ }
-      });
-    }
   } catch (err) {
     console.error('Error writing LOCAL_DB_FILE:', err);
   }
@@ -312,6 +291,9 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
               id: u.id || uid, name: u.name || '', email: u.email || '',
               role: u.role || 'user', verified: !!u.verified,
               picture: u.picture || '', paymentBillUrl: u.paymentBillUrl || '',
+              phone: u.phone || u.whatsapp || '',
+              whatsapp: u.whatsapp || u.phone || '',
+              whatsappVerified: !!u.whatsappVerified,
               updatedAt: u.updatedAt || new Date().toISOString()
             }, { merge: true });
           });
@@ -2184,35 +2166,54 @@ app.get('/api/expenses', async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized: user-id required' });
     }
 
+    // Collect all valid user ID aliases (Google sub ID, email slug ID, master admin ID)
+    const validUserIds = new Set([userId]);
+    const users = getLocalUsers();
+    const currentUser = users[userId] || Object.values(users).find(u => u && (u.id === userId || u.email === userId));
+
+    if (currentUser) {
+      if (currentUser.id) validUserIds.add(currentUser.id);
+      if (currentUser.email) {
+        validUserIds.add(`google_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`);
+      }
+    }
+    if (userId.includes('subodh') || (currentUser && currentUser.email && currentUser.email.includes('subodh'))) {
+      validUserIds.add('google_subodhram3350_gmail_com');
+    }
+
     if (useFirebase) {
-      const snapshot = await db.collection('expenses')
-        .where('userId', '==', userId)
-        .get();
+      const expensesMap = new Map();
+      for (const uid of validUserIds) {
+        try {
+          const snapshot = await db.collection('expenses')
+            .where('userId', '==', uid)
+            .get();
 
-      const expenses = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        let createdAtStr = data.createdAt;
-        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-          createdAtStr = data.createdAt.toDate().toISOString();
-        } else if (data.createdAt && data.createdAt._seconds) {
-          createdAtStr = new Date(data.createdAt._seconds * 1000).toISOString();
-        }
-        let updatedAtStr = data.updatedAt;
-        if (data.updatedAt && typeof data.updatedAt.toDate === 'function') {
-          updatedAtStr = data.updatedAt.toDate().toISOString();
-        } else if (data.updatedAt && data.updatedAt._seconds) {
-          updatedAtStr = new Date(data.updatedAt._seconds * 1000).toISOString();
-        }
-        expenses.push({ id: doc.id, ...data, createdAt: createdAtStr, updatedAt: updatedAtStr });
-      });
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            let createdAtStr = data.createdAt;
+            if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+              createdAtStr = data.createdAt.toDate().toISOString();
+            } else if (data.createdAt && data.createdAt._seconds) {
+              createdAtStr = new Date(data.createdAt._seconds * 1000).toISOString();
+            }
+            let updatedAtStr = data.updatedAt;
+            if (data.updatedAt && typeof data.updatedAt.toDate === 'function') {
+              updatedAtStr = data.updatedAt.toDate().toISOString();
+            } else if (data.updatedAt && data.updatedAt._seconds) {
+              updatedAtStr = new Date(data.updatedAt._seconds * 1000).toISOString();
+            }
+            expensesMap.set(doc.id, { id: doc.id, ...data, createdAt: createdAtStr, updatedAt: updatedAtStr });
+          });
+        } catch (qErr) {}
+      }
 
-      expenses.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+      const expenses = Array.from(expensesMap.values());
+      expenses.sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
       return res.json({ success: true, expenses });
     } else {
       const all = getLocalExpenses();
-      // Strictly filter by userId - each user sees ONLY their own expenses
-      let userExpenses = all.filter(e => e.userId === userId);
+      let userExpenses = all.filter(e => validUserIds.has(e.userId));
       userExpenses.sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
 
       return res.json({ success: true, expenses: userExpenses });
