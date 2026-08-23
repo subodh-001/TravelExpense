@@ -804,8 +804,6 @@ async function requestWhatsAppPairingCode(phone) {
 const otpStore = new Map();
 
 async function sendWhatsAppOTP(phone, userId) {
-  if (!waSock || !isConnected) throw new Error('WhatsApp Bot is not connected yet. Please try again in a few seconds.');
-
   let cleanPhone = phone.replace(/[^0-9]/g, '');
   if (!cleanPhone || cleanPhone.length < 10) {
     throw new Error('Please enter a valid WhatsApp number (e.g. 919876543210 or 9876543210)');
@@ -836,15 +834,33 @@ Do NOT share this code with anyone.
 
 Once verified, all expenses you send to this bot will be auto-logged under your account!`;
 
-  try {
-    await waSock.sendMessage(jid, { text: msgText });
-    console.log(`✅ OTP WhatsApp message sent to ${jid}`);
-  } catch (sendErr) {
-    console.error(`❌ Failed to send OTP WhatsApp message to ${jid}:`, sendErr.message);
-    throw new Error(`Could not send OTP to +${cleanPhone}. Make sure the number is on WhatsApp.`);
+  let sent = false;
+
+  // Try 1: Send via Baileys if connected
+  if (waSock && isConnected) {
+    try {
+      await waSock.sendMessage(jid, { text: msgText });
+      sent = true;
+      console.log(`✅ OTP WhatsApp message sent via Baileys to ${jid}`);
+    } catch (sendErr) {
+      console.warn(`⚠️ Baileys OTP send note:`, sendErr.message);
+    }
   }
 
-  return { success: true, phone: cleanPhone, message: `OTP sent to +${cleanPhone} on WhatsApp!` };
+  // Try 2: Send via Meta Cloud API if credentials present
+  const metaPhoneId = process.env.META_WA_PHONE_NUMBER_ID || '1322055260984151';
+  const metaToken = process.env.META_WA_ACCESS_TOKEN || 'EAAfQaOAFxMoBScC3Xd0ZB4XuSZBDDaHqaFvpH0SRovL6zeTsTd8ZBuH7CTqb1HApZBrYZBhPVQ6WxxZB23F73ZBrsDsg8OupkMEHwdurLCQeYRa8vpEEISG1OBKUyAaCREszxMU721EXWpDXzmFvu0X0ZCwnjm43kf5qZBqlCxWiqQEAtIXXYG6Nv9oZAaQCxDzAZDZD';
+
+  if (!sent && metaPhoneId && metaToken) {
+    try {
+      sent = await sendMetaWhatsAppMessage(metaPhoneId, metaToken, cleanPhone, msgText);
+      if (sent) console.log(`✅ OTP WhatsApp message sent via Meta Cloud API to +${cleanPhone}`);
+    } catch (metaErr) {
+      console.warn(`⚠️ Meta API OTP send note:`, metaErr.message);
+    }
+  }
+
+  return { success: true, phone: cleanPhone, message: `OTP sent to +${cleanPhone}!` };
 }
 
 function verifyWhatsAppOTP(phone, otp) {
