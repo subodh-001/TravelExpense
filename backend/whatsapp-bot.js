@@ -3,7 +3,7 @@ const {
   useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
-  downloadMediaMessage
+  downloadContentFromMessage
 } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
 const QRCode = require('qrcode');
@@ -15,6 +15,29 @@ let waSock = null;
 let qrCodeDataUrl = null;
 let isConnected = false;
 let connectedUserJid = null;
+
+// User Context Store for 3-minute sequential message combining (Text <-> Photo)
+const userContextStore = new Map(); // userId -> { pendingReceiptUrl, lastExpenseObj, timestamp }
+
+async function downloadWhatsAppImageBuffer(msg) {
+  try {
+    const imgMsg = msg.message?.imageMessage ||
+                   msg.message?.ephemeralMessage?.message?.imageMessage ||
+                   msg.message?.viewOnceMessage?.message?.imageMessage ||
+                   msg.message?.viewOnceMessageV2?.message?.imageMessage;
+    if (!imgMsg) return null;
+
+    const stream = await downloadContentFromMessage(imgMsg, 'image');
+    let buffer = Buffer.alloc(0);
+    for await (const chunk of stream) {
+      buffer = Buffer.concat([buffer, chunk]);
+    }
+    return buffer;
+  } catch (err) {
+    console.warn('⚠️ WhatsApp image download warning:', err.message);
+    return null;
+  }
+}
 
 // Helpers & Store References passed from server.js
 let getExpensesFn = null;
@@ -148,12 +171,12 @@ async function handleWhatsAppMessage(msg) {
 
     const userId = matchedUser.id || `google_${matchedUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
-    // Handle receipt image upload if photo attached
+    // Handle receipt image download if photo attached
     let receiptUrl = null;
     if (isImage && uploadCloudinaryFn) {
       try {
-        const buffer = await downloadMediaMessage(msg, 'buffer', {});
-        if (buffer) {
+        const buffer = await downloadWhatsAppImageBuffer(msg);
+        if (buffer && buffer.length > 0) {
           receiptUrl = await uploadCloudinaryFn(buffer, 'image/jpeg', 'whatsapp_receipts');
         }
       } catch (imgErr) {
@@ -161,7 +184,48 @@ async function handleWhatsAppMessage(msg) {
       }
     }
 
-    const parsed = parseExpenseMessage(textContent || (isImage ? 'Metro 50' : ''));
+    const textOnly = textContent && textContent.trim();
+    const parsed = parseExpenseMessage(textOnly);
+    const now = Date.now();
+    const userContext = userContextStore.get(userId);
+
+    // CASE 1: Photo sent WITHOUT expense text (e.g. user just sends receipt photo)
+    if (isImage && !parsed && receiptUrl) {
+      // Sub-case 1A: User logged a text expense entry in the last 3 minutes
+      if (userContext && userContext.lastExpenseObj && (now - userContext.timestamp < 180000)) {
+        const targetExp = userContext.lastExpenseObj;
+        if (!targetExp.receipts) targetExp.receipts = [];
+        targetExp.receipts.push(receiptUrl);
+
+        if (saveExpenseToDbFn) {
+          saveExpenseToDbFn(targetExp);
+        }
+
+        userContextStore.delete(userId);
+
+        const attachText = 
+`📎 *Receipt Photo Attached to Recent Entry!*
+
+📅 *Date:* ${targetExp.date}
+📌 *Category:* ${targetExp.location}
+💰 *Amount:* ₹${targetExp.total.toLocaleString('en-IN')}
+📝 *Notes:* ${targetExp.notes}`;
+
+        await waSock.sendMessage(remoteJid, { text: attachText });
+        return;
+      } else {
+        // Sub-case 1B: Store pending photo for next text message
+        userContextStore.set(userId, { pendingReceiptUrl: receiptUrl, timestamp: now });
+
+        const promptText = 
+`📸 *Receipt Photo Uploaded!*
+
+💬 Ab travel details (e.g. *Metro 40 Andheri to Saki Naka*) message bhej kar entry poori karein.`;
+
+        await waSock.sendMessage(remoteJid, { text: promptText });
+        return;
+      }
+    }
 
     // Handle commands
     if (parsed && parsed.isCommand) {
@@ -254,10 +318,17 @@ Try karein! Abhi type karein: *Metro 150* 🚀`;
       }
     }
 
-    // Process valid expense entry
+    // CASE 2: Process valid expense entry (Text or Photo with caption)
     if (parsed && !parsed.isCommand) {
       const todayDate = new Date().toISOString().slice(0, 10);
       const expenseId = `exp_wa_${Date.now().toString(36)}`;
+
+      // Check if user uploaded a photo in the last 3 minutes
+      let finalReceipts = receiptUrl ? [receiptUrl] : [];
+      if (!receiptUrl && userContext && userContext.pendingReceiptUrl && (now - userContext.timestamp < 180000)) {
+        finalReceipts.push(userContext.pendingReceiptUrl);
+        userContextStore.delete(userId);
+      }
 
       const newExpense = {
         id: expenseId,
@@ -268,16 +339,21 @@ Try karein! Abhi type karein: *Metro 150* 🚀`;
         paymentStatus: 'pending',
         entries: [{ type: parsed.category, amount: parsed.amount }],
         total: parsed.amount,
-        receipts: receiptUrl ? [receiptUrl] : [],
+        receipts: finalReceipts,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
-      if (getExpensesFn && saveExpensesFn) {
+      if (saveExpenseToDbFn) {
+        saveExpenseToDbFn(newExpense);
+      } else if (getExpensesFn && saveExpensesFn) {
         const expenses = getExpensesFn();
         expenses.unshift(newExpense);
         saveExpensesFn(expenses, true);
       }
+
+      // Save to context for potential follow-up photo in the next 3 minutes
+      userContextStore.set(userId, { lastExpenseObj: newExpense, timestamp: now });
 
       const categoryEmoji = {
         'Metro': '🚇', 'Local': '🚆', 'Auto/Rapido': '🛺',
@@ -285,7 +361,7 @@ Try karein! Abhi type karein: *Metro 150* 🚀`;
         'Food': '🍱', 'Others': '📌'
       }[parsed.category] || '📌';
 
-      const photoTag = receiptUrl ? '\n📎 *Receipt Photo Attached!*' : '';
+      const photoTag = finalReceipts.length > 0 ? '\n📎 *Receipt Photo Attached!*' : '';
 
       const confirmText = 
 `✅ *Travel Expense Logged Successfully!*
