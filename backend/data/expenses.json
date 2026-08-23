@@ -1,5 +1,43 @@
 [
   {
+    "id": "exp_wa_mt60beb1",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-23",
+    "location": "Metro",
+    "notes": "Metro",
+    "paymentStatus": "pending",
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 50
+      }
+    ],
+    "total": 50,
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1787501628/whatsapp_receipts/zuyrxebyirlcwhoqhqtq.jpg"
+    ],
+    "createdAt": "2026-08-23T16:13:46.670Z",
+    "updatedAt": "2026-08-23T16:13:46.670Z"
+  },
+  {
+    "id": "exp_wa_mt60b8nv",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-23",
+    "location": "Metro",
+    "notes": "Andheri",
+    "paymentStatus": "pending",
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 50
+      }
+    ],
+    "total": 50,
+    "receipts": [],
+    "createdAt": "2026-08-23T16:13:39.355Z",
+    "updatedAt": "2026-08-23T16:13:39.355Z"
+  },
+  {
     "id": "exp_404e57fa",
     "userId": "google_subodhram3350_gmail_com",
     "date": "2026-08-11",

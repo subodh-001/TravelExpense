@@ -2746,6 +2746,13 @@ app.listen(PORT, () => {
   // Helper to persist WhatsApp expenses to Firestore & Local DB
   const saveExpenseToDb = async (newExpense) => {
     try {
+      const expenses = getLocalExpenses();
+      if (expenses.some(e => e.id === newExpense.id)) {
+        return; // Already processed/saved
+      }
+      expenses.unshift(newExpense);
+      saveLocalExpenses(expenses, true);
+
       if (useFirebase) {
         await db.collection('expenses').doc(newExpense.id).set({
           ...newExpense,
@@ -2753,9 +2760,6 @@ app.listen(PORT, () => {
           createdAt: newExpense.createdAt
         });
       }
-      const expenses = getLocalExpenses();
-      expenses.unshift(newExpense);
-      saveLocalExpenses(expenses, true);
     } catch (err) {
       console.warn('⚠️ Error writing WhatsApp expense to Firestore/DB:', err.message);
     }

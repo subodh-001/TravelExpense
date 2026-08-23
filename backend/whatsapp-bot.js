@@ -90,9 +90,22 @@ function parseExpenseMessage(text) {
   };
 }
 
+const processedMsgIds = new Set();
+
 async function handleWhatsAppMessage(msg) {
   try {
     if (!msg.message) return;
+
+    // Message-level deduplication check
+    const msgId = msg.key.id;
+    if (msgId) {
+      if (processedMsgIds.has(msgId)) return;
+      processedMsgIds.add(msgId);
+      if (processedMsgIds.size > 500) {
+        const first = processedMsgIds.values().next().value;
+        processedMsgIds.delete(first);
+      }
+    }
 
     const remoteJid = msg.key.remoteJid;
     if (!remoteJid || remoteJid.endsWith('@g.us')) return; // Ignore group chats for private expense logging
