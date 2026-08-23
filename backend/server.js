@@ -2486,54 +2486,56 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
     const { expenseId } = req.params;
     const userId = req.userId;
 
-    if (useFirebase) {
-      const docRef = db.collection('expenses').doc(expenseId);
-      const doc = await docRef.get();
+    // 1. Delete from Local JSON storage
+    const expenses = getLocalExpenses();
+    const expIndex = expenses.findIndex(e => e.id === expenseId);
 
-      if (!doc.exists) {
-        return res.status(404).json({ error: 'Expense not found' });
-      }
-
-      const data = doc.data();
-      if (data.userId !== userId) {
-        return res.status(403).json({ error: 'Unauthorized' });
-      }
-
-      // Delete receipts
-      for (const receipt of data.receipts || []) {
-        try {
-          const filePath = `receipts/${userId}/${expenseId}/${receipt.fileName}`;
-          await bucket.file(filePath).delete();
-        } catch (e) {
-          console.warn('Receipt file delete warning:', e.message);
-        }
-      }
-
-      await docRef.delete();
-      return res.json({ success: true, message: 'Expense deleted!' });
-    } else {
-      const expenses = getLocalExpenses();
-      const expIndex = expenses.findIndex(e => e.id === expenseId);
-
-      if (expIndex === -1) {
-        return res.status(404).json({ error: 'Expense not found' });
-      }
-
+    if (expIndex !== -1) {
       if (expenses[expIndex].userId !== userId) {
         return res.status(403).json({ error: 'Unauthorized' });
       }
-
-      const [removed] = expenses.splice(expIndex, 1);
-      saveLocalExpenses(expenses);
-
-      // Delete uploads folder if exists
-      const userFolder = path.join(UPLOADS_DIR, userId, expenseId);
-      if (fs.existsSync(userFolder)) {
-        fs.rmSync(userFolder, { recursive: true, force: true });
-      }
-
-      return res.json({ success: true, message: 'Expense deleted!' });
+      expenses.splice(expIndex, 1);
+      // Write updated list to local file without background batch write
+      const tempPath = `${LOCAL_DB_FILE}.tmp`;
+      fs.writeFileSync(tempPath, JSON.stringify(expenses, null, 2));
+      fs.renameSync(tempPath, LOCAL_DB_FILE);
+      broadcastEvent('EXPENSES_UPDATED');
     }
+
+    // 2. Delete from Firebase Firestore if connected
+    if (useFirebase && db) {
+      try {
+        const docRef = db.collection('expenses').doc(expenseId);
+        const doc = await docRef.get();
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.userId !== userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+          }
+          // Delete receipt files from bucket if any
+          for (const receipt of data.receipts || []) {
+            try {
+              if (receipt.fileName && bucket) {
+                const filePath = `receipts/${userId}/${expenseId}/${receipt.fileName}`;
+                await bucket.file(filePath).delete();
+              }
+            } catch (e) {}
+          }
+          await docRef.delete();
+          console.log(`🔥 Expense ${expenseId} deleted from Firebase Firestore`);
+        }
+      } catch (fbErr) {
+        console.warn('⚠️ Firebase expense delete note:', fbErr.message);
+      }
+    }
+
+    // 3. Delete local uploads folder if exists
+    const userFolder = path.join(UPLOADS_DIR, userId, expenseId);
+    if (fs.existsSync(userFolder)) {
+      fs.rmSync(userFolder, { recursive: true, force: true });
+    }
+
+    return res.json({ success: true, message: 'Expense deleted successfully!' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
