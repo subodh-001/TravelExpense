@@ -206,12 +206,30 @@ async function handleWhatsAppMessage(msg) {
       textContent = msg.message.imageMessage.caption;
     }
 
-    // Ignore bot's own outgoing auto-replies or any fromMe messages that aren't valid expense commands
+    // Ignore any bot-generated template responses, confirmation messages, or system notifications immediately
     const textOnly = textContent && textContent.trim();
+    if (!textOnly && !isImage) return;
+
+    const isBotTemplate = textOnly.startsWith('✅') || 
+                          textOnly.startsWith('🤖') || 
+                          textOnly.startsWith('👋') || 
+                          textOnly.startsWith('📊') || 
+                          textOnly.startsWith('📜') || 
+                          textOnly.startsWith('⚠️') || 
+                          textOnly.startsWith('🔐') || 
+                          textOnly.startsWith('📎') || 
+                          textOnly.startsWith('📌') ||
+                          textOnly.includes('Logged Successfully') || 
+                          textOnly.includes('Receipt Photo Attached') || 
+                          textOnly.includes('View on Dashboard') ||
+                          textOnly.includes('Verification Code') ||
+                          textOnly.includes('Your OTP');
+
+    if (isBotTemplate) return;
+
     const parsed = parseExpenseMessage(textOnly);
 
     if (msg.key.fromMe) {
-      // If message is from bot itself or self-chat, only process if it is a valid expense or command
       if (!parsed && !isImage) return;
     }
 
