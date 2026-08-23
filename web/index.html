@@ -1472,21 +1472,15 @@
 
       <!-- Modal Body -->
       <div style="padding: 24px;">
-        <!-- Meta Official Cloud API Active Card -->
-        <div style="text-align: center; margin-bottom: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 16px; padding: 20px;">
-          <span style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 30px; font-weight: 800; font-size: 0.85rem; background: #dcfce7; color: #166534; margin-bottom: 8px;">
-            <i class="fa-solid fa-circle-check" style="color: #25d366;"></i> Meta Official Cloud API Bot Active
+        <!-- Bot Status Badge -->
+        <div id="waStatusBadgeContainer" style="margin-bottom: 20px; text-align: center;">
+          <span id="waStatusBadge" style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 30px; font-weight: 800; font-size: 0.85rem; background: #fef3c7; color: #92400e;">
+            <i class="fa-solid fa-spinner fa-spin"></i> Checking Bot Status...
           </span>
-          <p style="margin: 6px 0 14px 0; font-size: 1.15rem; font-weight: 900; color: #0f172a;">
-            🤖 Bot Number: +1 (555) 671-9782
-          </p>
-          <a href="https://wa.me/15556719782?text=Metro%20150" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: #25d366; color: #ffffff; padding: 10px 24px; border-radius: 25px; font-weight: 800; font-size: 0.95rem; text-decoration: none; box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);">
-            <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> Open WhatsApp Chat
-          </a>
         </div>
 
         <!-- How to Use Box -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; margin-bottom: 20px;">
           <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px;">
             <i class="fa-solid fa-bolt" style="color: #25d366;"></i> Instant WhatsApp Messages
           </h4>
@@ -1497,6 +1491,56 @@
             <li>Send a <strong style="color: #0f172a;">Photo of Receipt</strong> with caption <strong style="color: #0f172a;">Local 40</strong></li>
             <li>Type <strong style="color: #0f172a;">summary</strong> to view monthly total & pending balance</li>
           </ul>
+        </div>
+
+        <!-- Option B: 8-Digit Code Pairing Box -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; margin-bottom: 20px; text-align: center;">
+          <h4 style="margin: 0 0 6px 0; font-size: 0.88rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-key" style="color: #2563eb;"></i> Link Bot Number via 8-Digit Code (No Camera Required)
+          </h4>
+          <p style="font-size: 0.78rem; color: #64748b; margin: 0 0 10px 0;">Enter mobile number to make it the active Bot (e.g. 919076314255):</p>
+
+          <div style="display: flex; gap: 8px; justify-content: center; max-width: 340px; margin: 0 auto;">
+            <input type="tel" id="waPairingPhoneInput" placeholder="919076314255" style="padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700; font-size: 0.9rem; flex: 1; text-align: center;" />
+            <button type="button" id="waGetPairingCodeBtn" onclick="handleRequestWaPairingCode()" style="background: #0f172a; color: #ffffff; border: none; padding: 9px 14px; border-radius: 8px; font-weight: 800; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">
+              Get Code
+            </button>
+          </div>
+
+          <div id="waPairingCodeDisplay" style="display: none; margin-top: 12px; background: #e0e7ff; border: 2px dashed #6366f1; border-radius: 12px; padding: 14px;">
+            <span style="font-size: 0.78rem; color: #3730a3; font-weight: 700; display: block; margin-bottom: 4px;">YOUR WHATSAPP PAIRING CODE:</span>
+            <strong id="waPairingCodeVal" style="font-size: 1.8rem; letter-spacing: 6px; color: #1e1b4b; font-family: monospace; display: block;">---- ----</strong>
+            <p style="font-size: 0.76rem; color: #4338ca; margin: 8px 0 0 0; font-weight: 600;">
+              In WhatsApp: Linked Devices ➔ Link a Device ➔ "Link with phone number instead"
+            </p>
+          </div>
+        </div>
+
+        <!-- QR Code Pairing Box -->
+        <div id="waQrCodeSection" style="text-align: center; display: none; background: #f0fdf4; border: 2px dashed #86efac; border-radius: 14px; padding: 20px; margin-bottom: 20px;">
+          <p style="font-size: 0.88rem; font-weight: 800; color: #166534; margin: 0 0 12px 0;">
+            📲 Scan QR Code to Link Bot Phone Number:
+          </p>
+          <div id="waQrDisplay" style="background: #ffffff; padding: 12px; display: inline-block; border-radius: 14px; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.05);"></div>
+          <p style="font-size: 0.78rem; color: #475569; margin: 10px 0 0 0; font-weight: 700;">
+            Open WhatsApp ➔ Linked Devices ➔ Link a Device
+          </p>
+        </div>
+
+        <!-- Connected Section -->
+        <div id="waConnectedSection" style="text-align: center; display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 16px;">
+          <p style="margin: 0; font-size: 0.88rem; font-weight: 800; color: #166534;">
+            🎉 WhatsApp Bot is Active & Connected!
+          </p>
+          <p style="margin: 4px 0 12px 0; font-size: 0.85rem; font-weight: 800; color: #0f172a;" id="waConnectedUserText">Connected Number: +91 9076314255</p>
+          <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+            <a id="waDirectChatBtn" href="https://wa.me/919076314255?text=Metro%20150" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: #25d366; color: #ffffff; padding: 8px 16px; border-radius: 20px; font-weight: 800; font-size: 0.85rem; text-decoration: none; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);">
+              <i class="fa-brands fa-whatsapp" style="font-size: 1.1rem;"></i> Open WhatsApp Chat
+            </a>
+            <button type="button" onclick="handleDisconnectWhatsAppBot()" style="display: inline-flex; align-items: center; gap: 6px; background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; padding: 8px 16px; border-radius: 20px; font-weight: 800; font-size: 0.85rem; cursor: pointer;">
+              <i class="fa-solid fa-power-off"></i> Disconnect & Pair New Number
+            </button>
+          </div>
         </div>
       </div>
 

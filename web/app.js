@@ -5063,10 +5063,60 @@ function closeWhatsAppModal() {
 
 async function checkWhatsAppBotStatus() {
   const badge = document.getElementById('waStatusBadge');
-  if (badge) {
-    badge.style.background = '#dcfce7';
-    badge.style.color = '#15803d';
-    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Meta Cloud API Active (+1 555-671-9782)';
+  const connSec = document.getElementById('waConnectedSection');
+  const qrSec = document.getElementById('waQrCodeSection');
+  const qrDisplay = document.getElementById('waQrDisplay');
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/whatsapp/status`);
+    const data = await res.json();
+
+    if (data.connected) {
+      if (badge) {
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#15803d';
+        badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Connected & Online';
+      }
+      if (connSec) connSec.style.display = 'block';
+      if (qrSec) qrSec.style.display = 'none';
+
+      if (data.userJid) {
+        const num = data.userJid.split('@')[0].split(':')[0];
+        const chatBtn = document.getElementById('waDirectChatBtn');
+        if (chatBtn) chatBtn.href = `https://wa.me/${num}?text=Metro%20150`;
+        const textEl = document.getElementById('waConnectedUserText');
+        if (textEl) textEl.textContent = `Bot Active on +${num}! Click below to chat directly on WhatsApp.`;
+      }
+    } else if (data.qr) {
+      if (badge) {
+        badge.style.background = '#e0e7ff';
+        badge.style.color = '#3730a3';
+        badge.innerHTML = '<i class="fa-solid fa-qrcode"></i> Scan QR to Pair WhatsApp';
+      }
+      if (connSec) connSec.style.display = 'none';
+      if (qrSec) qrSec.style.display = 'block';
+      if (qrDisplay) {
+        if (data.qr.startsWith('data:image')) {
+          qrDisplay.innerHTML = `<img src="${data.qr}" style="width: 220px; height: 220px; border-radius: 8px; display: block; margin: 0 auto;" />`;
+        } else {
+          qrDisplay.innerHTML = `<div style="font-size: 0.8rem; font-weight: 700; color: #1e293b;">Terminal pairing code ready</div>`;
+        }
+      }
+    } else {
+      if (badge) {
+        badge.style.background = '#fef3c7';
+        badge.style.color = '#92400e';
+        badge.innerHTML = '<i class="fa-solid fa-signal"></i> Active & Ready';
+      }
+      if (connSec) connSec.style.display = 'block';
+      if (qrSec) qrSec.style.display = 'none';
+    }
+  } catch (err) {
+    if (badge) {
+      badge.style.background = '#fef3c7';
+      badge.style.color = '#92400e';
+      badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Bot Ready';
+    }
   }
 }
 
