@@ -4900,6 +4900,14 @@ async function checkWhatsAppBotStatus() {
       }
       if (connSec) connSec.style.display = 'block';
       if (qrSec) qrSec.style.display = 'none';
+
+      if (data.userJid) {
+        const num = data.userJid.replace(/[^0-9]/g, '');
+        const chatBtn = document.getElementById('waDirectChatBtn');
+        if (chatBtn) chatBtn.href = `https://wa.me/${num}?text=Metro%20150`;
+        const textEl = document.getElementById('waConnectedUserText');
+        if (textEl) textEl.textContent = `Bot Active on +${num}! Click below to chat directly on WhatsApp.`;
+      }
     } else if (data.qr) {
       if (badge) {
         badge.style.background = '#e0e7ff';
@@ -4930,5 +4938,42 @@ async function checkWhatsAppBotStatus() {
       badge.style.color = '#92400e';
       badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Bot Ready';
     }
+  }
+}
+
+async function handleRequestWaPairingCode() {
+  const input = document.getElementById('waPairingPhoneInput');
+  const btn = document.getElementById('waGetPairingCodeBtn');
+  const disp = document.getElementById('waPairingCodeDisplay');
+  const val = document.getElementById('waPairingCodeVal');
+
+  const phone = input ? input.value.trim() : '';
+  if (!phone || phone.length < 10) {
+    alert('Please enter your mobile phone number with country code (e.g. 919876543210 for India).');
+    return;
+  }
+
+  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/whatsapp/pairing-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone })
+    });
+    const data = await res.json();
+
+    if (btn) btn.innerHTML = 'Get Code';
+
+    if (res.ok && data.success && data.code) {
+      if (disp) disp.style.display = 'block';
+      if (val) val.textContent = data.code;
+      if (typeof showCustomToast === 'function') showCustomToast(`🔑 WhatsApp Pairing Code generated: ${data.code}`);
+    } else {
+      alert(data.error || 'Failed to generate WhatsApp pairing code.');
+    }
+  } catch (err) {
+    if (btn) btn.innerHTML = 'Get Code';
+    alert('Error generating code: ' + err.message);
   }
 }

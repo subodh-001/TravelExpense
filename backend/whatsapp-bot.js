@@ -358,6 +358,16 @@ async function startWhatsAppBot(callbacks = {}) {
   }
 }
 
+async function requestWhatsAppPairingCode(phone) {
+  if (!waSock) throw new Error('WhatsApp Bot engine is initializing. Please try again in a few seconds.');
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  if (!cleanPhone || cleanPhone.length < 10) {
+    throw new Error('Please enter a valid phone number with country code (e.g. 919876543210)');
+  }
+  const code = await waSock.requestPairingCode(cleanPhone);
+  return code;
+}
+
 function getWhatsAppStatus() {
   return {
     connected: isConnected,
@@ -370,5 +380,6 @@ function getWhatsAppStatus() {
 module.exports = {
   startWhatsAppBot,
   getWhatsAppStatus,
-  parseExpenseMessage
+  parseExpenseMessage,
+  requestWhatsAppPairingCode
 };

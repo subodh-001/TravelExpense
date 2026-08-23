@@ -2711,7 +2711,7 @@ app.get('/api/stats', authenticate, async (req, res) => {
 });
 
 // ---------- WHATSAPP BOT ENDPOINTS ----------
-const { startWhatsAppBot, getWhatsAppStatus, parseExpenseMessage } = require('./whatsapp-bot');
+const { startWhatsAppBot, getWhatsAppStatus, parseExpenseMessage, requestWhatsAppPairingCode } = require('./whatsapp-bot');
 
 app.get('/api/whatsapp/status', (req, res) => {
   res.json(getWhatsAppStatus());
@@ -2721,6 +2721,17 @@ app.post('/api/whatsapp/parse', (req, res) => {
   const { text } = req.body;
   const parsed = parseExpenseMessage(text || '');
   res.json({ success: true, parsed });
+});
+
+app.post('/api/whatsapp/pairing-code', async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ error: 'Mobile phone number with country code is required (e.g. 919876543210)' });
+    const code = await requestWhatsAppPairingCode(phone);
+    res.json({ success: true, code });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // ==================== START SERVER ====================
