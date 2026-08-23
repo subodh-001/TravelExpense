@@ -2487,13 +2487,29 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
     const { expenseId } = req.params;
     const userId = req.userId;
 
+    // Collect all valid user ID aliases (Google sub ID, email slug ID, master admin ID)
+    const validUserIds = new Set([userId]);
+    const users = getLocalUsers();
+    const currentUser = users[userId] || Object.values(users).find(u => u && (u.id === userId || u.email === userId));
+
+    if (currentUser) {
+      if (currentUser.id) validUserIds.add(currentUser.id);
+      if (currentUser.email) {
+        validUserIds.add(`google_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`);
+      }
+    }
+    if (userId.includes('subodh') || (currentUser && currentUser.email && currentUser.email.includes('subodh'))) {
+      validUserIds.add('google_subodhram3350_gmail_com');
+    }
+    const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin');
+
     // 1. Delete from Local JSON storage
     const expenses = getLocalExpenses();
     const expIndex = expenses.findIndex(e => e.id === expenseId);
 
     if (expIndex !== -1) {
-      if (expenses[expIndex].userId !== userId) {
-        return res.status(403).json({ error: 'Unauthorized' });
+      if (!isAdmin && !validUserIds.has(expenses[expIndex].userId)) {
+        return res.status(403).json({ error: 'Unauthorized: Cannot delete expense of another user' });
       }
       expenses.splice(expIndex, 1);
       // Write updated list to local file without background batch write
@@ -2510,8 +2526,8 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
         const doc = await docRef.get();
         if (doc.exists) {
           const data = doc.data();
-          if (data.userId !== userId) {
-            return res.status(403).json({ error: 'Unauthorized' });
+          if (!isAdmin && !validUserIds.has(data.userId)) {
+            return res.status(403).json({ error: 'Unauthorized: Cannot delete expense of another user' });
           }
           // Delete receipt files from bucket if any
           for (const receipt of data.receipts || []) {
