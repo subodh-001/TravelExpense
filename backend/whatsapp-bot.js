@@ -121,6 +121,74 @@ const CATEGORY_MAP = [
   { category: 'Others', keywords: ['other', 'others', 'misc', 'toll', 'parking', 'ticket'] }
 ];
 
+function extractDateFromText(text) {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  // 1. YYYY-MM-DD or YYYY/MM/DD
+  const ymdMatch = text.match(/\b(20\d{2})[-/](0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])\b/);
+  if (ymdMatch) {
+    const y = ymdMatch[1];
+    const m = ymdMatch[2].padStart(2, '0');
+    const d = ymdMatch[3].padStart(2, '0');
+    return { dateStr: `${y}-${m}-${d}`, matchStr: ymdMatch[0] };
+  }
+
+  // 2. DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+  const dmyMatch = text.match(/\b(0?[1-9]|[12]\d|3[01])[-/.](0?[1-9]|1[0-2])[-/.](20\d{2}|\d{2})\b/);
+  if (dmyMatch) {
+    const d = dmyMatch[1].padStart(2, '0');
+    const m = dmyMatch[2].padStart(2, '0');
+    let y = dmyMatch[3];
+    if (y.length === 2) y = '20' + y;
+    return { dateStr: `${y}-${m}-${d}`, matchStr: dmyMatch[0] };
+  }
+
+  // 3. DD/MM or DD-MM without year (assumes current year)
+  const dmMatch = text.match(/\b(0?[1-9]|[12]\d|3[01])[-/](0?[1-9]|1[0-2])\b/);
+  if (dmMatch) {
+    const d = dmMatch[1].padStart(2, '0');
+    const m = dmMatch[2].padStart(2, '0');
+    return { dateStr: `${currentYear}-${m}-${d}`, matchStr: dmMatch[0] };
+  }
+
+  // 4. DD Month (e.g. 20 Aug, 20 August, 15 Aug 2026)
+  const monthNames = {
+    jan: '01', january: '01', feb: '02', february: '02',
+    mar: '03', march: '03', apr: '04', april: '04',
+    may: '05', jun: '06', june: '06', jul: '07', july: '07',
+    aug: '08', august: '08', sep: '09', sept: '09', september: '09',
+    oct: '10', october: '10', nov: '11', november: '11', dec: '12', december: '12'
+  };
+
+  const monthRegex = /\b(0?[1-9]|[12]\d|3[01])\s*([a-zA-Z]{3,9})(?:\s*(20\d{2}))?\b/i;
+  const monthMatch = text.match(monthRegex);
+  if (monthMatch) {
+    const monthKey = monthMatch[2].toLowerCase();
+    if (monthNames[monthKey]) {
+      const d = monthMatch[1].padStart(2, '0');
+      const m = monthNames[monthKey];
+      const y = monthMatch[3] || currentYear;
+      return { dateStr: `${y}-${m}-${d}`, matchStr: monthMatch[0] };
+    }
+  }
+
+  // 5. Keyword: yesterday / kal
+  const kwMatch = text.match(/\b(yesterday|kal)\b/i);
+  if (kwMatch) {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const y = yesterday.getFullYear();
+    const m = String(yesterday.getMonth() + 1).padStart(2, '0');
+    const d = String(yesterday.getDate()).padStart(2, '0');
+    return { dateStr: `${y}-${m}-${d}`, matchStr: kwMatch[0] };
+  }
+
+  // Default: today
+  const todayStr = now.toISOString().slice(0, 10);
+  return { dateStr: todayStr, matchStr: null };
+}
+
 function parseExpenseMessage(text) {
   if (!text || typeof text !== 'string') return null;
   const clean = text.trim();
@@ -132,6 +200,9 @@ function parseExpenseMessage(text) {
   if (['summary', 'total', 'balance', 'stats'].includes(lower)) return { isCommand: true, command: 'summary' };
   if (['history', 'recent', 'list', 'entries'].includes(lower)) return { isCommand: true, command: 'history' };
   if (lower.startsWith('link ')) return { isCommand: true, command: 'link', arg: clean.substring(5).trim() };
+
+  // Extract custom date if specified
+  const { dateStr, matchStr } = extractDateFromText(clean);
 
   // Regex to extract amount (e.g. 150, rs 150, ₹150, 150rs, 150.50)
   const amountMatch = clean.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d{1,2})?)\s*(?:rs\.?|rupees)?/i);
@@ -153,9 +224,12 @@ function parseExpenseMessage(text) {
     if (matchedCategory !== 'Others') break;
   }
 
-  // Extract comment/notes (remove amount and category keyword from raw text)
+  // Extract comment/notes (remove amount, custom date, and category keyword from raw text)
   let comment = clean;
   comment = comment.replace(amountMatch[0], ' ');
+  if (matchStr) {
+    comment = comment.replace(matchStr, ' ');
+  }
   for (const item of CATEGORY_MAP) {
     for (const kw of item.keywords) {
       const regex = new RegExp(`\\b${kw}\\b`, 'gi');
@@ -170,6 +244,7 @@ function parseExpenseMessage(text) {
     category: matchedCategory,
     amount,
     comment,
+    dateStr,
     rawText: clean
   };
 }
@@ -429,7 +504,7 @@ Try karein! Abhi type karein: *Metro 150* 🚀`;
 
     // CASE 2: Process valid expense entry (Text or Photo with caption)
     if (parsed && !parsed.isCommand) {
-      const todayDate = new Date().toISOString().slice(0, 10);
+      const expenseDate = parsed.dateStr || new Date().toISOString().slice(0, 10);
       const expenseId = `exp_wa_${Date.now().toString(36)}`;
 
       // Check if user uploaded a photo in the last 3 minutes
@@ -442,7 +517,7 @@ Try karein! Abhi type karein: *Metro 150* 🚀`;
       const newExpense = {
         id: expenseId,
         userId: userId,
-        date: todayDate,
+        date: expenseDate,
         location: parsed.category,
         notes: parsed.comment || parsed.category,
         paymentStatus: 'pending',
@@ -475,7 +550,7 @@ Try karein! Abhi type karein: *Metro 150* 🚀`;
       const confirmText = 
 `✅ *Travel Expense Logged Successfully!*
 
-📅 *Date:* ${todayDate}
+📅 *Date:* ${expenseDate}
 ${categoryEmoji} *Category:* ${parsed.category}
 💰 *Amount:* ₹${parsed.amount.toLocaleString('en-IN')}
 📝 *Notes:* ${parsed.comment}${photoTag}
