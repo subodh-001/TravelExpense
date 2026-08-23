@@ -44,7 +44,7 @@ function parseExpenseMessage(text) {
 
   // Check for commands first
   const lower = clean.toLowerCase();
-  if (['help', 'menu', 'start', 'hi', 'hello'].includes(lower)) return { isCommand: true, command: 'help' };
+  if (['help', 'menu', 'start', 'hi', 'hello', 'hey', 'hii', 'hie', 'helo', 'namaste', 'wup'].includes(lower)) return { isCommand: true, command: 'help' };
   if (['summary', 'total', 'balance', 'stats'].includes(lower)) return { isCommand: true, command: 'summary' };
   if (['history', 'recent', 'list', 'entries'].includes(lower)) return { isCommand: true, command: 'history' };
   if (lower.startsWith('link ')) return { isCommand: true, command: 'link', arg: clean.substring(5).trim() };
@@ -92,12 +92,10 @@ function parseExpenseMessage(text) {
 
 async function handleWhatsAppMessage(msg) {
   try {
-    if (!msg.message || msg.key.fromMe) return;
+    if (!msg.message) return;
 
     const remoteJid = msg.key.remoteJid;
     if (!remoteJid || remoteJid.endsWith('@g.us')) return; // Ignore group chats for private expense logging
-
-    const senderNumber = remoteJid.replace(/[^0-9]/g, '');
 
     // Extract text content or caption
     let textContent = '';
@@ -110,6 +108,13 @@ async function handleWhatsAppMessage(msg) {
     } else if (isImage && msg.message.imageMessage.caption) {
       textContent = msg.message.imageMessage.caption;
     }
+
+    // Ignore bot's own outgoing auto-replies to prevent loops
+    if (msg.key.fromMe && (textContent.startsWith('👋') || textContent.startsWith('🤖') || textContent.startsWith('✅') || textContent.startsWith('📊') || textContent.startsWith('📜') || textContent.startsWith('⚠️'))) {
+      return;
+    }
+
+    const senderNumber = remoteJid.replace(/[^0-9]/g, '');
 
     // Match sender to system user by phone number or default to super_admin/master user
     const usersObj = getUsersFn ? getUsersFn() : {};
@@ -149,18 +154,22 @@ async function handleWhatsAppMessage(msg) {
     if (parsed && parsed.isCommand) {
       if (parsed.command === 'help') {
         const replyMenu = 
-`🤖 *FGTech Travel Expense Bot* ✈️
+`👋 *Welcome to FGTech Travel Expense Bot!* ✈️
 
-*How to Log Travel Expenses:*
-• Type: \`Metro 150\`
-• Type: \`Uber 280 Andheri to BKC\`
-• Type: \`Food 120 Lunch at station\`
-• Send a *Photo of Receipt* with caption \`Local 40\`
+Main aapka automated travel expense assistant hu. System me travel entry log karne ke liye seedhe mujhe message bhej sakte hain!
 
-*Commands:*
-• \`summary\` - View monthly total & pending balance
-• \`history\` - View 5 recent travel logs
-• \`link <email>\` - Pair your WhatsApp number to account`;
+📝 *Kaise Log Karein:*
+• Send: \`Metro 150\`
+• Send: \`Uber 280 Andheri to BKC\`
+• Send: \`Food 120 Lunch at station\`
+• Ticket / Bill ki *Photo* caption me \`Local 40\` likh kar bhejein
+
+📊 *Other Commands:*
+• \`summary\` - Monthly balance & total check karein
+• \`history\` - Recent 5 entries dekhein
+• \`link <email>\` - Apna WhatsApp number email account se link karein
+
+Try karein! Abhi type karein: *Metro 150* 🚀`;
         await waSock.sendMessage(remoteJid, { text: replyMenu });
         return;
       }
@@ -340,8 +349,9 @@ async function startWhatsAppBot(callbacks = {}) {
       } else if (connection === 'open') {
         isConnected = true;
         qrCodeDataUrl = null;
-        connectedUserJid = waSock.user?.id || waSock.user?.jid;
-        console.log('🤖 WhatsApp Travel Expense Bot CONNECTED & ONLINE! (JID:', connectedUserJid + ')');
+        const rawJid = waSock.user?.id || waSock.user?.jid || '';
+        connectedUserJid = rawJid.split('@')[0].split(':')[0];
+        console.log('🤖 WhatsApp Travel Expense Bot CONNECTED & ONLINE! (Phone: +' + connectedUserJid + ')');
       }
     });
 

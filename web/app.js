@@ -4902,7 +4902,7 @@ async function checkWhatsAppBotStatus() {
       if (qrSec) qrSec.style.display = 'none';
 
       if (data.userJid) {
-        const num = data.userJid.replace(/[^0-9]/g, '');
+        const num = data.userJid.split('@')[0].split(':')[0];
         const chatBtn = document.getElementById('waDirectChatBtn');
         if (chatBtn) chatBtn.href = `https://wa.me/${num}?text=Metro%20150`;
         const textEl = document.getElementById('waConnectedUserText');
