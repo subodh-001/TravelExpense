@@ -232,15 +232,14 @@ async function handleWhatsAppMessage(msg) {
               console.warn('⚠️ Cloudinary upload failed, saving locally:', cloudErr.message);
             }
           }
-          // Fallback: save to local uploads directory
+          // Fallback: encode as base64 data URL (works on Render, no filesystem needed)
           if (!receiptUrl) {
-            const uploadsDir = path.join(__dirname, 'uploads');
-            if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-            const fileName = `wa_receipt_${Date.now()}.jpg`;
-            const filePath = path.join(uploadsDir, fileName);
-            fs.writeFileSync(filePath, buffer);
-            receiptUrl = `/uploads/${fileName}`;
-            console.log(`💾 WhatsApp receipt saved locally: ${receiptUrl}`);
+            try {
+              receiptUrl = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+              console.log(`📦 WhatsApp receipt saved as base64 data URL (${Math.round(buffer.length / 1024)}KB)`);
+            } catch (b64Err) {
+              console.warn('⚠️ Base64 encoding failed:', b64Err.message);
+            }
           }
         }
       } catch (imgErr) {
