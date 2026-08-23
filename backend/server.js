@@ -2715,7 +2715,7 @@ app.get('/api/stats', authenticate, async (req, res) => {
 });
 
 // ---------- WHATSAPP BOT ENDPOINTS ----------
-const { startWhatsAppBot, getWhatsAppStatus, parseExpenseMessage, requestWhatsAppPairingCode } = require('./whatsapp-bot');
+const { startWhatsAppBot, getWhatsAppStatus, parseExpenseMessage, requestWhatsAppPairingCode, sendWhatsAppOTP, verifyWhatsAppOTP } = require('./whatsapp-bot');
 
 app.get('/api/whatsapp/status', (req, res) => {
   res.json(getWhatsAppStatus());
@@ -2735,6 +2735,53 @@ app.post('/api/whatsapp/pairing-code', async (req, res) => {
     res.json({ success: true, code });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Send OTP via WhatsApp to verify user's phone number
+app.post('/api/whatsapp/send-otp', async (req, res) => {
+  try {
+    const { phone, userId } = req.body;
+    if (!phone || !userId) return res.status(400).json({ error: 'phone and userId are required' });
+    const result = await sendWhatsAppOTP(phone, userId);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Verify OTP and link phone number to user account
+app.post('/api/whatsapp/verify-otp', async (req, res) => {
+  try {
+    const { phone, otp, userId } = req.body;
+    if (!phone || !otp || !userId) return res.status(400).json({ error: 'phone, otp and userId are required' });
+
+    const result = verifyWhatsAppOTP(phone, otp);
+    if (!result.success) return res.status(400).json({ error: result.error });
+
+    // Link phone to user in DB
+    const users = getLocalUsers();
+    const user = users[userId] || {};
+    const cleanPhone = result.phone;
+    user.phone = cleanPhone;
+    user.whatsapp = cleanPhone;
+    user.whatsappVerified = true;
+    user.updatedAt = new Date().toISOString();
+    users[userId] = user;
+    saveLocalUsers(users);
+
+    if (useFirebase) {
+      try {
+        await db.collection('users').doc(userId).set({ phone: cleanPhone, whatsapp: cleanPhone, whatsappVerified: true, updatedAt: user.updatedAt }, { merge: true });
+      } catch (fbErr) {
+        console.warn('Firebase phone sync note:', fbErr.message);
+      }
+    }
+
+    console.log(`✅ WhatsApp number +${cleanPhone} verified and linked to user ${userId}`);
+    res.json({ success: true, phone: cleanPhone, message: `✅ Number +${cleanPhone} verified and linked to your account!` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

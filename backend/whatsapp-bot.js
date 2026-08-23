@@ -469,6 +469,58 @@ async function requestWhatsAppPairingCode(phone) {
   return code;
 }
 
+// OTP store: { phone -> { otp, userId, expiresAt } }
+const otpStore = new Map();
+
+async function sendWhatsAppOTP(phone, userId) {
+  if (!waSock || !isConnected) throw new Error('WhatsApp Bot is not connected yet. Please try again.');
+
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  if (!cleanPhone || cleanPhone.length < 10) {
+    throw new Error('Please enter a valid 10+ digit WhatsApp number (e.g. 919876543210)');
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+  const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+  otpStore.set(cleanPhone, { otp, userId, expiresAt });
+
+  const jid = `${cleanPhone}@s.whatsapp.net`;
+  const msgText =
+`🔐 *FGTech Travel Expense — Verification Code*
+
+Your OTP to verify your WhatsApp number is:
+
+*${otp}*
+
+⏰ This code expires in *5 minutes*.
+Do NOT share this code with anyone.
+
+Once verified, all your WhatsApp messages to this bot will be logged under your account automatically.`;
+
+  await waSock.sendMessage(jid, { text: msgText });
+  return { success: true, message: `OTP sent to +${cleanPhone} on WhatsApp!` };
+}
+
+function verifyWhatsAppOTP(phone, otp) {
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const stored = otpStore.get(cleanPhone);
+
+  if (!stored) {
+    return { success: false, error: 'No OTP found for this number. Please request a new one.' };
+  }
+  if (Date.now() > stored.expiresAt) {
+    otpStore.delete(cleanPhone);
+    return { success: false, error: 'OTP expired. Please request a new one.' };
+  }
+  if (stored.otp !== otp.trim()) {
+    return { success: false, error: 'Incorrect OTP. Please try again.' };
+  }
+
+  otpStore.delete(cleanPhone);
+  return { success: true, userId: stored.userId, phone: cleanPhone };
+}
+
 function getWhatsAppStatus() {
   return {
     connected: isConnected,
@@ -482,5 +534,7 @@ module.exports = {
   startWhatsAppBot,
   getWhatsAppStatus,
   parseExpenseMessage,
-  requestWhatsAppPairingCode
+  requestWhatsAppPairingCode,
+  sendWhatsAppOTP,
+  verifyWhatsAppOTP
 };

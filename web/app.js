@@ -4713,48 +4713,94 @@ async function handleAccountUpdateProfile(e) {
   }
 }
 
-async function handleAccountLinkWhatsApp() {
+async function handleSendWhatsAppOTP() {
   const phoneInput = document.getElementById('accountPhoneInput');
+  const btn = document.getElementById('waSendOtpBtn');
   if (!phoneInput) return;
 
-  const raw = phoneInput.value.trim();
-  const phone = raw.replace(/[^0-9]/g, '');
-
+  const phone = phoneInput.value.replace(/[^0-9]/g, '');
   if (!phone || phone.length < 10) {
-    alert('Please enter a valid WhatsApp number (e.g. 919876543210 or 9876543210)');
+    alert('Please enter a valid phone number (e.g. 919876543210 or 9876543210)');
     return;
   }
 
   const user = state.currentGoogleUser || getStoredGoogleUser();
-  if (!user || !user.id) {
-    alert('Please sign in first.');
-    return;
-  }
+  if (!user || !user.id) { alert('Please sign in first.'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
 
   try {
-    const res = await fetch(`${API_BASE_URL}/user/profile`, {
+    const res = await fetch(`${API_BASE_URL}/whatsapp/send-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: user.id, name: user.name, email: user.email, picture: user.picture, phone, whatsapp: phone })
+      body: JSON.stringify({ phone, userId: user.id })
     });
     const data = await res.json();
     if (res.ok && data.success) {
-      const updatedUser = { ...user, phone, whatsapp: phone };
-      state.currentGoogleUser = updatedUser;
-      localStorage.setItem('google_user', JSON.stringify(updatedUser));
-
-      const statusEl = document.getElementById('accountPhoneLinkedStatus');
-      if (statusEl) {
-        statusEl.style.display = 'block';
-        statusEl.innerHTML = `\u2705 Linked! +${phone} — Messages from this number log under <strong>${user.name}</strong>.`;
-      }
-
-      showToast(`\u2705 WhatsApp +${phone} linked to your account!`);
+      document.getElementById('waOtpStep1').style.display = 'none';
+      document.getElementById('waOtpStep2').style.display = 'flex';
+      document.getElementById('accountOtpInput').focus();
     } else {
-      alert(data.error || 'Failed to link number');
+      alert(data.error || 'Failed to send OTP. Make sure server is running.');
     }
   } catch (err) {
     alert('Network error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send OTP';
+  }
+}
+
+async function handleVerifyWhatsAppOTP() {
+  const phoneInput = document.getElementById('accountPhoneInput');
+  const otpInput = document.getElementById('accountOtpInput');
+  const btn = document.getElementById('waVerifyOtpBtn');
+  if (!phoneInput || !otpInput) return;
+
+  const phone = phoneInput.value.replace(/[^0-9]/g, '');
+  const otp = otpInput.value.trim();
+
+  if (!otp || otp.length !== 6) {
+    alert('Please enter the 6-digit OTP sent on WhatsApp.');
+    return;
+  }
+
+  const user = state.currentGoogleUser || getStoredGoogleUser();
+  if (!user || !user.id) { alert('Please sign in first.'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/whatsapp/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, otp, userId: user.id })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      const updatedUser = { ...user, phone: data.phone, whatsapp: data.phone, whatsappVerified: true };
+      state.currentGoogleUser = updatedUser;
+      localStorage.setItem('google_user', JSON.stringify(updatedUser));
+
+      // Hide OTP steps, show verified badge
+      document.getElementById('waOtpStep1').style.display = 'none';
+      document.getElementById('waOtpStep2').style.display = 'none';
+      const statusEl = document.getElementById('accountPhoneLinkedStatus');
+      if (statusEl) {
+        statusEl.style.display = 'flex';
+        statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#25d366;"></i> ✅ Verified! +${data.phone} linked to <strong>${user.name}</strong>. Bot expenses will log here.`;
+      }
+      showToast(`✅ WhatsApp +${data.phone} verified & linked!`);
+    } else {
+      alert(data.error || 'Incorrect or expired OTP. Please try again.');
+    }
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-shield-check"></i> Verify';
   }
 }
 
