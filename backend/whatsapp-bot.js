@@ -561,13 +561,8 @@ ${categoryEmoji} *Category:* ${parsed.category}
       return;
     }
 
-    // Default response for unparsed text (only for incoming messages from users, never from bot/self)
-    if (!msg.key.fromMe) {
-      await waSock.sendMessage(remoteJid, {
-        text: `🤖 Hi! Send an expense like \`Metro 150\` or \`Uber 250 Andheri\` to log it, or type \`help\` for options.`
-      });
-    }
-
+    // Non-expense personal messages are completely ignored so personal chats work normally!
+    return;
   } catch (err) {
     console.error('Error handling WhatsApp message:', err);
   }
