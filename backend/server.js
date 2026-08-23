@@ -1165,7 +1165,7 @@ app.post('/api/auth/reset-password', (req, res) => {
 
 app.post('/api/user/profile', async (req, res) => {
   try {
-    const { id, name, email, picture, password, role } = req.body;
+    const { id, name, email, picture, password, role, phone, whatsapp } = req.body;
     if (!id) return res.status(400).json({ error: 'User ID is required' });
 
     const users = getLocalUsers();
@@ -1176,6 +1176,8 @@ app.post('/api/user/profile', async (req, res) => {
       passwordHash = crypto.createHash('sha256').update(password).digest('hex');
     }
 
+    const cleanPhone = (phone || whatsapp || existingUser.phone || existingUser.whatsapp || '').replace(/[^0-9]/g, '');
+
     const userData = {
       ...existingUser,
       id,
@@ -1183,6 +1185,8 @@ app.post('/api/user/profile', async (req, res) => {
       email: email || existingUser.email || 'user@example.com',
       picture: (picture && !picture.includes('alt=') && !picture.includes('dicebear') && !picture.includes('ui-avatars')) ? picture : (existingUser.picture || DEFAULT_USER_AVATAR),
       role: role || existingUser.role || 'user',
+      phone: cleanPhone || existingUser.phone || '',
+      whatsapp: cleanPhone || existingUser.whatsapp || '',
       passwordHash,
       updatedAt: new Date().toISOString()
     };

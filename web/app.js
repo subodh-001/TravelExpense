@@ -552,11 +552,76 @@ function openEditProfileModal() {
   profileNameInput.value = user.name || '';
   profileEmailInput.value = user.email || '';
   if (profilePasswordInput) profilePasswordInput.value = '';
+
+  const phoneInput = document.getElementById('profilePhoneInput');
+  const phoneBadge = document.getElementById('profilePhoneLinkedBadge');
+  if (phoneInput) {
+    phoneInput.value = user.phone || user.whatsapp || '';
+    if (user.phone || user.whatsapp) {
+      if (phoneBadge) phoneBadge.style.display = 'block';
+    } else {
+      if (phoneBadge) phoneBadge.style.display = 'none';
+    }
+  }
+
   profilePhotoPreview.src = user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`;
   profilePhotoStatus.textContent = 'PNG or JPG, max 5MB (Stores in Cloudinary)';
   state.pendingProfilePhotoUrl = null;
 
   openModal(editProfileModal);
+}
+
+async function verifyWhatsAppLinkOnProfile() {
+  const phoneInput = document.getElementById('profilePhoneInput');
+  if (!phoneInput) return;
+  const raw = phoneInput.value.trim();
+  const phone = raw.replace(/[^0-9]/g, '');
+  if (!phone || phone.length < 10) {
+    alert('Please enter a valid 10 to 12 digit WhatsApp phone number (e.g. 919876543210 or 9876543210)');
+    return;
+  }
+
+  const user = state.currentGoogleUser;
+  if (!user || !user.email) {
+    alert('You must be logged in to link your WhatsApp number');
+    return;
+  }
+
+  try {
+    const payload = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      picture: user.picture,
+      phone: phone,
+      whatsapp: phone
+    };
+
+    const res = await fetch(`${API_BASE_URL}/user/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      const updatedUser = {
+        ...state.currentGoogleUser,
+        phone,
+        whatsapp: phone
+      };
+      state.currentGoogleUser = updatedUser;
+      localStorage.setItem('google_user', JSON.stringify(updatedUser));
+      
+      const badge = document.getElementById('profilePhoneLinkedBadge');
+      if (badge) badge.style.display = 'block';
+
+      showToast(`✅ WhatsApp number +${phone} linked to your account (${user.email})!`);
+    } else {
+      alert(data.error || 'Failed to link phone number');
+    }
+  } catch (err) {
+    alert('Network error linking phone number: ' + err.message);
+  }
 }
 
 async function handleProfilePhotoSelect(e) {
@@ -609,6 +674,9 @@ async function handleSaveProfile(e) {
   const email = state.currentGoogleUser.email; // Email remains locked to logged-in Google Identity
   const password = profilePasswordInput ? profilePasswordInput.value : '';
 
+  const phoneInput = document.getElementById('profilePhoneInput');
+  const phone = phoneInput ? phoneInput.value.replace(/[^0-9]/g, '') : '';
+
   if (!name) {
     alert('Please enter a display Name');
     return;
@@ -625,7 +693,9 @@ async function handleSaveProfile(e) {
     id: state.currentGoogleUser.id,
     name,
     email,
-    picture
+    picture,
+    phone,
+    whatsapp: phone
   };
   if (password) {
     payload.password = password;
@@ -642,13 +712,15 @@ async function handleSaveProfile(e) {
       const updatedUser = {
         ...state.currentGoogleUser,
         name,
-        picture
+        picture,
+        phone,
+        whatsapp: phone
       };
       state.currentGoogleUser = updatedUser;
       localStorage.setItem('google_user', JSON.stringify(updatedUser));
       updateUserProfileUI();
       closeModal(editProfileModal);
-      showToast('✓ Profile updated successfully!');
+      showToast('✓ Profile & WhatsApp Number updated successfully!');
     } else {
       alert(data.error || 'Failed to update profile.');
     }

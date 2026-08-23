@@ -152,12 +152,14 @@ async function handleWhatsAppMessage(msg) {
 
     const senderNumber = remoteJid.replace(/[^0-9]/g, '');
 
-    // Match sender to system user by phone number or default to super_admin/master user
+    // Match sender to system user by phone number (10-digit suffix matching for +91 / local formats)
     const usersObj = getUsersFn ? getUsersFn() : {};
     let matchedUser = Object.values(usersObj).find(u => {
       if (!u) return false;
-      const uPhone = (u.phone || u.whatsapp || '').replace(/[^0-9]/g, '');
-      return uPhone && uPhone === senderNumber;
+      const uPhone = (u.phone || u.whatsapp || u.mobile || '').replace(/[^0-9]/g, '');
+      if (!uPhone) return false;
+      return uPhone === senderNumber || 
+             uPhone.slice(-10) === senderNumber.slice(-10);
     });
 
     // Fallback: master user subodhram3350@gmail.com

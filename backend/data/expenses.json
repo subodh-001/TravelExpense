@@ -1,5 +1,23 @@
 [
   {
+    "id": "exp_wa_mt60jdqs",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-23",
+    "location": "Auto/Rapido",
+    "notes": "marol",
+    "paymentStatus": "pending",
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 100
+      }
+    ],
+    "total": 100,
+    "receipts": [],
+    "createdAt": "2026-08-23T16:19:59.188Z",
+    "updatedAt": "2026-08-23T16:19:59.188Z"
+  },
+  {
     "id": "exp_wa_mt60beb1",
     "userId": "google_subodhram3350_gmail_com",
     "date": "2026-08-23",
