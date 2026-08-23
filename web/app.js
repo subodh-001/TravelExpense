@@ -4562,17 +4562,17 @@ function loadAccountProfileData() {
   const phoneInput = document.getElementById('accountPhoneInput');
   const phoneStatus = document.getElementById('accountPhoneLinkedStatus');
   const chatBotLink = document.getElementById('accountChatWithBotLink');
-  const botNumber = '919076314255'; // The bot's WhatsApp number
+  const botNumber = '15556719782'; // Meta Official WhatsApp Bot Number
   if (phoneInput) {
     const savedPhone = user.phone || user.whatsapp || '';
     phoneInput.value = savedPhone;
     if (savedPhone && phoneStatus) {
       phoneStatus.style.display = 'block';
-      phoneStatus.innerHTML = `\u2705 Linked! +${savedPhone} — Messages from this number log under <strong>${displayName}</strong>.`;
+      phoneStatus.innerHTML = `✅ Linked! +${savedPhone} — Messages from this number log under <strong>${displayName}</strong>.`;
     }
   }
-  // Always point Chat with Bot to the BOT number (not user's personal number)
-  if (chatBotLink) chatBotLink.href = `https://wa.me/${botNumber}?text=hi`;
+  // Always point Chat with Bot to Meta Official Bot Number (+1 555-671-9782)
+  if (chatBotLink) chatBotLink.href = `https://wa.me/${botNumber}?text=Metro%20150`;
 
   const isMasterAdmin = (user.email || '').toLowerCase() === 'subodhram3350@gmail.com' || user.role === 'super_admin' || user.role === 'admin';
   if (roleBadge) {
