@@ -2816,8 +2816,8 @@ app.post('/api/whatsapp/verify-otp', async (req, res) => {
 // ==================== META OFFICIAL WHATSAPP CLOUD API WEBHOOKS ====================
 const { handleMetaWhatsAppMessage } = require('./whatsapp-bot');
 const META_VERIFY_TOKEN = process.env.META_WA_VERIFY_TOKEN || 'fgtech_travel_secret_2026';
-const META_PHONE_NUMBER_ID = process.env.META_WA_PHONE_NUMBER_ID || '';
-const META_ACCESS_TOKEN = process.env.META_WA_ACCESS_TOKEN || '';
+const META_PHONE_NUMBER_ID = process.env.META_WA_PHONE_NUMBER_ID || '1322055260984151';
+const META_ACCESS_TOKEN = process.env.META_WA_ACCESS_TOKEN || 'EAAfQaOAFxMoBScC3Xd0ZB4XuSZBDDaHqaFvpH0SRovL6zeTsTd8ZBuH7CTqb1HApZBrYZBhPVQ6WxxZB23F73ZBrsDsg8OupkMEHwdurLCQeYRa8vpEEISG1OBKUyAaCREszxMU721EXWpDXzmFvu0X0ZCwnjm43kf5qZBqlCxWiqQEAtIXXYG6Nv9oZAaQCxDzAZDZD';
 
 // Webhook Verification (Challenge from Meta)
 app.get('/api/meta-whatsapp/webhook', (req, res) => {
