@@ -561,8 +561,23 @@ ${categoryEmoji} *Category:* ${parsed.category}
       return;
     }
 
-    // Non-expense personal messages are completely ignored so personal chats work normally!
-    return;
+    // Default auto-reply for incoming messages to the Bot number (lets senders know this is a bot and not Subodh personally)
+    if (!msg.key.fromMe) {
+      const botGreeting = 
+`🤖 *FGTech Travel Expense Bot* ✈️
+
+Main ek automated travel expense assistant hu. System me travel expense log karne ke liye aap mujhe message bhej sakte hain!
+
+📝 *Kaise Log Karein:*
+• \`Metro 150\`
+• \`Uber 280 Andheri\`
+• \`Food 120 Lunch\`
+• Receipt ticket photo 📸
+
+👤 *Note:* Subodh se personal baat karne ke liye unke personal WhatsApp number par message karein!`;
+
+      await waSock.sendMessage(remoteJid, { text: botGreeting });
+    }
   } catch (err) {
     console.error('Error handling WhatsApp message:', err);
   }
