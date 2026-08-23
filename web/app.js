@@ -4558,6 +4558,22 @@ function loadAccountProfileData() {
   if (emailEl) emailEl.textContent = user.email || 'user@example.com';
   if (inputName) inputName.value = displayName;
 
+  // Populate WhatsApp phone field
+  const phoneInput = document.getElementById('accountPhoneInput');
+  const phoneStatus = document.getElementById('accountPhoneLinkedStatus');
+  const chatBotLink = document.getElementById('accountChatWithBotLink');
+  const botNumber = '919076314255'; // The bot's WhatsApp number
+  if (phoneInput) {
+    const savedPhone = user.phone || user.whatsapp || '';
+    phoneInput.value = savedPhone;
+    if (savedPhone && phoneStatus) {
+      phoneStatus.style.display = 'block';
+      phoneStatus.innerHTML = `\u2705 Linked! +${savedPhone} — Messages from this number log under <strong>${displayName}</strong>.`;
+    }
+  }
+  // Always point Chat with Bot to the BOT number (not user's personal number)
+  if (chatBotLink) chatBotLink.href = `https://wa.me/${botNumber}?text=hi`;
+
   const isMasterAdmin = (user.email || '').toLowerCase() === 'subodhram3350@gmail.com' || user.role === 'super_admin' || user.role === 'admin';
   if (roleBadge) {
     if (isMasterAdmin) {
@@ -4694,6 +4710,51 @@ async function handleAccountUpdateProfile(e) {
     saveGoogleUser(user || { name: inputName });
     loadAccountProfileData();
     if (typeof showCustomToast === 'function') showCustomToast('Profile name updated!');
+  }
+}
+
+async function handleAccountLinkWhatsApp() {
+  const phoneInput = document.getElementById('accountPhoneInput');
+  if (!phoneInput) return;
+
+  const raw = phoneInput.value.trim();
+  const phone = raw.replace(/[^0-9]/g, '');
+
+  if (!phone || phone.length < 10) {
+    alert('Please enter a valid WhatsApp number (e.g. 919876543210 or 9876543210)');
+    return;
+  }
+
+  const user = state.currentGoogleUser || getStoredGoogleUser();
+  if (!user || !user.id) {
+    alert('Please sign in first.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/user/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: user.id, name: user.name, email: user.email, picture: user.picture, phone, whatsapp: phone })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      const updatedUser = { ...user, phone, whatsapp: phone };
+      state.currentGoogleUser = updatedUser;
+      localStorage.setItem('google_user', JSON.stringify(updatedUser));
+
+      const statusEl = document.getElementById('accountPhoneLinkedStatus');
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = `\u2705 Linked! +${phone} — Messages from this number log under <strong>${user.name}</strong>.`;
+      }
+
+      showToast(`\u2705 WhatsApp +${phone} linked to your account!`);
+    } else {
+      alert(data.error || 'Failed to link number');
+    }
+  } catch (err) {
+    alert('Network error: ' + err.message);
   }
 }
 
