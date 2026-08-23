@@ -2715,10 +2715,19 @@ app.get('/api/stats', authenticate, async (req, res) => {
 });
 
 // ---------- WHATSAPP BOT ENDPOINTS ----------
-const { startWhatsAppBot, getWhatsAppStatus, parseExpenseMessage, requestWhatsAppPairingCode, sendWhatsAppOTP, verifyWhatsAppOTP } = require('./whatsapp-bot');
+const { startWhatsAppBot, disconnectWhatsAppBot, getWhatsAppStatus, parseExpenseMessage, requestWhatsAppPairingCode, sendWhatsAppOTP, verifyWhatsAppOTP } = require('./whatsapp-bot');
 
 app.get('/api/whatsapp/status', (req, res) => {
   res.json(getWhatsAppStatus());
+});
+
+app.post('/api/whatsapp/disconnect', async (req, res) => {
+  try {
+    const result = await disconnectWhatsAppBot();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/whatsapp/parse', (req, res) => {

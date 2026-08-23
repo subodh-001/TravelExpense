@@ -5156,3 +5156,26 @@ async function handleRequestWaPairingCode() {
     alert('Error generating code: ' + err.message);
   }
 }
+
+async function handleDisconnectWhatsAppBot() {
+  if (!confirm('Are you sure you want to disconnect the current WhatsApp Bot? This will unpair the phone number and generate a new QR code.')) return;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/whatsapp/disconnect`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('🔌 WhatsApp Bot disconnected. Generating new QR code...');
+      const connSec = document.getElementById('waConnectedSection');
+      const qrSec = document.getElementById('waQrCodeSection');
+      if (connSec) connSec.style.display = 'none';
+      if (qrSec) qrSec.style.display = 'block';
+      const qrDisplay = document.getElementById('waQrDisplay');
+      if (qrDisplay) qrDisplay.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating fresh QR code...';
+      setTimeout(checkWhatsAppBotStatus, 3000);
+    } else {
+      alert(data.error || 'Failed to disconnect WhatsApp bot');
+    }
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  }
+}

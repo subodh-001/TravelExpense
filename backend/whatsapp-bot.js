@@ -512,10 +512,20 @@ async function startWhatsAppBot(callbacks = {}) {
       if (connection === 'close') {
         isConnected = false;
         const statusCode = lastDisconnect?.error?.output?.statusCode;
-        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+        const isLoggedOut = statusCode === DisconnectReason.loggedOut;
 
-        console.log(`⚠️ WhatsApp Bot connection closed (${statusCode}). Reconnecting: ${shouldReconnect}`);
-        if (shouldReconnect) {
+        console.log(`⚠️ WhatsApp Bot connection closed (${statusCode}). Logged out: ${isLoggedOut}`);
+        if (isLoggedOut) {
+          // User unlinked/logged out from phone -> wipe auth and generate new QR
+          try {
+            if (fs.existsSync(AUTH_DIR)) fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+            if (dbFn) dbFn.collection('_system').doc('whatsapp_auth').delete().catch(() => {});
+          } catch (e) {}
+          connectedUserJid = null;
+          qrCodeDataUrl = null;
+          console.log('🧹 WhatsApp session wiped due to phone logout. Restarting engine for fresh QR code...');
+          setTimeout(() => startWhatsAppBot(callbacks), 2000);
+        } else {
           setTimeout(() => startWhatsAppBot(callbacks), 5000);
         }
       } else if (connection === 'open') {
@@ -620,6 +630,32 @@ function verifyWhatsAppOTP(phone, otp) {
   return { success: true, userId: stored.userId, phone: cleanPhone };
 }
 
+async function disconnectWhatsAppBot() {
+  try {
+    if (waSock) {
+      try { await waSock.logout(); } catch (_) {}
+      try { waSock.end(undefined); } catch (_) {}
+      waSock = null;
+    }
+    isConnected = false;
+    connectedUserJid = null;
+    qrCodeDataUrl = null;
+
+    if (fs.existsSync(AUTH_DIR)) {
+      fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+    }
+    if (dbFn) {
+      await dbFn.collection('_system').doc('whatsapp_auth').delete().catch(() => {});
+    }
+    console.log('🔌 WhatsApp Bot disconnected manually & session reset.');
+
+    return { success: true, message: 'Bot disconnected & session cleared. Ready for new QR code scan!' };
+  } catch (err) {
+    console.error('Error disconnecting bot:', err.message);
+    throw err;
+  }
+}
+
 function getWhatsAppStatus() {
   return {
     connected: isConnected,
@@ -631,6 +667,7 @@ function getWhatsAppStatus() {
 
 module.exports = {
   startWhatsAppBot,
+  disconnectWhatsAppBot,
   getWhatsAppStatus,
   parseExpenseMessage,
   requestWhatsAppPairingCode,
