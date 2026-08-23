@@ -1,5 +1,25 @@
 [
   {
+    "id": "exp_wa_mt61exsh",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-23",
+    "location": "Ola/Uber",
+    "notes": "Varosva",
+    "paymentStatus": "pending",
+    "entries": [
+      {
+        "type": "Ola/Uber",
+        "amount": 120
+      }
+    ],
+    "total": 120,
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1787503479/whatsapp_receipts/regyeh6fnohtu498u8al.jpg"
+    ],
+    "createdAt": "2026-08-23T16:44:31.505Z",
+    "updatedAt": "2026-08-23T16:44:31.505Z"
+  },
+  {
     "id": "exp_wa_mt60jdqs",
     "userId": "google_subodhram3350_gmail_com",
     "date": "2026-08-23",

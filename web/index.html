@@ -460,13 +460,12 @@
 
           <!-- WhatsApp OTP Verification Section -->
           <div style="border-top: 1px dashed #cbd5e1; padding-top: 18px; margin-top: 4px;">
-            <h4 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+            <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
               <i class="fa-brands fa-whatsapp" style="color: #25d366;"></i> Verify WhatsApp Number
             </h4>
-            <p style="font-size: 0.78rem; color: #64748b; margin: 0 0 14px 0;">Link your WhatsApp number to auto-log expenses when you message the bot.</p>
 
             <!-- Verified badge (shown after success) -->
-            <div id="accountPhoneLinkedStatus" style="display: none; font-size: 0.82rem; color: #166534; font-weight: 700; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; display: none; align-items: center; gap: 8px;"></div>
+            <div id="accountPhoneLinkedStatus" style="display: none; font-size: 0.82rem; color: #166534; font-weight: 700; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; align-items: center; gap: 8px;"></div>
 
             <!-- Step 1: Enter phone & Send OTP -->
             <div id="waOtpStep1" style="display: flex; gap: 8px;">
@@ -477,21 +476,19 @@
             </div>
 
             <!-- Step 2: Enter OTP (hidden until OTP sent) -->
-            <div id="waOtpStep2" style="display: none; margin-top: 10px; flex-direction: column; gap: 8px;">
-              <p style="font-size: 0.78rem; color: #166534; font-weight: 700; margin: 0;">
-                <i class="fa-solid fa-check-circle"></i> OTP sent on WhatsApp! Enter the 6-digit code below.
+            <div id="waOtpStep2" style="display: none; margin-top: 10px; flex-direction: column; gap: 10px;">
+              <p style="font-size: 0.8rem; color: #166534; font-weight: 700; margin: 0; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-brands fa-whatsapp"></i> OTP sent on WhatsApp from <strong>+91 9076314255</strong> (the Expense Bot). Check your WhatsApp!
               </p>
               <div style="display: flex; gap: 8px;">
-                <input type="text" id="accountOtpInput" maxlength="6" placeholder="Enter 6-digit OTP" style="flex: 1; padding: 10px 14px; border: 2px solid #25d366; border-radius: 10px; font-weight: 800; font-size: 1.1rem; letter-spacing: 6px; text-align: center; box-sizing: border-box; min-width: 0;" />
+                <input type="text" id="accountOtpInput" maxlength="6" placeholder="_ _ _ _ _ _" style="flex: 1; padding: 10px 14px; border: 2px solid #25d366; border-radius: 10px; font-weight: 800; font-size: 1.1rem; letter-spacing: 8px; text-align: center; box-sizing: border-box; min-width: 0;" />
                 <button type="button" id="waVerifyOtpBtn" onclick="handleVerifyWhatsAppOTP()" style="background: #0f172a; color: #ffffff; border: none; border-radius: 10px; font-weight: 800; font-size: 0.85rem; padding: 10px 16px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
                   <i class="fa-solid fa-shield-check"></i> Verify
                 </button>
               </div>
-              <button type="button" onclick="document.getElementById('waOtpStep2').style.display='none'; document.getElementById('waOtpStep1').style.display='flex';" style="font-size: 0.75rem; color: #64748b; background: none; border: none; cursor: pointer; text-align: left; padding: 0; font-weight: 600;">← Change number</button>
+              <button type="button" onclick="document.getElementById('waOtpStep2').style.display='none'; document.getElementById('waOtpStep1').style.display='flex';" style="font-size: 0.75rem; color: #94a3b8; background: none; border: none; cursor: pointer; text-align: left; padding: 0; font-weight: 600;">← Change number</button>
             </div>
           </div>
-
-
           <!-- Form: Change Password (Collapsible Accordion) -->
           <div style="border-top: 1px dashed #cbd5e1; padding-top: 18px;">
             <button type="button" onclick="toggleAccountPasswordBox()" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 16px; width: 100%; text-align: left; font-weight: 800; color: #0f172a; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">

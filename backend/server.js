@@ -2822,6 +2822,7 @@ app.listen(PORT, () => {
     saveLocalExpenses,
     getLocalUsers,
     uploadToCloudinary,
-    saveExpenseToDb
+    saveExpenseToDb,
+    db: useFirebase ? db : null  // Pass Firebase db for cloud auth persistence
   });
 });

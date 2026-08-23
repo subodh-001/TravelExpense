@@ -32,6 +32,7 @@ async function downloadWhatsAppImageBuffer(msg) {
     for await (const chunk of stream) {
       buffer = Buffer.concat([buffer, chunk]);
     }
+    console.log(`📸 WhatsApp image downloaded: ${buffer.length} bytes`);
     return buffer;
   } catch (err) {
     console.warn('⚠️ WhatsApp image download warning:', err.message);
@@ -45,8 +46,52 @@ let saveExpensesFn = null;
 let getUsersFn = null;
 let uploadCloudinaryFn = null;
 let saveExpenseToDbFn = null;
+let dbFn = null; // Firebase Firestore db reference for cloud auth persistence
 
 const AUTH_DIR = path.join(__dirname, 'data', 'baileys_auth_info');
+const DASHBOARD_URL = process.env.BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000';
+
+// ========== Firebase Auth Persistence for Cloud Deployments ==========
+async function backupAuthToFirebase(db) {
+  if (!db) return;
+  try {
+    if (!fs.existsSync(AUTH_DIR)) return;
+    const files = fs.readdirSync(AUTH_DIR).filter(f => f.endsWith('.json'));
+    const authData = {};
+    for (const file of files) {
+      try { authData[file] = JSON.parse(fs.readFileSync(path.join(AUTH_DIR, file), 'utf8')); } catch (_) {}
+    }
+    if (Object.keys(authData).length === 0) return;
+    await db.collection('_system').doc('whatsapp_auth').set({
+      files: JSON.stringify(authData),
+      updatedAt: new Date().toISOString()
+    });
+    console.log('\u2601\ufe0f WhatsApp auth backed up to Firebase (' + Object.keys(authData).length + ' files)');
+  } catch (err) {
+    console.warn('\u26a0\ufe0f Auth backup to Firebase warning:', err.message);
+  }
+}
+
+async function restoreAuthFromFirebase(db) {
+  if (!db) return false;
+  try {
+    const doc = await db.collection('_system').doc('whatsapp_auth').get();
+    if (!doc.exists || !doc.data().files) {
+      console.log('\u2139\ufe0f No WhatsApp auth backup found in Firebase.');
+      return false;
+    }
+    const authData = JSON.parse(doc.data().files);
+    if (!fs.existsSync(AUTH_DIR)) fs.mkdirSync(AUTH_DIR, { recursive: true });
+    for (const [file, content] of Object.entries(authData)) {
+      fs.writeFileSync(path.join(AUTH_DIR, file), JSON.stringify(content));
+    }
+    console.log('\u2705 WhatsApp auth restored from Firebase (' + Object.keys(authData).length + ' files)');
+    return true;
+  } catch (err) {
+    console.warn('\u26a0\ufe0f Auth restore from Firebase warning:', err.message);
+    return false;
+  }
+}
 
 // Category mapping helper
 const CATEGORY_MAP = [
@@ -175,14 +220,31 @@ async function handleWhatsAppMessage(msg) {
 
     // Handle receipt image download if photo attached
     let receiptUrl = null;
-    if (isImage && uploadCloudinaryFn) {
+    if (isImage) {
       try {
         const buffer = await downloadWhatsAppImageBuffer(msg);
         if (buffer && buffer.length > 0) {
-          receiptUrl = await uploadCloudinaryFn(buffer, 'image/jpeg', 'whatsapp_receipts');
+          if (uploadCloudinaryFn) {
+            try {
+              receiptUrl = await uploadCloudinaryFn(buffer, 'image/jpeg', 'whatsapp_receipts');
+              console.log(`☁️ WhatsApp receipt uploaded to Cloudinary: ${receiptUrl}`);
+            } catch (cloudErr) {
+              console.warn('⚠️ Cloudinary upload failed, saving locally:', cloudErr.message);
+            }
+          }
+          // Fallback: save to local uploads directory
+          if (!receiptUrl) {
+            const uploadsDir = path.join(__dirname, 'uploads');
+            if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+            const fileName = `wa_receipt_${Date.now()}.jpg`;
+            const filePath = path.join(uploadsDir, fileName);
+            fs.writeFileSync(filePath, buffer);
+            receiptUrl = `/uploads/${fileName}`;
+            console.log(`💾 WhatsApp receipt saved locally: ${receiptUrl}`);
+          }
         }
       } catch (imgErr) {
-        console.warn('⚠️ WhatsApp image download warning:', imgErr.message);
+        console.warn('⚠️ WhatsApp image handling warning:', imgErr.message);
       }
     }
 
@@ -192,20 +254,29 @@ async function handleWhatsAppMessage(msg) {
     const userContext = userContextStore.get(userId);
 
     // CASE 1: Photo sent WITHOUT expense text (e.g. user just sends receipt photo)
-    if (isImage && !parsed && receiptUrl) {
-      // Sub-case 1A: User logged a text expense entry in the last 3 minutes
-      if (userContext && userContext.lastExpenseObj && (now - userContext.timestamp < 180000)) {
-        const targetExp = userContext.lastExpenseObj;
-        if (!targetExp.receipts) targetExp.receipts = [];
-        targetExp.receipts.push(receiptUrl);
+    if (isImage && receiptUrl) {
+      if (!parsed) {
+        // Sub-case 1A: User logged a text expense entry in the last 3 minutes
+        if (userContext && userContext.lastExpenseObj && (now - userContext.timestamp < 180000)) {
+          const targetExp = userContext.lastExpenseObj;
+          if (!targetExp.receipts) targetExp.receipts = [];
+          targetExp.receipts.push(receiptUrl);
 
-        if (saveExpenseToDbFn) {
-          saveExpenseToDbFn(targetExp);
-        }
+          // Use update-specific fn if available, else direct save
+          if (saveExpenseToDbFn) {
+            const expenses = getExpensesFn ? getExpensesFn() : [];
+            const idx = expenses.findIndex(e => e.id === targetExp.id);
+            if (idx !== -1) {
+              expenses[idx] = targetExp;
+              if (saveExpensesFn) saveExpensesFn(expenses, true);
+            } else {
+              saveExpenseToDbFn(targetExp);
+            }
+          }
 
-        userContextStore.delete(userId);
+          userContextStore.delete(userId);
 
-        const attachText = 
+          const attachText = 
 `📎 *Receipt Photo Attached to Recent Entry!*
 
 📅 *Date:* ${targetExp.date}
@@ -213,20 +284,23 @@ async function handleWhatsAppMessage(msg) {
 💰 *Amount:* ₹${targetExp.total.toLocaleString('en-IN')}
 📝 *Notes:* ${targetExp.notes}`;
 
-        await waSock.sendMessage(remoteJid, { text: attachText });
-        return;
-      } else {
-        // Sub-case 1B: Store pending photo for next text message
-        userContextStore.set(userId, { pendingReceiptUrl: receiptUrl, timestamp: now });
+          await waSock.sendMessage(remoteJid, { text: attachText });
+          return;
+        } else {
+          // Sub-case 1B: Store pending photo for next text message
+          userContextStore.set(userId, { pendingReceiptUrl: receiptUrl, timestamp: now });
 
-        const promptText = 
-`📸 *Receipt Photo Uploaded!*
+          const promptText = 
+`📸 *Receipt Photo Received!*
 
-💬 Ab travel details (e.g. *Metro 40 Andheri to Saki Naka*) message bhej kar entry poori karein.`;
+💬 Ab travel details bhejein (e.g. *Metro 40 Andheri to Saki Naka*) to log this entry with the receipt.`;
 
-        await waSock.sendMessage(remoteJid, { text: promptText });
-        return;
+          await waSock.sendMessage(remoteJid, { text: promptText });
+          return;
+        }
       }
+    } else if (isImage && !receiptUrl) {
+      console.warn('⚠️ Image received from WhatsApp but could not be saved.');
     }
 
     // Handle commands
@@ -373,7 +447,7 @@ ${categoryEmoji} *Category:* ${parsed.category}
 💰 *Amount:* ₹${parsed.amount.toLocaleString('en-IN')}
 📝 *Notes:* ${parsed.comment}${photoTag}
 
-🌐 *View on Dashboard:* http://localhost:3000`;
+🌐 *View on Dashboard:* ${DASHBOARD_URL}`;
 
       await waSock.sendMessage(remoteJid, { text: confirmText });
       return;
@@ -395,11 +469,15 @@ async function startWhatsAppBot(callbacks = {}) {
   getUsersFn = callbacks.getLocalUsers;
   uploadCloudinaryFn = callbacks.uploadToCloudinary;
   saveExpenseToDbFn = callbacks.saveExpenseToDb;
+  dbFn = callbacks.db || null;
 
   try {
     if (!fs.existsSync(AUTH_DIR)) {
       fs.mkdirSync(AUTH_DIR, { recursive: true });
     }
+
+    // On cloud (Render), restore auth from Firebase before starting
+    await restoreAuthFromFirebase(dbFn);
 
     const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
     const { version } = await fetchLatestBaileysVersion();
@@ -412,7 +490,11 @@ async function startWhatsAppBot(callbacks = {}) {
       browser: ['FGTech Travel Engine', 'Chrome', '1.0.0']
     });
 
-    waSock.ev.on('creds.update', saveCreds);
+    // Save credentials locally AND backup to Firebase for cloud persistence
+    waSock.ev.on('creds.update', async () => {
+      await saveCreds();
+      await backupAuthToFirebase(dbFn);
+    });
 
     waSock.ev.on('connection.update', (update) => {
       const { connection, lastDisconnect, qr } = update;
@@ -473,38 +555,56 @@ async function requestWhatsAppPairingCode(phone) {
 const otpStore = new Map();
 
 async function sendWhatsAppOTP(phone, userId) {
-  if (!waSock || !isConnected) throw new Error('WhatsApp Bot is not connected yet. Please try again.');
+  if (!waSock || !isConnected) throw new Error('WhatsApp Bot is not connected yet. Please try again in a few seconds.');
 
-  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  let cleanPhone = phone.replace(/[^0-9]/g, '');
   if (!cleanPhone || cleanPhone.length < 10) {
-    throw new Error('Please enter a valid 10+ digit WhatsApp number (e.g. 919876543210)');
+    throw new Error('Please enter a valid WhatsApp number (e.g. 919876543210 or 9876543210)');
+  }
+
+  // Auto-add India country code if only 10 digits entered
+  if (cleanPhone.length === 10) {
+    cleanPhone = '91' + cleanPhone;
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
   const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
 
+  // Store with the full number (with country code) as key
   otpStore.set(cleanPhone, { otp, userId, expiresAt });
+  console.log(`📲 OTP generated for +${cleanPhone}: ${otp} (userId: ${userId})`);
 
   const jid = `${cleanPhone}@s.whatsapp.net`;
   const msgText =
 `🔐 *FGTech Travel Expense — Verification Code*
 
-Your OTP to verify your WhatsApp number is:
+Your OTP to link your WhatsApp number is:
 
 *${otp}*
 
 ⏰ This code expires in *5 minutes*.
 Do NOT share this code with anyone.
 
-Once verified, all your WhatsApp messages to this bot will be logged under your account automatically.`;
+Once verified, all expenses you send to this bot will be auto-logged under your account!`;
 
-  await waSock.sendMessage(jid, { text: msgText });
-  return { success: true, message: `OTP sent to +${cleanPhone} on WhatsApp!` };
+  try {
+    await waSock.sendMessage(jid, { text: msgText });
+    console.log(`✅ OTP WhatsApp message sent to ${jid}`);
+  } catch (sendErr) {
+    console.error(`❌ Failed to send OTP WhatsApp message to ${jid}:`, sendErr.message);
+    throw new Error(`Could not send OTP to +${cleanPhone}. Make sure the number is on WhatsApp.`);
+  }
+
+  return { success: true, phone: cleanPhone, message: `OTP sent to +${cleanPhone} on WhatsApp!` };
 }
 
 function verifyWhatsAppOTP(phone, otp) {
-  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  let cleanPhone = phone.replace(/[^0-9]/g, '');
+  // Auto-add country code if 10 digits (same normalization as send)
+  if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+
   const stored = otpStore.get(cleanPhone);
+  console.log(`🔍 Verifying OTP for +${cleanPhone}, stored:`, stored ? `${stored.otp} (expires in ${Math.round((stored.expiresAt - Date.now()) / 1000)}s)` : 'NOT FOUND');
 
   if (!stored) {
     return { success: false, error: 'No OTP found for this number. Please request a new one.' };
