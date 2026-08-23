@@ -56,19 +56,33 @@ async function backupAuthToFirebase(db) {
   if (!db) return;
   try {
     if (!fs.existsSync(AUTH_DIR)) return;
-    const files = fs.readdirSync(AUTH_DIR).filter(f => f.endsWith('.json'));
+    const allFiles = fs.readdirSync(AUTH_DIR).filter(f => f.endsWith('.json'));
+    
+    // Only back up essential auth files (creds, sessions, app-state, sender-keys, top 20 prekeys)
+    // This keeps the backup size <50KB and prevents Firestore 1MB limit errors
+    const essentialFiles = allFiles.filter(f => {
+      if (f === 'creds.json') return true;
+      if (f.startsWith('session-') || f.startsWith('sender-key-') || f.startsWith('app-state-') || f.startsWith('tctoken-')) return true;
+      if (f.startsWith('pre-key-')) {
+        const num = parseInt(f.replace('pre-key-', '').replace('.json', ''), 10);
+        return !isNaN(num) && num <= 20;
+      }
+      return false;
+    });
+
     const authData = {};
-    for (const file of files) {
+    for (const file of essentialFiles) {
       try { authData[file] = JSON.parse(fs.readFileSync(path.join(AUTH_DIR, file), 'utf8')); } catch (_) {}
     }
-    if (Object.keys(authData).length === 0) return;
+    if (!authData['creds.json']) return;
+
     await db.collection('_system').doc('whatsapp_auth').set({
       files: JSON.stringify(authData),
       updatedAt: new Date().toISOString()
     });
-    console.log('\u2601\ufe0f WhatsApp auth backed up to Firebase (' + Object.keys(authData).length + ' files)');
+    console.log(`☁️ WhatsApp essential auth backed up to Firebase (${Object.keys(authData).length} files)`);
   } catch (err) {
-    console.warn('\u26a0\ufe0f Auth backup to Firebase warning:', err.message);
+    console.warn('⚠️ Auth backup to Firebase warning:', err.message);
   }
 }
 
@@ -77,18 +91,20 @@ async function restoreAuthFromFirebase(db) {
   try {
     const doc = await db.collection('_system').doc('whatsapp_auth').get();
     if (!doc.exists || !doc.data().files) {
-      console.log('\u2139\ufe0f No WhatsApp auth backup found in Firebase.');
+      console.log('ℹ️ No WhatsApp auth backup found in Firebase.');
       return false;
     }
     const authData = JSON.parse(doc.data().files);
+    if (!authData['creds.json']) return false;
+
     if (!fs.existsSync(AUTH_DIR)) fs.mkdirSync(AUTH_DIR, { recursive: true });
     for (const [file, content] of Object.entries(authData)) {
       fs.writeFileSync(path.join(AUTH_DIR, file), JSON.stringify(content));
     }
-    console.log('\u2705 WhatsApp auth restored from Firebase (' + Object.keys(authData).length + ' files)');
+    console.log(`✅ WhatsApp auth restored from Firebase (${Object.keys(authData).length} files)`);
     return true;
   } catch (err) {
-    console.warn('\u26a0\ufe0f Auth restore from Firebase warning:', err.message);
+    console.warn('⚠️ Auth restore from Firebase warning:', err.message);
     return false;
   }
 }
@@ -514,28 +530,16 @@ async function startWhatsAppBot(callbacks = {}) {
       if (connection === 'close') {
         isConnected = false;
         const statusCode = lastDisconnect?.error?.output?.statusCode;
-        const isLoggedOut = statusCode === DisconnectReason.loggedOut;
-
-        console.log(`⚠️ WhatsApp Bot connection closed (${statusCode}). Logged out: ${isLoggedOut}`);
-        if (isLoggedOut) {
-          // User unlinked/logged out from phone -> wipe auth and generate new QR
-          try {
-            if (fs.existsSync(AUTH_DIR)) fs.rmSync(AUTH_DIR, { recursive: true, force: true });
-            if (dbFn) dbFn.collection('_system').doc('whatsapp_auth').delete().catch(() => {});
-          } catch (e) {}
-          connectedUserJid = null;
-          qrCodeDataUrl = null;
-          console.log('🧹 WhatsApp session wiped due to phone logout. Restarting engine for fresh QR code...');
-          setTimeout(() => startWhatsAppBot(callbacks), 2000);
-        } else {
-          setTimeout(() => startWhatsAppBot(callbacks), 5000);
-        }
+        console.log(`⚠️ WhatsApp Bot connection closed (statusCode: ${statusCode}). Reconnecting in 3s...`);
+        setTimeout(() => startWhatsAppBot(callbacks), 3000);
       } else if (connection === 'open') {
         isConnected = true;
         qrCodeDataUrl = null;
         const rawJid = waSock.user?.id || waSock.user?.jid || '';
         connectedUserJid = rawJid.split('@')[0].split(':')[0];
         console.log('🤖 WhatsApp Travel Expense Bot CONNECTED & ONLINE! (Phone: +' + connectedUserJid + ')');
+        // Persist valid active session to Firebase
+        backupAuthToFirebase(dbFn);
       }
     });
 
