@@ -2813,6 +2813,59 @@ app.post('/api/whatsapp/verify-otp', async (req, res) => {
   }
 });
 
+// ==================== META OFFICIAL WHATSAPP CLOUD API WEBHOOKS ====================
+const { handleMetaWhatsAppMessage } = require('./whatsapp-bot');
+const META_VERIFY_TOKEN = process.env.META_WA_VERIFY_TOKEN || 'fgtech_travel_secret_2026';
+const META_PHONE_NUMBER_ID = process.env.META_WA_PHONE_NUMBER_ID || '';
+const META_ACCESS_TOKEN = process.env.META_WA_ACCESS_TOKEN || '';
+
+// Webhook Verification (Challenge from Meta)
+app.get('/api/meta-whatsapp/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === META_VERIFY_TOKEN) {
+    console.log('✅ Meta WhatsApp Webhook Verified successfully!');
+    return res.status(200).send(challenge);
+  }
+  return res.sendStatus(403);
+});
+
+// Webhook Event Receiver (Incoming Messages from Meta)
+app.post('/api/meta-whatsapp/webhook', async (req, res) => {
+  res.status(200).send('EVENT_RECEIVED');
+  try {
+    const body = req.body;
+    if (body.object === 'whatsapp_business_account') {
+      body.entry?.forEach(entry => {
+        entry.changes?.forEach(change => {
+          const value = change.value;
+          if (value && value.messages) {
+            value.messages.forEach(async (msg) => {
+              await handleMetaWhatsAppMessage(msg, value.contacts, {
+                phoneNumberId: process.env.META_WA_PHONE_NUMBER_ID || META_PHONE_NUMBER_ID,
+                accessToken: process.env.META_WA_ACCESS_TOKEN || META_ACCESS_TOKEN,
+                saveExpenseToDb: (exp) => {
+                  if (useFirebase && db) db.collection('expenses').doc(exp.id).set(exp);
+                  const exps = getLocalExpenses();
+                  exps.unshift(exp);
+                  saveLocalExpenses(exps);
+                },
+                getUsers: getLocalUsers,
+                getExpenses: getLocalExpenses,
+                saveExpenses: saveLocalExpenses
+              });
+            });
+          }
+        });
+      });
+    }
+  } catch (err) {
+    console.error('Error in Meta WhatsApp Webhook:', err.message);
+  }
+});
+
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

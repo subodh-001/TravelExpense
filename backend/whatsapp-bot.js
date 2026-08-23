@@ -268,6 +268,7 @@ async function handleWhatsAppMessage(msg) {
 
     const remoteJid = msg.key.remoteJid;
     if (!remoteJid || remoteJid.endsWith('@g.us')) return; // Ignore group chats for private expense logging
+    const senderNumber = remoteJid.replace(/[^0-9]/g, '');
 
     // Extract text content or caption
     let textContent = '';
@@ -583,6 +584,136 @@ Main ek automated travel expense assistant hu. System me travel expense log karn
   }
 }
 
+// ========== Meta WhatsApp Cloud API Integration ==========
+async function sendMetaWhatsAppMessage(phoneNumberId, accessToken, toPhone, text) {
+  if (!phoneNumberId || !accessToken) {
+    console.warn('⚠️ Meta WhatsApp API keys missing (phoneNumberId or accessToken)');
+    return false;
+  }
+  try {
+    const res = await fetch(`https://graph.facebook.com/v19.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: toPhone,
+        type: 'text',
+        text: { body: text }
+      })
+    });
+    const data = await res.json();
+    return res.ok;
+  } catch (err) {
+    console.error('❌ Meta WhatsApp send error:', err.message);
+    return false;
+  }
+}
+
+async function handleMetaWhatsAppMessage(msg, contacts, callbacks) {
+  try {
+    const fromPhone = msg.from; // e.g. "919076314255"
+    if (!fromPhone) return;
+
+    let textContent = '';
+    let isImage = false;
+    let receiptUrl = null;
+
+    if (msg.type === 'text' && msg.text && msg.text.body) {
+      textContent = msg.text.body;
+    } else if (msg.type === 'image') {
+      isImage = true;
+      if (msg.image && msg.image.caption) textContent = msg.image.caption;
+    }
+
+    const textOnly = textContent && textContent.trim();
+    if (!textOnly && !isImage) return;
+
+    const parsed = parseExpenseMessage(textOnly);
+    const usersObj = callbacks.getUsers ? callbacks.getUsers() : {};
+    
+    let matchedUser = Object.values(usersObj).find(u => {
+      if (!u) return false;
+      const uPhone = (u.phone || u.whatsapp || u.mobile || '').replace(/[^0-9]/g, '');
+      if (!uPhone) return false;
+      return uPhone === fromPhone || uPhone.slice(-10) === fromPhone.slice(-10);
+    });
+
+    if (!matchedUser) {
+      matchedUser = Object.values(usersObj).find(u => u && u.email && u.email.toLowerCase() === 'subodhram3350@gmail.com') || {
+        id: 'google_subodhram3350_gmail_com',
+        name: 'Subodh Ram',
+        email: 'subodhram3350@gmail.com'
+      };
+    }
+
+    const userId = matchedUser.id || `google_${matchedUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    if (parsed && parsed.isCommand) {
+      if (parsed.command === 'help') {
+        const replyMenu = 
+`👋 *Welcome to FGTech Travel Expense Bot!* ✈️
+
+Main aapka automated travel expense assistant hu. System me travel entry log karne ke liye seedhe mujhe message bhej sakte hain!
+
+📝 *Kaise Log Karein:*
+• \`Metro 150\`
+• \`Uber 280 Andheri to BKC\`
+• \`Food 120 Lunch at station\`
+• Ticket / Bill photo caption me \`Local 40\`
+
+📊 *Commands:*
+• \`summary\` - Monthly balance check karein
+• \`history\` - Recent 5 entries dekhein
+
+Try karein! Type: *Metro 150* 🚀`;
+        await sendMetaWhatsAppMessage(callbacks.phoneNumberId, callbacks.accessToken, fromPhone, replyMenu);
+        return;
+      }
+    }
+
+    if (parsed && !parsed.isCommand) {
+      const expenseDate = parsed.dateStr || new Date().toISOString().slice(0, 10);
+      const expenseId = `exp_meta_${Date.now().toString(36)}`;
+
+      const newExpense = {
+        id: expenseId,
+        userId: userId,
+        date: expenseDate,
+        location: parsed.category,
+        notes: parsed.comment || parsed.category,
+        paymentStatus: 'pending',
+        entries: [{ type: parsed.category, amount: parsed.amount }],
+        total: parsed.amount,
+        receipts: receiptUrl ? [receiptUrl] : [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (callbacks.saveExpenseToDb) {
+        callbacks.saveExpenseToDb(newExpense);
+      }
+
+      const confirmText = 
+`✅ *Travel Expense Logged Successfully!*
+
+📅 *Date:* ${expenseDate}
+📌 *Category:* ${parsed.category}
+💰 *Amount:* ₹${parsed.amount.toLocaleString('en-IN')}
+📝 *Notes:* ${parsed.comment}
+
+🌐 *View on Dashboard:* ${DASHBOARD_URL}`;
+
+      await sendMetaWhatsAppMessage(callbacks.phoneNumberId, callbacks.accessToken, fromPhone, confirmText);
+    }
+  } catch (err) {
+    console.error('Error handling Meta WhatsApp Message:', err.message);
+  }
+}
+
 async function startWhatsAppBot(callbacks = {}) {
   getExpensesFn = callbacks.getLocalExpenses;
   saveExpensesFn = callbacks.saveLocalExpenses;
@@ -781,5 +912,6 @@ module.exports = {
   parseExpenseMessage,
   requestWhatsAppPairingCode,
   sendWhatsAppOTP,
-  verifyWhatsAppOTP
+  verifyWhatsAppOTP,
+  handleMetaWhatsAppMessage
 };
