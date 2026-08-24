@@ -206,10 +206,6 @@ function parseExpenseMessage(text) {
 
   // Regex to extract amount (e.g. 150, rs 150, ₹150, 150rs, 150.50)
   const amountMatch = clean.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d{1,2})?)\s*(?:rs\.?|rupees)?/i);
-  if (!amountMatch) return null;
-
-  const amount = parseFloat(amountMatch[1]);
-  if (isNaN(amount) || amount <= 0) return null;
 
   // Determine category
   let matchedCategory = 'Others';
@@ -223,6 +219,25 @@ function parseExpenseMessage(text) {
     }
     if (matchedCategory !== 'Others') break;
   }
+
+  if (!amountMatch) {
+    // If text contains valid words but no amount yet, return as partial draft
+    if (clean.length >= 2 && !/^[^\w]+$/.test(clean)) {
+      return {
+        isCommand: false,
+        isPartial: true,
+        category: matchedCategory,
+        comment: clean,
+        dateStr,
+        rawText: clean
+      };
+    }
+    return null;
+  }
+
+  const amount = parseFloat(amountMatch[1]);
+  if (isNaN(amount) || amount <= 0) return null;
+
 
   // Extract comment/notes (remove amount, custom date, and category keyword from raw text)
   let comment = clean;

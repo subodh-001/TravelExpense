@@ -1,7 +1,7 @@
 /**
  * Telegram Travel Expense Bot Integration
  * 100% Free, Zero Expiry, Instant Polling Engine
- * Complete Feature Parity with WhatsApp Bot
+ * Complete Feature Parity with WhatsApp Bot & Multi-Step Conversational State
  */
 
 const { Bot } = require('node-telegram-bot-api');
@@ -95,7 +95,7 @@ function startTelegramBot(callbacks = {}) {
       } catch (_) {}
     });
 
-    // Handle All Messages (Text, Greetings "hi/hello", Photos)
+    // Handle All Messages (Text, Greetings, Step-by-Step Multi-Message Entries, Photos)
     bot.on('message', async (ctx) => {
       const msg = ctx.message;
       if (!msg) return;
@@ -134,8 +134,7 @@ function startTelegramBot(callbacks = {}) {
         }
       }
 
-
-      // 1. Handle Photo Attachments
+      // Handle Photo Attachments
       let receiptUrl = null;
       if (isPhoto) {
         try {
@@ -157,8 +156,9 @@ function startTelegramBot(callbacks = {}) {
       // Parse text for expense or command
       const parsed = parseExpenseMessage(textOnly);
 
-      // CASE A: Photo sent WITHOUT text (or photo attached to last text entry in <3 min)
+      // CASE A: Photo sent WITHOUT expense text
       if (isPhoto && receiptUrl && (!parsed || parsed.isCommand)) {
+        // Sub-case A1: User logged a text expense entry in the last 3 minutes
         if (userContext && userContext.lastExpenseObj && (now - userContext.timestamp < 180000)) {
           const targetExp = userContext.lastExpenseObj;
           if (!targetExp.receipts) targetExp.receipts = [];
@@ -185,8 +185,18 @@ function startTelegramBot(callbacks = {}) {
           return ctx.reply(attachText, { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD })
             .catch(err => console.warn('⚠️ Telegram reply error:', err.message));
         } else {
-          userContextStore.set(matchedUserId, { pendingReceiptUrl: receiptUrl, timestamp: now });
-          return ctx.reply('📸 *Receipt Photo Received!* Now send your expense text (e.g. `Metro 150`) to complete entry.', { parse_mode: 'Markdown' })
+          // Sub-case A2: Store pending photo for next text message
+          const draftCat = userContext ? userContext.draftCategory : null;
+          const draftNot = userContext ? userContext.draftNotes : null;
+
+          userContextStore.set(matchedUserId, {
+            pendingReceiptUrl: receiptUrl,
+            draftCategory: draftCat,
+            draftNotes: draftNot,
+            timestamp: now
+          });
+
+          return ctx.reply('📸 *Receipt Photo Received!* Now send travel amount or details (e.g. `Metro 150` or `280`) to complete 1 single entry.', { parse_mode: 'Markdown' })
             .catch(err => console.warn('⚠️ Telegram reply error:', err.message));
         }
       }
@@ -207,25 +217,53 @@ function startTelegramBot(callbacks = {}) {
         }
       }
 
-      // CASE C: Valid Expense Entry (e.g. "Metro 150", "Uber 280 Andheri to BKC")
-      if (parsed && !parsed.isCommand && parsed.amount > 0) {
-        const expenseDate = parsed.dateStr || new Date().toISOString().slice(0, 10);
-        const expenseId = `exp_tg_${Date.now().toString(36)}`;
+      // CASE C: Partial Text Entry (User sent location/category text like "Uber Andheri" WITHOUT price yet)
+      if (parsed && !parsed.isCommand && parsed.isPartial) {
+        const pendingUrl = receiptUrl || (userContext ? userContext.pendingReceiptUrl : null);
 
+        userContextStore.set(matchedUserId, {
+          draftCategory: parsed.category,
+          draftNotes: parsed.comment,
+          pendingReceiptUrl: pendingUrl,
+          timestamp: now
+        });
+
+        const emoji = CATEGORY_EMOJIS[parsed.category] || '📌';
+        return ctx.reply(`📍 *Recorded Travel Details:* ${parsed.comment}\n${emoji} *Category:* ${parsed.category}\n\n💬 Ab amount bhejein (e.g. *280*) to complete this single expense entry!`, { parse_mode: 'Markdown' })
+          .catch(err => console.warn('⚠️ Telegram reply error:', err.message));
+      }
+
+      // CASE D: Complete Valid Expense Entry (e.g. "150", "Metro 150", "Uber 280 Andheri")
+      if (parsed && !parsed.isCommand && parsed.amount > 0) {
+        let finalCategory = parsed.category;
+        let finalNotes = parsed.comment;
         let finalReceipts = receiptUrl ? [receiptUrl] : [];
-        if (!receiptUrl && userContext && userContext.pendingReceiptUrl && (now - userContext.timestamp < 180000)) {
-          finalReceipts.push(userContext.pendingReceiptUrl);
+
+        // Check if there was a previous draft (location/category or pending photo <5 min old)
+        if (userContext && (now - userContext.timestamp < 300000)) {
+          if (userContext.draftCategory && userContext.draftCategory !== 'Others') {
+            finalCategory = userContext.draftCategory;
+          }
+          if (userContext.draftNotes && userContext.draftNotes !== parsed.comment) {
+            finalNotes = `${userContext.draftNotes} (${parsed.comment})`;
+          }
+          if (!receiptUrl && userContext.pendingReceiptUrl) {
+            finalReceipts.push(userContext.pendingReceiptUrl);
+          }
           userContextStore.delete(matchedUserId);
         }
+
+        const expenseDate = parsed.dateStr || new Date().toISOString().slice(0, 10);
+        const expenseId = `exp_tg_${Date.now().toString(36)}`;
 
         const newExpense = {
           id: expenseId,
           userId: matchedUserId,
           date: expenseDate,
-          location: parsed.category,
-          notes: parsed.comment || parsed.category,
+          location: finalCategory,
+          notes: finalNotes || finalCategory,
           paymentStatus: 'pending',
-          entries: [{ type: parsed.category, amount: parsed.amount }],
+          entries: [{ type: finalCategory, amount: parsed.amount }],
           total: parsed.amount,
           receipts: finalReceipts,
           createdAt: new Date().toISOString(),
@@ -247,16 +285,16 @@ function startTelegramBot(callbacks = {}) {
 
         userContextStore.set(matchedUserId, { lastExpenseObj: newExpense, timestamp: now });
 
-        const emoji = CATEGORY_EMOJIS[parsed.category] || '📌';
+        const emoji = CATEGORY_EMOJIS[finalCategory] || '📌';
         const photoTag = finalReceipts.length > 0 ? '\n📎 *Receipt Photo Attached!*' : '';
 
         const confirmText = 
 `✅ *Travel Expense Logged Successfully!*
 
 📅 *Date:* ${expenseDate}
-${emoji} *Category:* ${parsed.category}
+${emoji} *Category:* ${finalCategory}
 💰 *Amount:* ₹${parsed.amount.toLocaleString('en-IN')}
-📝 *Notes:* ${parsed.comment}${photoTag}
+📝 *Notes:* ${finalNotes}${photoTag}
 ${userEmail ? `👤 *Account:* ${userEmail}` : '👤 *Account:* Telegram (Use `/link email` to sync with Web Dashboard)'}`;
 
         return ctx.reply(confirmText, {
@@ -265,7 +303,7 @@ ${userEmail ? `👤 *Account:* ${userEmail}` : '👤 *Account:* Telegram (Use `/
         }).catch(err => console.warn('⚠️ Telegram reply error:', err.message));
       }
 
-      // CASE D: Unrecognized text (Greetings or help)
+      // CASE E: Unrecognized text (Greetings or help)
       if (textOnly && !textOnly.startsWith('/')) {
         await sendGreetingMenu(ctx);
       }
@@ -291,7 +329,7 @@ Namaste *${firstName}*! Main aapka automated travel expense assistant hu. System
 
 📝 *Kaise Log Karein:*
 • Send: \`Metro 150\`
-• Send: \`Uber 280 Andheri to BKC\`
+• Send step-by-step: Send \`Uber Andheri\` first ➔ then send \`280\`
 • Send: \`Food 120 Lunch at station\`
 • Ticket / Bill ki *Photo* caption me \`Local 40\` likh kar bhejein
 
