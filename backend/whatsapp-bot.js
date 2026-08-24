@@ -613,6 +613,45 @@ async function sendMetaWhatsAppMessage(phoneNumberId, accessToken, toPhone, text
   }
 }
 
+// ========== CallMeBot Integration (100% Free Outbound Messages) ==========
+async function sendCallMeBotMessage(toPhone, text, apiKey) {
+  const key = apiKey || process.env.CALLMEBOT_API_KEY;
+  if (!key) return false;
+  try {
+    const cleanPhone = toPhone.replace(/[^0-9]/g, '');
+    const url = `https://api.callmebot.com/whatsapp.php?phone=${cleanPhone}&text=${encodeURIComponent(text)}&apikey=${key}`;
+    const res = await fetch(url);
+    return res.ok;
+  } catch (err) {
+    console.error('❌ CallMeBot send error:', err.message);
+    return false;
+  }
+}
+
+// ========== UltraMsg Integration (Free 100 msgs/day) ==========
+async function sendUltraMsgMessage(toPhone, text, instanceId, token) {
+  const instId = instanceId || process.env.ULTRAMSG_INSTANCE_ID;
+  const tk = token || process.env.ULTRAMSG_TOKEN;
+  if (!instId || !tk) return false;
+  try {
+    const cleanPhone = toPhone.replace(/[^0-9]/g, '');
+    const res = await fetch(`https://api.ultramsg.com/${instId}/messages/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        token: tk,
+        to: cleanPhone,
+        body: text,
+        priority: '1'
+      })
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('❌ UltraMsg send error:', err.message);
+    return false;
+  }
+}
+
 async function handleMetaWhatsAppMessage(msg, contacts, callbacks) {
   try {
     const fromPhone = msg.from; // e.g. "919076314255"
@@ -847,9 +886,29 @@ Once verified, all expenses you send to this bot will be auto-logged under your 
     }
   }
 
-  // Try 2: Send via Meta Cloud API if credentials present
-  const metaPhoneId = process.env.META_WA_PHONE_NUMBER_ID || '1322055260984151';
-  const metaToken = process.env.META_WA_ACCESS_TOKEN || 'EAAfQaOAFxMoBScC3Xd0ZB4XuSZBDDaHqaFvpH0SRovL6zeTsTd8ZBuH7CTqb1HApZBrYZBhPVQ6WxxZB23F73ZBrsDsg8OupkMEHwdurLCQeYRa8vpEEISG1OBKUyAaCREszxMU721EXWpDXzmFvu0X0ZCwnjm43kf5qZBqlCxWiqQEAtIXXYG6Nv9oZAaQCxDzAZDZD';
+  // Try 2: Send via CallMeBot if API key is present
+  if (!sent && process.env.CALLMEBOT_API_KEY) {
+    try {
+      sent = await sendCallMeBotMessage(cleanPhone, msgText);
+      if (sent) console.log(`✅ OTP WhatsApp message sent via CallMeBot to +${cleanPhone}`);
+    } catch (cmbErr) {
+      console.warn(`⚠️ CallMeBot OTP send note:`, cmbErr.message);
+    }
+  }
+
+  // Try 3: Send via UltraMsg if credentials present
+  if (!sent && process.env.ULTRAMSG_INSTANCE_ID && process.env.ULTRAMSG_TOKEN) {
+    try {
+      sent = await sendUltraMsgMessage(cleanPhone, msgText);
+      if (sent) console.log(`✅ OTP WhatsApp message sent via UltraMsg to +${cleanPhone}`);
+    } catch (umErr) {
+      console.warn(`⚠️ UltraMsg OTP send note:`, umErr.message);
+    }
+  }
+
+  // Try 4: Send via Meta Cloud API if credentials present
+  const metaPhoneId = process.env.META_WA_PHONE_NUMBER_ID;
+  const metaToken = process.env.META_WA_ACCESS_TOKEN;
 
   if (!sent && metaPhoneId && metaToken) {
     try {
@@ -912,6 +971,74 @@ async function disconnectWhatsAppBot() {
   }
 }
 
+async function handleUltraMsgMessage(data, callbacks = {}) {
+  try {
+    if (!data || data.fromMe) return; // Skip outbound messages sent from me
+    const rawFrom = data.from || '';
+    const fromPhone = rawFrom.replace(/[^0-9]/g, ''); // e.g. "919076314255"
+    const textOnly = (data.body || '').trim();
+
+    if (!fromPhone || !textOnly) return;
+
+    // Parse expense from text
+    const parsed = parseExpenseMessage(textOnly);
+    if (!parsed || !parsed.amount || parsed.amount <= 0) return;
+
+    const getUsers = callbacks.getUsers || (callbacks.getLocalUsers ? callbacks.getLocalUsers : null);
+    const users = getUsers ? getUsers() : {};
+
+    let matchedUserId = 'wa_' + fromPhone;
+    let userEmail = '';
+
+    const foundUser = Object.values(users).find(u => {
+      const uPhone = (u.phone || u.whatsapp || u.mobile || '').replace(/[^0-9]/g, '');
+      return uPhone && (uPhone === fromPhone || fromPhone.endsWith(uPhone) || uPhone.endsWith(fromPhone));
+    });
+
+    if (foundUser) {
+      matchedUserId = foundUser.id || foundUser.uid || foundUser.email;
+      userEmail = foundUser.email;
+    }
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const newExpense = {
+      id: 'wa_um_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      userId: matchedUserId,
+      date: dateStr,
+      location: parsed.location || parsed.category || 'Travel',
+      notes: parsed.notes || textOnly,
+      total: parsed.amount,
+      paymentStatus: 'pending',
+      paymentBillUrl: data.media || null,
+      settledAt: null,
+      createdAt: new Date().toISOString(),
+      source: 'WhatsApp UltraMsg'
+    };
+
+    if (callbacks.saveExpenseToDb) {
+      await callbacks.saveExpenseToDb(newExpense);
+    } else if (saveExpensesFn) {
+      const exps = getExpensesFn ? getExpensesFn() : [];
+      exps.unshift(newExpense);
+      saveExpensesFn(exps, true);
+    }
+
+    // Send reply back via UltraMsg
+    const replyText =
+`✅ *Expense Logged via WhatsApp!*
+
+• *Amount:* ₹${parsed.amount}
+• *Location/Type:* ${newExpense.location}
+• *Notes:* ${newExpense.notes}
+• *Date:* ${newExpense.date}
+${userEmail ? `• *Account:* Linked to ${userEmail}` : '• *Account:* WhatsApp'}`;
+
+    await sendUltraMsgMessage(fromPhone, replyText);
+  } catch (err) {
+    console.error('Error handling UltraMsg message:', err.message);
+  }
+}
+
 function getWhatsAppStatus() {
   return {
     connected: isConnected,
@@ -929,5 +1056,9 @@ module.exports = {
   requestWhatsAppPairingCode,
   sendWhatsAppOTP,
   verifyWhatsAppOTP,
-  handleMetaWhatsAppMessage
+  handleMetaWhatsAppMessage,
+  handleUltraMsgMessage,
+  sendCallMeBotMessage,
+  sendUltraMsgMessage
 };
+

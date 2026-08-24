@@ -2733,8 +2733,10 @@ app.get('/api/stats', authenticate, async (req, res) => {
   }
 });
 
-// ---------- WHATSAPP BOT ENDPOINTS ----------
-const { startWhatsAppBot, disconnectWhatsAppBot, getWhatsAppStatus, parseExpenseMessage, requestWhatsAppPairingCode, sendWhatsAppOTP, verifyWhatsAppOTP } = require('./whatsapp-bot');
+// ---------- WHATSAPP & TELEGRAM BOT ENDPOINTS ----------
+const { startWhatsAppBot, disconnectWhatsAppBot, getWhatsAppStatus, parseExpenseMessage, requestWhatsAppPairingCode, sendWhatsAppOTP, verifyWhatsAppOTP, handleUltraMsgMessage } = require('./whatsapp-bot');
+const { startTelegramBot } = require('./telegram-bot');
+
 
 app.get('/api/whatsapp/status', (req, res) => {
   res.json(getWhatsAppStatus());
@@ -2866,7 +2868,31 @@ app.post('/api/meta-whatsapp/webhook', async (req, res) => {
   }
 });
 
+// ==================== ULTRAMSG WHATSAPP WEBHOOK ====================
+app.post('/api/ultramsg/webhook', async (req, res) => {
+  res.status(200).send('OK');
+  try {
+    const data = req.body.data || req.body;
+    if (data && data.body) {
+      await handleUltraMsgMessage(data, {
+        getLocalUsers,
+        getLocalExpenses,
+        saveLocalExpenses,
+        saveExpenseToDb: async (exp) => {
+          if (useFirebase && db) db.collection('expenses').doc(exp.id).set(exp);
+          const exps = getLocalExpenses();
+          exps.unshift(exp);
+          saveLocalExpenses(exps);
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Error in UltraMsg Webhook:', err.message);
+  }
+});
+
 // ==================== START SERVER ====================
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`====================================================`);
@@ -2906,4 +2932,13 @@ app.listen(PORT, () => {
     saveExpenseToDb,
     db: useFirebase ? db : null  // Pass Firebase db for cloud auth persistence
   });
+
+  // Launch Telegram Bot Engine
+  startTelegramBot({
+    getLocalExpenses,
+    saveLocalExpenses,
+    getLocalUsers,
+    saveExpenseToDb
+  });
 });
+
