@@ -2208,9 +2208,18 @@ app.get('/api/expenses', async (req, res) => {
         } catch (qErr) {}
       }
 
+      // Merge local expenses so any bot-logged expense shows up instantly!
+      const localAll = getLocalExpenses();
+      localAll.filter(e => e && validUserIds.has(e.userId)).forEach(e => {
+        if (!expensesMap.has(e.id)) {
+          expensesMap.set(e.id, e);
+        }
+      });
+
       const expenses = Array.from(expensesMap.values());
       expenses.sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
       return res.json({ success: true, expenses });
+
     } else {
       const all = getLocalExpenses();
       let userExpenses = all.filter(e => validUserIds.has(e.userId));
