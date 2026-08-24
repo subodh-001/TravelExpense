@@ -42,6 +42,8 @@ function startTelegramBot(callbacks = {}) {
   saveExpensesFn = callbacks.saveLocalExpenses;
   getUsersFn = callbacks.getLocalUsers;
   saveDbFn = callbacks.saveExpenseToDb;
+  uploadCloudinaryFn = callbacks.uploadToCloudinary;
+
 
   if (!token) {
     console.log('ℹ️ Telegram Bot Token not found in TELEGRAM_BOT_TOKEN environment variable. Telegram bot is currently idle.');
@@ -134,7 +136,7 @@ function startTelegramBot(callbacks = {}) {
         }
       }
 
-      // Handle Photo Attachments
+      // Handle Photo Attachments (Stored permanently in Cloudinary/Backend Storage)
       let receiptUrl = null;
       if (isPhoto) {
         try {
@@ -142,13 +144,39 @@ function startTelegramBot(callbacks = {}) {
           if (ctx.api && ctx.api.getFile) {
             const fileInfo = await ctx.api.getFile(photoFile.file_id);
             if (fileInfo && fileInfo.file_path) {
-              receiptUrl = `https://api.telegram.org/file/bot${token}/${fileInfo.file_path}`;
+              const fileLink = `https://api.telegram.org/file/bot${token}/${fileInfo.file_path}`;
+              receiptUrl = fileLink;
+
+              try {
+                const photoRes = await fetch(fileLink);
+                if (photoRes.ok) {
+                  const arrayBuf = await photoRes.arrayBuffer();
+                  const buffer = Buffer.from(arrayBuf);
+
+                  if (uploadCloudinaryFn) {
+                    try {
+                      receiptUrl = await uploadCloudinaryFn(buffer, 'image/jpeg', 'telegram_receipts');
+                      console.log(`☁️ Telegram receipt uploaded to Cloudinary permanently: ${receiptUrl}`);
+                    } catch (cloudErr) {
+                      console.warn('⚠️ Cloudinary upload warning:', cloudErr.message);
+                    }
+                  }
+
+                  if (!receiptUrl || receiptUrl === fileLink) {
+                    receiptUrl = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+                    console.log(`📦 Telegram receipt stored permanently as Base64 data URL (${Math.round(buffer.length / 1024)}KB)`);
+                  }
+                }
+              } catch (dlErr) {
+                console.warn('⚠️ Could not download Telegram photo buffer:', dlErr.message);
+              }
             }
           }
         } catch (pErr) {
           console.warn('⚠️ Could not fetch Telegram photo file path:', pErr.message);
         }
       }
+
 
       const now = Date.now();
       const userContext = userContextStore.get(matchedUserId);

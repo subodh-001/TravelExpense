@@ -2947,7 +2947,9 @@ app.listen(PORT, () => {
     getLocalExpenses,
     saveLocalExpenses,
     getLocalUsers,
+    uploadToCloudinary,
     saveExpenseToDb
   });
 });
+
 
