@@ -1,7 +1,7 @@
 /**
  * Telegram Travel Expense Bot Integration
  * 100% Free, Zero Expiry, Instant Polling Engine
- * Complete Feature Parity with WhatsApp Bot & Multi-Step Conversational State
+ * Uses node-telegram-bot-api (grammY-style ctx API)
  */
 
 const { Bot } = require('node-telegram-bot-api');
@@ -12,6 +12,9 @@ let getExpensesFn = null;
 let saveExpensesFn = null;
 let getUsersFn = null;
 let saveDbFn = null;
+let uploadCloudinaryFn = null;
+
+// Context store: maps matchedUserId -> { lastExpenseObj, pendingReceiptUrl, draftCategory, draftNotes, timestamp }
 const userContextStore = new Map();
 
 const CATEGORY_EMOJIS = {
@@ -27,10 +30,104 @@ const CATEGORY_EMOJIS = {
 
 const MAIN_KEYBOARD = {
   inline_keyboard: [
-    [{ text: '📊 View Summary', callback_data: 'cmd_summary' }, { text: '📜 Recent History', callback_data: 'cmd_history' }],
-    [{ text: '❓ Help & Menu', callback_data: 'cmd_help' }]
+    [
+      { text: '📊 View Summary', callback_data: 'cmd_summary' },
+      { text: '📜 Recent History', callback_data: 'cmd_history' }
+    ],
+    [
+      { text: '❓ Help & Menu', callback_data: 'cmd_help' }
+    ]
   ]
 };
+
+// ─── Helper: resolve a telegram chatId → { matchedUserId, userEmail, userName }
+function resolveUser(chatId, fromUsername) {
+  let matchedUserId = 'telegram_' + chatId;
+  let userEmail = '';
+  let userName = '';
+
+  if (!getUsersFn) return { matchedUserId, userEmail, userName };
+
+  const users = getUsersFn();
+  let found = Object.values(users).find(u =>
+    u && (
+      (u.telegramChatId && u.telegramChatId === chatId.toString()) ||
+      (fromUsername && u.telegramUsername && u.telegramUsername === fromUsername)
+    )
+  );
+
+  if (!found) {
+    // Fallback: default admin account (Subodh Ram)
+    found = Object.values(users).find(u => u && u.email && u.email.toLowerCase() === 'subodhram3350@gmail.com')
+      || { id: 'google_subodhram3350_gmail_com', name: 'Subodh Ram', email: 'subodhram3350@gmail.com' };
+  }
+
+  if (found) {
+    matchedUserId = found.id || `google_${found.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    userEmail = found.email || '';
+    userName = found.name || '';
+  }
+
+  return { matchedUserId, userEmail, userName };
+}
+
+// ─── Helper: download & upload photo, return permanent URL
+async function handlePhotoUpload(fileId, ctx) {
+  try {
+    const fileInfo = await ctx.api.getFile(fileId);
+    if (!fileInfo || !fileInfo.file_path) return null;
+
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const fileLink = `https://api.telegram.org/file/bot${token}/${fileInfo.file_path}`;
+
+    // Try to download buffer
+    const photoRes = await fetch(fileLink);
+    if (!photoRes.ok) return fileLink;
+
+    const arrayBuf = await photoRes.arrayBuffer();
+    const buffer = Buffer.from(arrayBuf);
+
+    // Try Cloudinary first
+    if (uploadCloudinaryFn) {
+      try {
+        const cloudUrl = await uploadCloudinaryFn(buffer, 'image/jpeg', 'telegram_receipts');
+        console.log(`☁️ Telegram receipt uploaded to Cloudinary: ${cloudUrl}`);
+        return cloudUrl;
+      } catch (cloudErr) {
+        console.warn('⚠️ Cloudinary upload warning:', cloudErr.message);
+      }
+    }
+
+    // Fallback: Base64 (stored in DB, always retrievable)
+    const b64 = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+    console.log(`📦 Telegram receipt stored as Base64 (${Math.round(buffer.length / 1024)}KB)`);
+    return b64;
+
+  } catch (err) {
+    console.warn('⚠️ Could not process Telegram photo:', err.message);
+    return null;
+  }
+}
+
+// ─── Helper: save or update expense in DB
+async function persistExpense(expense) {
+  if (saveDbFn) {
+    try {
+      await saveDbFn(expense);
+    } catch (err) {
+      console.warn('⚠️ Error persisting Telegram expense:', err.message);
+    }
+  } else if (getExpensesFn && saveExpensesFn) {
+    const expenses = getExpensesFn();
+    const idx = expenses.findIndex(e => e.id === expense.id);
+    if (idx !== -1) {
+      expenses[idx] = expense;
+    } else {
+      expenses.unshift(expense);
+    }
+    saveExpensesFn(expenses, true);
+  }
+}
 
 /**
  * Main Telegram Bot Initialization
@@ -44,9 +141,8 @@ function startTelegramBot(callbacks = {}) {
   saveDbFn = callbacks.saveExpenseToDb;
   uploadCloudinaryFn = callbacks.uploadToCloudinary;
 
-
   if (!token) {
-    console.log('ℹ️ Telegram Bot Token not found in TELEGRAM_BOT_TOKEN environment variable. Telegram bot is currently idle.');
+    console.log('ℹ️ TELEGRAM_BOT_TOKEN not set. Telegram bot is idle.');
     return null;
   }
 
@@ -54,235 +150,149 @@ function startTelegramBot(callbacks = {}) {
     bot = new Bot(token);
     console.log('🤖 Telegram Travel Expense Bot CONNECTED & ONLINE! (@FreegTravel_bot) 🚀');
 
-    // Command: /start
-    bot.command('start', async (ctx) => {
-      await sendGreetingMenu(ctx);
-    });
+    // ── /start, /help, /menu
+    bot.command('start', async (ctx) => handleGreetingCtx(ctx));
+    bot.command('help', async (ctx) => handleGreetingCtx(ctx));
+    bot.command('menu', async (ctx) => handleGreetingCtx(ctx));
 
-    // Command: /help or /menu
-    bot.command(['help', 'menu'], async (ctx) => {
-      await sendGreetingMenu(ctx);
-    });
+    // ── /summary, /total, /balance
+    bot.command(['summary', 'total', 'balance'], async (ctx) => handleMonthlySummaryCtx(ctx));
 
-    // Command: /summary
-    bot.command(['summary', 'total', 'balance'], async (ctx) => {
-      await sendMonthlySummary(ctx);
-    });
+    // ── /history, /recent, /list
+    bot.command(['history', 'recent', 'list'], async (ctx) => handleHistoryCtx(ctx));
 
-    // Command: /history or /recent
-    bot.command(['history', 'recent', 'list'], async (ctx) => {
-      await sendHistoryExpenses(ctx);
-    });
-
-    // Command: /link <email>
+    // ── /link <email>
     bot.command('link', async (ctx) => {
-      const rawText = ctx.message ? ctx.message.text : '';
-      const parts = rawText.split(/\s+/);
-      const targetEmail = (parts[1] || '').trim().toLowerCase();
-      await handleLinkEmail(ctx, targetEmail);
+      const text = ctx.message ? ctx.message.text : '';
+      const parts = text.split(/\s+/);
+      const email = (parts[1] || '').trim().toLowerCase();
+      await handleLinkCtx(ctx, email);
     });
 
-    // Handle Callback Query (Inline Keyboard Buttons)
+    // ── Inline keyboard button callbacks
     bot.on('callback_query', async (ctx) => {
       const data = ctx.callbackQuery ? ctx.callbackQuery.data : null;
-      if (data === 'cmd_summary') {
-        await sendMonthlySummary(ctx);
-      } else if (data === 'cmd_history' || data === 'cmd_recent') {
-        await sendHistoryExpenses(ctx);
-      } else if (data === 'cmd_help') {
-        await sendGreetingMenu(ctx);
-      }
-      try {
-        await ctx.answerCallbackQuery();
-      } catch (_) {}
+      try { await ctx.answerCallbackQuery(); } catch (_) {}
+      if (data === 'cmd_summary') return handleMonthlySummaryCtx(ctx);
+      if (data === 'cmd_history') return handleHistoryCtx(ctx);
+      if (data === 'cmd_help') return handleGreetingCtx(ctx);
     });
 
-    // Handle All Messages (Text, Greetings, Step-by-Step Multi-Message Entries, Photos)
+    // ── All text + photo messages
     bot.on('message', async (ctx) => {
       const msg = ctx.message;
-      if (!msg) return;
+      if (!msg || !msg.chat) return;
 
+      const chatId = msg.chat.id;
       const textOnly = (msg.text || msg.caption || '').trim();
-      const isPhoto = msg.photo && msg.photo.length > 0;
+      const isPhoto = !!(msg.photo && msg.photo.length > 0);
 
-      // Handle Slash Commands handled by command listeners above
-      if (textOnly && textOnly.startsWith('/') && !textOnly.startsWith('/link')) return;
+      // Skip slash commands (handled above by bot.command)
+      if (textOnly && textOnly.startsWith('/')) return;
 
-      const telegramUserId = ctx.from ? ctx.from.id.toString() : '';
+      const { matchedUserId, userEmail } = resolveUser(chatId, ctx.from && ctx.from.username);
 
-      // Match linked user by telegramChatId or username
-      let matchedUserId = 'telegram_' + telegramUserId;
-      let userEmail = '';
-
-      if (getUsersFn) {
-        const users = getUsersFn();
-        let found = Object.values(users).find(u => u && (
-          (u.telegramChatId && u.telegramChatId === telegramUserId) ||
-          (ctx.from && ctx.from.username && u.telegramUsername === ctx.from.username)
-        ));
-
-        // Default fallback to admin Subodh Ram (subodhram3350@gmail.com)
-        if (!found) {
-          found = Object.values(users).find(u => u && u.email && u.email.toLowerCase() === 'subodhram3350@gmail.com') || {
-            id: 'google_subodhram3350_gmail_com',
-            name: 'Subodh Ram',
-            email: 'subodhram3350@gmail.com'
-          };
-        }
-
-        if (found) {
-          matchedUserId = found.id || `google_${found.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          userEmail = found.email;
-        }
-      }
-
-      // Handle Photo Attachments (Stored permanently in Cloudinary/Backend Storage)
+      // ── Photo handling: download & upload permanently
       let receiptUrl = null;
       if (isPhoto) {
-        try {
-          const photoFile = msg.photo[msg.photo.length - 1]; // highest resolution
-          if (ctx.api && ctx.api.getFile) {
-            const fileInfo = await ctx.api.getFile(photoFile.file_id);
-            if (fileInfo && fileInfo.file_path) {
-              const fileLink = `https://api.telegram.org/file/bot${token}/${fileInfo.file_path}`;
-              receiptUrl = fileLink;
-
-              try {
-                const photoRes = await fetch(fileLink);
-                if (photoRes.ok) {
-                  const arrayBuf = await photoRes.arrayBuffer();
-                  const buffer = Buffer.from(arrayBuf);
-
-                  if (uploadCloudinaryFn) {
-                    try {
-                      receiptUrl = await uploadCloudinaryFn(buffer, 'image/jpeg', 'telegram_receipts');
-                      console.log(`☁️ Telegram receipt uploaded to Cloudinary permanently: ${receiptUrl}`);
-                    } catch (cloudErr) {
-                      console.warn('⚠️ Cloudinary upload warning:', cloudErr.message);
-                    }
-                  }
-
-                  if (!receiptUrl || receiptUrl === fileLink) {
-                    receiptUrl = `data:image/jpeg;base64,${buffer.toString('base64')}`;
-                    console.log(`📦 Telegram receipt stored permanently as Base64 data URL (${Math.round(buffer.length / 1024)}KB)`);
-                  }
-                }
-              } catch (dlErr) {
-                console.warn('⚠️ Could not download Telegram photo buffer:', dlErr.message);
-              }
-            }
-          }
-        } catch (pErr) {
-          console.warn('⚠️ Could not fetch Telegram photo file path:', pErr.message);
-        }
+        const largestPhoto = msg.photo[msg.photo.length - 1];
+        receiptUrl = await handlePhotoUpload(largestPhoto.file_id, ctx);
       }
-
 
       const now = Date.now();
       const userContext = userContextStore.get(matchedUserId);
 
-      // Parse text for expense or command
-      const parsed = parseExpenseMessage(textOnly);
+      // ── Parse text content
+      const parsed = textOnly ? parseExpenseMessage(textOnly) : null;
 
-      // CASE A: Photo sent WITHOUT expense text
+      // ══════════════════════════════════════════════════
+      // CASE A: Photo-only message (no expense amount in caption)
+      // ══════════════════════════════════════════════════
       if (isPhoto && receiptUrl && (!parsed || parsed.isCommand)) {
-        // Sub-case A1: User logged a text expense entry in the last 3 minutes
-        if (userContext && userContext.lastExpenseObj && (now - userContext.timestamp < 180000)) {
+        if (userContext && userContext.lastExpenseObj && (now - userContext.timestamp < 300000)) {
+          // Attach photo to the LAST logged expense (within 5 min)
           const targetExp = userContext.lastExpenseObj;
           if (!targetExp.receipts) targetExp.receipts = [];
-          targetExp.receipts.push(receiptUrl);
+          if (!targetExp.receipts.includes(receiptUrl)) {
+            targetExp.receipts.push(receiptUrl);
+          }
           targetExp.paymentBillUrl = receiptUrl;
           targetExp.updatedAt = new Date().toISOString();
 
-          if (saveDbFn) {
-            try {
-              await saveDbFn(targetExp);
-            } catch (dbErr) {
-              console.warn('⚠️ Error updating Telegram expense photo in DB:', dbErr.message);
-            }
-          } else if (saveExpensesFn) {
-            const expenses = getExpensesFn ? getExpensesFn() : [];
-            const idx = expenses.findIndex(e => e.id === targetExp.id);
-            if (idx !== -1) {
-              expenses[idx] = targetExp;
-              saveExpensesFn(expenses, true);
-            }
-          }
+          await persistExpense(targetExp);
           userContextStore.delete(matchedUserId);
 
-
-          const attachText = 
-`📎 *Receipt Photo Attached to Recent Entry!*
+          const text =
+`📎 *Receipt Photo Attached!*
 
 📅 *Date:* ${targetExp.date}
-📌 *Category:* ${targetExp.location}
-💰 *Amount:* ₹${targetExp.total.toLocaleString('en-IN')}
-📝 *Notes:* ${targetExp.notes}`;
+${CATEGORY_EMOJIS[targetExp.location] || '📌'} *Category:* ${targetExp.location}
+💰 *Amount:* ₹${(targetExp.total || 0).toLocaleString('en-IN')}
+📝 *Notes:* ${targetExp.notes}
+✅ *Entry updated in Dashboard!*`;
 
-          return ctx.reply(attachText, { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD })
-            .catch(err => console.warn('⚠️ Telegram reply error:', err.message));
+          return ctx.reply(text, { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD })
+            .catch(err => console.warn('Telegram send error:', err.message));
+
+        } else if (userContext && userContext.draftCategory && (now - userContext.timestamp < 300000)) {
+          userContextStore.set(matchedUserId, { ...userContext, pendingReceiptUrl: receiptUrl, timestamp: now });
+          return ctx.reply(
+            '📸 *Receipt photo saved!* Ab amount bhejein (e.g. `280`) to complete the entry.',
+            { parse_mode: 'Markdown' }
+          ).catch(err => console.warn('Telegram send error:', err.message));
+
         } else {
-          // Sub-case A2: Store pending photo for next text message
-          const draftCat = userContext ? userContext.draftCategory : null;
-          const draftNot = userContext ? userContext.draftNotes : null;
-
-          userContextStore.set(matchedUserId, {
-            pendingReceiptUrl: receiptUrl,
-            draftCategory: draftCat,
-            draftNotes: draftNot,
-            timestamp: now
-          });
-
-          return ctx.reply('📸 *Receipt Photo Received!* Now send travel amount or details (e.g. `Metro 150` or `280`) to complete 1 single entry.', { parse_mode: 'Markdown' })
-            .catch(err => console.warn('⚠️ Telegram reply error:', err.message));
+          userContextStore.set(matchedUserId, { pendingReceiptUrl: receiptUrl, timestamp: now });
+          return ctx.reply(
+            '📸 *Receipt photo received!* Ab travel details aur amount bhejein (e.g. `Metro 150`) to log the expense.',
+            { parse_mode: 'Markdown' }
+          ).catch(err => console.warn('Telegram send error:', err.message));
         }
       }
 
-      // CASE B: Commands like "hi", "hello", "summary", "history", "link"
+      // ══════════════════════════════════════════════════
+      // CASE B: Text/caption is a command (help, summary, history)
+      // ══════════════════════════════════════════════════
       if (parsed && parsed.isCommand) {
-        if (parsed.command === 'help') {
-          return sendGreetingMenu(ctx);
-        }
-        if (parsed.command === 'summary') {
-          return sendMonthlySummary(ctx);
-        }
-        if (parsed.command === 'history') {
-          return sendHistoryExpenses(ctx);
-        }
-        if (parsed.command === 'link') {
-          return handleLinkEmail(ctx, parsed.arg);
-        }
+        if (parsed.command === 'help') return handleGreetingCtx(ctx);
+        if (parsed.command === 'summary') return handleMonthlySummaryCtx(ctx);
+        if (parsed.command === 'history') return handleHistoryCtx(ctx);
+        if (parsed.command === 'link') return handleLinkCtx(ctx, parsed.arg);
       }
 
-      // CASE C: Partial Text Entry (User sent location/category text like "Uber Andheri" WITHOUT price yet)
+      // ══════════════════════════════════════════════════
+      // CASE C: Partial text — location/category but NO amount yet
+      // ══════════════════════════════════════════════════
       if (parsed && !parsed.isCommand && parsed.isPartial) {
         const pendingUrl = receiptUrl || (userContext ? userContext.pendingReceiptUrl : null);
-
         userContextStore.set(matchedUserId, {
           draftCategory: parsed.category,
           draftNotes: parsed.comment,
           pendingReceiptUrl: pendingUrl,
           timestamp: now
         });
-
         const emoji = CATEGORY_EMOJIS[parsed.category] || '📌';
-        return ctx.reply(`📍 *Recorded Travel Details:* ${parsed.comment}\n${emoji} *Category:* ${parsed.category}\n\n💬 Ab amount bhejein (e.g. *280*) to complete this single expense entry!`, { parse_mode: 'Markdown' })
-          .catch(err => console.warn('⚠️ Telegram reply error:', err.message));
+        return ctx.reply(
+          `📍 *Location recorded:* ${parsed.comment}\n${emoji} *Category:* ${parsed.category}\n\n💬 Ab amount bhejein (e.g. \`280\`) to complete this entry!`,
+          { parse_mode: 'Markdown' }
+        ).catch(err => console.warn('Telegram send error:', err.message));
       }
 
-      // CASE D: Complete Valid Expense Entry (e.g. "150", "Metro 150", "Uber 280 Andheri")
+      // ══════════════════════════════════════════════════
+      // CASE D: Full expense entry — has amount
+      // ══════════════════════════════════════════════════
       if (parsed && !parsed.isCommand && parsed.amount > 0) {
         let finalCategory = parsed.category;
-        let finalNotes = parsed.comment;
+        let finalNotes = parsed.comment || parsed.category;
         let finalReceipts = receiptUrl ? [receiptUrl] : [];
 
-        // Check if there was a previous draft (location/category or pending photo <5 min old)
+        // Merge previous draft context
         if (userContext && (now - userContext.timestamp < 300000)) {
           if (userContext.draftCategory && userContext.draftCategory !== 'Others') {
             finalCategory = userContext.draftCategory;
           }
-          if (userContext.draftNotes && userContext.draftNotes !== parsed.comment) {
-            finalNotes = `${userContext.draftNotes} (${parsed.comment})`;
+          if (userContext.draftNotes && userContext.draftNotes !== finalNotes) {
+            finalNotes = `${userContext.draftNotes} — ${finalNotes}`;
           }
           if (!receiptUrl && userContext.pendingReceiptUrl) {
             finalReceipts.push(userContext.pendingReceiptUrl);
@@ -291,59 +301,55 @@ function startTelegramBot(callbacks = {}) {
         }
 
         const expenseDate = parsed.dateStr || new Date().toISOString().slice(0, 10);
-        const expenseId = `exp_tg_${Date.now().toString(36)}`;
+        const expenseId = `exp_tg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 
         const newExpense = {
           id: expenseId,
           userId: matchedUserId,
           date: expenseDate,
           location: finalCategory,
-          notes: finalNotes || finalCategory,
+          notes: finalNotes,
           paymentStatus: 'pending',
           entries: [{ type: finalCategory, amount: parsed.amount }],
           total: parsed.amount,
           receipts: finalReceipts,
+          paymentBillUrl: finalReceipts[0] || null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           source: 'Telegram Bot'
         };
 
-        if (saveDbFn) {
-          try {
-            await saveDbFn(newExpense);
-          } catch (dbErr) {
-            console.warn('⚠️ Error persisting Telegram expense to Firestore:', dbErr.message);
-          }
-        } else if (getExpensesFn && saveExpensesFn) {
-          const expenses = getExpensesFn();
-          expenses.unshift(newExpense);
-          saveExpensesFn(expenses, true);
-        }
-
+        await persistExpense(newExpense);
         userContextStore.set(matchedUserId, { lastExpenseObj: newExpense, timestamp: now });
 
         const emoji = CATEGORY_EMOJIS[finalCategory] || '📌';
-        const photoTag = finalReceipts.length > 0 ? '\n📎 *Receipt Photo Attached!*' : '';
+        const photoTag = finalReceipts.length > 0 ? '\n📎 *Receipt attached!*' : '\n💡 _Bill/ticket photo hai toh abhi bhej sakte ho!_';
 
-        const confirmText = 
+        const confirmText =
 `✅ *Travel Expense Logged Successfully!*
 
 📅 *Date:* ${expenseDate}
 ${emoji} *Category:* ${finalCategory}
 💰 *Amount:* ₹${parsed.amount.toLocaleString('en-IN')}
 📝 *Notes:* ${finalNotes}${photoTag}
-${userEmail ? `👤 *Account:* ${userEmail}` : '👤 *Account:* Telegram (Use `/link email` to sync with Web Dashboard)'}`;
+👤 *Account:* ${userEmail || 'subodhram3350@gmail.com'}`;
 
         return ctx.reply(confirmText, {
           parse_mode: 'Markdown',
           reply_markup: MAIN_KEYBOARD
-        }).catch(err => console.warn('⚠️ Telegram reply error:', err.message));
+        }).catch(err => console.warn('Telegram send error:', err.message));
       }
 
-      // CASE E: Unrecognized text (Greetings or help)
-      if (textOnly && !textOnly.startsWith('/')) {
-        await sendGreetingMenu(ctx);
+      // ══════════════════════════════════════════════════
+      // CASE E: Unrecognized / greeting text → show help
+      // ══════════════════════════════════════════════════
+      if (textOnly) {
+        return handleGreetingCtx(ctx);
       }
+    });
+
+    bot.catch((err) => {
+      console.warn('⚠️ Telegram bot error:', err && (err.message || err));
     });
 
     bot.startPolling();
@@ -354,113 +360,158 @@ ${userEmail ? `👤 *Account:* ${userEmail}` : '👤 *Account:* Telegram (Use `/
   }
 }
 
-/**
- * Send Greeting & Help Menu (Triggers on "hi", "hello", "help", /start)
- */
-async function sendGreetingMenu(ctx) {
-  const firstName = ctx.from ? ctx.from.first_name : 'Traveler';
-  const replyMenu = 
+
+// ─── ctx → msg adapter helpers (ctx wraps msg for command handlers)
+function ctxToMsg(ctx) {
+  return {
+    chat: ctx.chat || (ctx.message && ctx.message.chat) || { id: 0 },
+    from: ctx.from || (ctx.message && ctx.message.from) || {}
+  };
+}
+async function handleGreetingCtx(ctx) { return handleGreetingMenu(ctxToMsg(ctx), ctx); }
+async function handleMonthlySummaryCtx(ctx) { return handleMonthlySummary(ctxToMsg(ctx), ctx); }
+async function handleHistoryCtx(ctx) { return handleHistoryExpenses(ctxToMsg(ctx), ctx); }
+async function handleLinkCtx(ctx, email) { return handleLinkEmail(ctxToMsg(ctx), email, ctx); }
+
+// ─── Send Greeting Menu
+async function handleGreetingMenu(msg, ctx) {
+  const firstName = (msg.from && msg.from.first_name) ? msg.from.first_name : 'Traveler';
+
+  const text =
 `🤖 *FGTech Travel Expense Bot* ✈️
 
-Namaste *${firstName}*! Main aapka automated travel expense assistant hu. System me travel entry log karne ke liye seedhe mujhe message bhej sakte hain!
+Namaste *${firstName}*! Main aapka travel expense assistant hun.
 
-📝 *Kaise Log Karein:*
-• Send: \`Metro 150\`
-• Send step-by-step: Send \`Uber Andheri\` first ➔ then send \`280\`
-• Send: \`Food 120 Lunch at station\`
-• Ticket / Bill ki *Photo* caption me \`Local 40\` likh kar bhejein
+📝 *Expense Log Karne ke Tarike:*
+
+*One-line (fastest):*
+• \`Metro 150\`
+• \`Ola 280 Andheri to Bandra\`
+• \`Food 120 Lunch\`
+
+*Step-by-step (multi-message):*
+1️⃣ Pehle bhejo: \`Uber Andheri\`
+2️⃣ Phir amount: \`280\`
+3️⃣ Optional: Bill/ticket ki photo bhejo
+
+📸 *Bill Photo ke saath:*
+• Photo + caption: \`Local 40\`
+• Ya pehle expense bhejo, phir photo bhejo
 
 📊 *Other Commands:*
-• \`summary\` - Monthly balance & total check karein
-• \`history\` - Recent 5 entries dekhein
-• \`link <email>\` - Telegram ko app email account se link karein
+• \`summary\` — Monthly total & balance
+• \`history\` — Recent 5 entries
+• \`/link user@email.com\` — Web Dashboard se link karo
 
-Try karein! Abhi type karein: *Metro 150* 🚀`;
+🚀 Try karo: *Metro 150*`;
 
-  await ctx.reply(replyMenu, {
-    parse_mode: 'Markdown',
-    reply_markup: MAIN_KEYBOARD
-  }).catch(_ => {});
+  const opts = { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD };
+  if (ctx && ctx.reply) return ctx.reply(text, opts).catch(_ => {});
+  return bot.api.sendMessage(msg.chat.id, text, opts).catch(_ => {});
 }
 
-/**
- * Handle Link Email
- */
-async function handleLinkEmail(ctx, emailArg) {
-  const targetEmail = (emailArg || '').trim().toLowerCase();
-  if (!targetEmail || !targetEmail.includes('@')) {
-    return ctx.reply('⚠️ Please provide a valid email address. Example: `/link user@example.com`', { parse_mode: 'Markdown' });
-  }
+// ─── Monthly Summary
+async function handleMonthlySummary(msg, ctx) {
+  const telegramId = msg.from ? msg.from.id.toString() : '';
+  const chatId = msg.chat.id;
+  const { matchedUserId } = resolveUser(chatId, msg.from && msg.from.username);
 
-  const telegramUserId = ctx.from ? ctx.from.id.toString() : '';
-  const users = getUsersFn ? getUsersFn() : {};
-  let foundKey = Object.keys(users).find(k => users[k] && users[k].email && users[k].email.toLowerCase() === targetEmail);
-
-  if (foundKey && saveExpensesFn) {
-    users[foundKey].telegramChatId = telegramUserId;
-    users[foundKey].telegramUsername = ctx.from ? ctx.from.username || '' : '';
-    users[foundKey].updatedAt = new Date().toISOString();
-    saveExpensesFn([], false); // triggers backup
-    await ctx.reply(`✅ Success! Telegram account linked to account *${targetEmail}*. All expenses logged here will reflect on your Web Dashboard!`, { parse_mode: 'Markdown' });
-  } else {
-    await ctx.reply(`⚠️ User account *${targetEmail}* not found on Web App. Please log in on the Web App first, then link here.`, { parse_mode: 'Markdown' });
-  }
-}
-
-/**
- * Send Monthly Summary
- */
-async function sendMonthlySummary(ctx) {
-  const telegramUserId = ctx.from ? ctx.from.id.toString() : '';
-  const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
+  const currentMonth = new Date().toISOString().substring(0, 7);
   const allExpenses = getExpensesFn ? getExpensesFn() : [];
-  
-  const userExpenses = allExpenses.filter(e => e && (
-    e.userId === 'telegram_' + telegramUserId ||
-    (e.source === 'Telegram Bot')
-  ));
+
+  const userExpenses = allExpenses.filter(e =>
+    e && (e.userId === matchedUserId || e.userId === `telegram_${telegramId}`)
+  );
 
   const monthExpenses = userExpenses.filter(e => e.date && e.date.startsWith(currentMonth));
   const totalLogged = monthExpenses.reduce((s, e) => s + (e.total || 0), 0);
   const paidTotal = monthExpenses.filter(e => e.paymentStatus === 'paid').reduce((s, e) => s + (e.total || 0), 0);
   const pendingTotal = monthExpenses.filter(e => e.paymentStatus !== 'paid').reduce((s, e) => s + (e.total || 0), 0);
 
-  const summaryMsg = 
-`📊 *Monthly Travel Summary (${currentMonth})*
+  const text =
+`📊 *Monthly Travel Summary — ${currentMonth}*
 
 💰 *Total Logged:* ₹${totalLogged.toLocaleString('en-IN')}
 ✅ *Paid/Settled:* ₹${paidTotal.toLocaleString('en-IN')}
 ⏳ *Pending Balance:* ₹${pendingTotal.toLocaleString('en-IN')}
-🧾 *Total Entries:* ${monthExpenses.length} entries`;
+🧾 *Total Entries:* ${monthExpenses.length}`;
 
-  await ctx.reply(summaryMsg, { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD }).catch(_ => {});
+  const opts = { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD };
+  if (ctx && ctx.reply) return ctx.reply(text, opts).catch(_ => {});
+  return bot.api.sendMessage(chatId, text, opts).catch(_ => {});
 }
 
-/**
- * Send History Expenses (Last 5 Entries)
- */
-async function sendHistoryExpenses(ctx) {
-  const telegramUserId = ctx.from ? ctx.from.id.toString() : '';
+// ─── Last 5 Expense Entries
+async function handleHistoryExpenses(msg, ctx) {
+  const telegramId = msg.from ? msg.from.id.toString() : '';
+  const chatId = msg.chat.id;
+  const { matchedUserId } = resolveUser(chatId, msg.from && msg.from.username);
+
   const allExpenses = getExpensesFn ? getExpensesFn() : [];
-  const userExpenses = allExpenses.filter(e => e && (
-    e.userId === 'telegram_' + telegramUserId ||
-    (e.source === 'Telegram Bot')
-  )).slice(0, 5);
+  const userExpenses = allExpenses
+    .filter(e => e && (e.userId === matchedUserId || e.userId === `telegram_${telegramId}`))
+    .sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
+    .slice(0, 5);
+
+  const opts = { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD };
 
   if (userExpenses.length === 0) {
-    return ctx.reply('📂 *No travel entries logged yet.* Try typing `Metro 150`!', { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD }).catch(_ => {});
+    const emptyMsg = '📂 *Koi entries nahi hain abhi.* Type karo `Metro 150` to start!';
+    if (ctx && ctx.reply) return ctx.reply(emptyMsg, opts).catch(_ => {});
+    return bot.api.sendMessage(chatId, emptyMsg, opts).catch(_ => {});
   }
 
-  let text = '📜 *Your Recent 5 Travel Entries:*\n\n';
+  let text = '📜 *Recent 5 Travel Entries:*\n\n';
   userExpenses.forEach((exp, idx) => {
-    const cat = exp.entries && exp.entries[0] ? exp.entries[0].type : exp.location;
+    const emoji = CATEGORY_EMOJIS[exp.location] || '📌';
     const status = exp.paymentStatus === 'paid' ? '✅ Paid' : '⏳ Pending';
-    text += `${idx + 1}. *${exp.date}* — ${cat}\n   💰 ₹${exp.total} (${status})\n   📝 ${exp.notes || 'No comment'}\n\n`;
+    const receipt = (exp.receipts && exp.receipts.length > 0) ? ' 📎' : '';
+    text += `${idx + 1}. *${exp.date}* — ${emoji} ${exp.location}${receipt}\n   💰 ₹${exp.total} (${status})\n   📝 ${exp.notes || '—'}\n\n`;
   });
 
-  await ctx.reply(text.trim(), { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD }).catch(_ => {});
+  if (ctx && ctx.reply) return ctx.reply(text.trim(), opts).catch(_ => {});
+  return bot.api.sendMessage(chatId, text.trim(), opts).catch(_ => {});
 }
 
-module.exports = {
-  startTelegramBot
-};
+// ─── Link Telegram to Web App Email Account
+async function handleLinkEmail(msg, emailArg, ctx) {
+  const chatId = msg.chat.id;
+  const targetEmail = (emailArg || '').trim().toLowerCase();
+
+  const send = (text, opts) => {
+    if (ctx && ctx.reply) return ctx.reply(text, opts || {}).catch(_ => {});
+    return bot.api.sendMessage(chatId, text, opts || {}).catch(_ => {});
+  };
+
+  if (!targetEmail || !targetEmail.includes('@')) {
+    return send('⚠️ Valid email chahiye. Example: `/link user@example.com`', { parse_mode: 'Markdown' });
+  }
+
+  const telegramId = msg.from ? msg.from.id.toString() : '';
+  const users = getUsersFn ? getUsersFn() : {};
+  const foundKey = Object.keys(users).find(k => users[k] && users[k].email && users[k].email.toLowerCase() === targetEmail);
+
+  if (foundKey) {
+    users[foundKey].telegramChatId = telegramId;
+    users[foundKey].telegramUsername = msg.from ? (msg.from.username || '') : '';
+    users[foundKey].updatedAt = new Date().toISOString();
+
+    if (saveExpensesFn) {
+      const expenses = getExpensesFn ? getExpensesFn() : [];
+      saveExpensesFn(expenses, true);
+    }
+
+    return send(
+      `✅ *Linked!* Telegram account linked to *${targetEmail}*.\n\nAb sab expenses Web Dashboard pe bhi dikhenge!`,
+      { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD }
+    );
+  } else {
+    return send(
+      `⚠️ Account *${targetEmail}* Web App pe nahi mila. Pehle Web App pe login karo, phir link karo.`,
+      { parse_mode: 'Markdown' }
+    );
+  }
+}
+
+module.exports = { startTelegramBot };
+
