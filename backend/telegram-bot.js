@@ -191,8 +191,16 @@ function startTelegramBot(callbacks = {}) {
           const targetExp = userContext.lastExpenseObj;
           if (!targetExp.receipts) targetExp.receipts = [];
           targetExp.receipts.push(receiptUrl);
+          targetExp.paymentBillUrl = receiptUrl;
+          targetExp.updatedAt = new Date().toISOString();
 
-          if (saveExpensesFn) {
+          if (saveDbFn) {
+            try {
+              await saveDbFn(targetExp);
+            } catch (dbErr) {
+              console.warn('⚠️ Error updating Telegram expense photo in DB:', dbErr.message);
+            }
+          } else if (saveExpensesFn) {
             const expenses = getExpensesFn ? getExpensesFn() : [];
             const idx = expenses.findIndex(e => e.id === targetExp.id);
             if (idx !== -1) {
@@ -201,6 +209,7 @@ function startTelegramBot(callbacks = {}) {
             }
           }
           userContextStore.delete(matchedUserId);
+
 
           const attachText = 
 `📎 *Receipt Photo Attached to Recent Entry!*

@@ -2910,27 +2910,31 @@ app.listen(PORT, () => {
   console.log(`🌐 Web Client: http://localhost:${PORT}`);
   console.log(`====================================================`);
 
-  // Helper to persist WhatsApp expenses to Firestore & Local DB
+  // Helper to persist WhatsApp / Telegram expenses to Firestore & Local DB
   const saveExpenseToDb = async (newExpense) => {
     try {
       const expenses = getLocalExpenses();
-      if (expenses.some(e => e.id === newExpense.id)) {
-        return; // Already processed/saved
+      const existingIdx = expenses.findIndex(e => e.id === newExpense.id);
+      if (existingIdx !== -1) {
+        expenses[existingIdx] = newExpense;
+      } else {
+        expenses.unshift(newExpense);
       }
-      expenses.unshift(newExpense);
       saveLocalExpenses(expenses, true);
 
-      if (useFirebase) {
+      if (useFirebase && db) {
         await db.collection('expenses').doc(newExpense.id).set({
           ...newExpense,
           date: newExpense.date,
-          createdAt: newExpense.createdAt
-        });
+          createdAt: newExpense.createdAt,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
       }
     } catch (err) {
-      console.warn('⚠️ Error writing WhatsApp expense to Firestore/DB:', err.message);
+      console.warn('⚠️ Error writing bot expense to Firestore/DB:', err.message);
     }
   };
+
 
   // Launch WhatsApp Bot Engine
   startWhatsAppBot({
