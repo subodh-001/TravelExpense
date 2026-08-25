@@ -41,6 +41,8 @@ const MAIN_KEYBOARD = {
   ]
 };
 
+const activeTelegramChatIds = new Map();
+
 // ─── Helper: resolve telegram user profile in DB (Strict lookup only, zero auto-creation)
 function ensureUserProfile(chatId, fromObj) {
   const chatIdStr = chatId ? chatId.toString() : '';
@@ -48,6 +50,10 @@ function ensureUserProfile(chatId, fromObj) {
   const firstName = fromObj ? (fromObj.first_name || '') : '';
   const lastName = fromObj ? (fromObj.last_name || '') : '';
   const fullName = [firstName, lastName].filter(Boolean).join(' ') || (fromUsername ? `@${fromUsername}` : `Telegram User (${chatIdStr})`);
+
+  if (fromUsername && chatIdStr) {
+    activeTelegramChatIds.set(fromUsername.replace(/^@/, '').toLowerCase(), chatIdStr);
+  }
 
   if (!getUsersFn) return { matchedUserId: null, userEmail: '', userName: fullName, isLinked: false };
 
@@ -112,6 +118,10 @@ async function sendTelegramOtpMessage(usernameOrChatId, otpCode) {
       }
     }
   });
+
+  if (!targetChatId && cleanTarget && activeTelegramChatIds.has(cleanTarget)) {
+    targetChatId = activeTelegramChatIds.get(cleanTarget);
+  }
 
   if (!targetChatId && /^\d+$/.test(cleanTarget)) {
     targetChatId = cleanTarget;
