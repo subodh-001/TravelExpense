@@ -153,15 +153,29 @@ This OTP will expire in 10 minutes.`;
 async function handlePhotoUpload(fileId, ctx) {
   try {
     let filePath = null;
+    let fileInfo = null;
+
     if (ctx && ctx.api && ctx.api.getFile) {
-      const fileInfo = await ctx.api.getFile(fileId);
-      if (fileInfo && fileInfo.file_path) filePath = fileInfo.file_path;
-    } else if (bot && bot.api && bot.api.getFile) {
-      const fileInfo = await bot.api.getFile(fileId);
-      if (fileInfo && fileInfo.file_path) filePath = fileInfo.file_path;
+      fileInfo = await ctx.api.getFile({ file_id: fileId }).catch(() => null);
+    }
+    if (!fileInfo && bot && bot.api && bot.api.getFile) {
+      fileInfo = await bot.api.getFile({ file_id: fileId }).catch(() => null);
+    }
+    if (!fileInfo && ctx && ctx.api && ctx.api.getFile) {
+      fileInfo = await ctx.api.getFile(fileId).catch(() => null);
+    }
+    if (!fileInfo && bot && bot.api && bot.api.getFile) {
+      fileInfo = await bot.api.getFile(fileId).catch(() => null);
     }
 
-    if (!filePath) return null;
+    if (fileInfo && fileInfo.file_path) {
+      filePath = fileInfo.file_path;
+    }
+
+    if (!filePath) {
+      console.warn('⚠️ Could not get file_path for Telegram photo ID:', fileId);
+      return null;
+    }
 
     const token = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
     const fileLink = `https://api.telegram.org/file/bot${token}/${filePath}`;
@@ -172,7 +186,10 @@ async function handlePhotoUpload(fileId, ctx) {
     });
 
     const photoRes = await httpFetch(fileLink);
-    if (!photoRes.ok) return fileLink;
+    if (!photoRes.ok) {
+      console.warn('⚠️ Telegram photo fetch HTTP failed:', photoRes.status);
+      return fileLink;
+    }
 
     const arrayBuf = await photoRes.arrayBuffer();
     const buffer = Buffer.from(arrayBuf);
