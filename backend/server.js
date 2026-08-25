@@ -294,6 +294,8 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
               phone: u.phone || u.whatsapp || '',
               whatsapp: u.whatsapp || u.phone || '',
               whatsappVerified: !!u.whatsappVerified,
+              telegramChatId: u.telegramChatId || '',
+              telegramUsername: u.telegramUsername || '',
               updatedAt: u.updatedAt || new Date().toISOString()
             }, { merge: true });
           });
@@ -524,6 +526,63 @@ const authenticate = (req, res, next) => {
   req.userId = userId;
   next();
 };
+
+// Helper to resolve all user ID aliases (Google, Telegram, WhatsApp, Email, Master Admin)
+function getUserAliasIds(userId, users = null) {
+  const validUserIds = new Set();
+  if (!userId) return validUserIds;
+
+  validUserIds.add(userId);
+  const allUsers = users || getLocalUsers();
+
+  const currentUser = allUsers[userId] || Object.values(allUsers).find(u =>
+    u && (
+      u.id === userId ||
+      (u.email && u.email.toLowerCase() === userId.toLowerCase()) ||
+      (u.telegramChatId && u.telegramChatId === userId) ||
+      (u.telegramChatId && `telegram_${u.telegramChatId}` === userId)
+    )
+  );
+
+  if (currentUser) {
+    if (currentUser.id) validUserIds.add(currentUser.id);
+    if (currentUser.email) {
+      validUserIds.add(currentUser.email);
+      validUserIds.add(`google_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    }
+    if (currentUser.telegramChatId) {
+      validUserIds.add(currentUser.telegramChatId);
+      validUserIds.add(`telegram_${currentUser.telegramChatId}`);
+    }
+    if (currentUser.telegramUsername) {
+      validUserIds.add(currentUser.telegramUsername);
+      validUserIds.add(`telegram_${currentUser.telegramUsername}`);
+    }
+    if (currentUser.phone || currentUser.whatsapp) {
+      const ph = (currentUser.phone || currentUser.whatsapp).replace(/[^0-9]/g, '');
+      if (ph) {
+        validUserIds.add(ph);
+        validUserIds.add(`whatsapp_${ph}`);
+      }
+    }
+  }
+
+  if (userId.startsWith('telegram_')) {
+    const rawId = userId.replace('telegram_', '');
+    validUserIds.add(rawId);
+    const linked = Object.values(allUsers).find(u => u && u.telegramChatId === rawId);
+    if (linked) {
+      if (linked.id) validUserIds.add(linked.id);
+      if (linked.email) validUserIds.add(`google_${linked.email.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    }
+  }
+
+  if (userId.includes('subodh') || (currentUser && currentUser.email && currentUser.email.includes('subodh'))) {
+    validUserIds.add('google_subodhram3350_gmail_com');
+  }
+
+  return validUserIds;
+}
 
 // ==================== BI-DIRECTIONAL SYNC ENDPOINTS ====================
 app.get('/api/sync/export', (req, res) => {
@@ -2166,20 +2225,9 @@ app.get('/api/expenses', async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized: user-id required' });
     }
 
-    // Collect all valid user ID aliases (Google sub ID, email slug ID, master admin ID)
-    const validUserIds = new Set([userId]);
+    // Collect all valid user ID aliases (Google sub ID, Telegram ID, WhatsApp ID, Email)
     const users = getLocalUsers();
-    const currentUser = users[userId] || Object.values(users).find(u => u && (u.id === userId || u.email === userId));
-
-    if (currentUser) {
-      if (currentUser.id) validUserIds.add(currentUser.id);
-      if (currentUser.email) {
-        validUserIds.add(`google_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`);
-      }
-    }
-    if (userId.includes('subodh') || (currentUser && currentUser.email && currentUser.email.includes('subodh'))) {
-      validUserIds.add('google_subodhram3350_gmail_com');
-    }
+    const validUserIds = getUserAliasIds(userId, users);
 
     if (useFirebase) {
       const expensesMap = new Map();
@@ -2238,22 +2286,33 @@ app.get('/api/expenses/date/:date', authenticate, async (req, res) => {
   try {
     const userId = req.userId;
     const { date } = req.params;
+    const users = getLocalUsers();
+    const validUserIds = getUserAliasIds(userId, users);
 
     if (useFirebase) {
-      const snapshot = await db.collection('expenses')
-        .where('userId', '==', userId)
-        .where('date', '==', date)
-        .get();
+      const expensesMap = new Map();
+      for (const uid of validUserIds) {
+        try {
+          const snapshot = await db.collection('expenses')
+            .where('userId', '==', uid)
+            .where('date', '==', date)
+            .get();
 
-      const expenses = [];
-      snapshot.forEach(doc => {
-        expenses.push({ id: doc.id, ...doc.data() });
+          snapshot.forEach(doc => {
+            expensesMap.set(doc.id, { id: doc.id, ...doc.data() });
+          });
+        } catch (_) {}
+      }
+
+      const localAll = getLocalExpenses();
+      localAll.filter(e => e && validUserIds.has(e.userId) && e.date === date).forEach(e => {
+        if (!expensesMap.has(e.id)) expensesMap.set(e.id, e);
       });
 
-      return res.json({ success: true, expenses });
+      return res.json({ success: true, expenses: Array.from(expensesMap.values()) });
     } else {
       const all = getLocalExpenses();
-      const filtered = all.filter(e => e.userId === userId && e.date === date);
+      const filtered = all.filter(e => validUserIds.has(e.userId) && e.date === date);
       return res.json({ success: true, expenses: filtered });
     }
   } catch (error) {
@@ -2496,20 +2555,10 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
     const { expenseId } = req.params;
     const userId = req.userId;
 
-    // Collect all valid user ID aliases (Google sub ID, email slug ID, master admin ID)
-    const validUserIds = new Set([userId]);
+    // Collect all valid user ID aliases (Google sub ID, Telegram ID, WhatsApp ID, Email)
     const users = getLocalUsers();
+    const validUserIds = getUserAliasIds(userId, users);
     const currentUser = users[userId] || Object.values(users).find(u => u && (u.id === userId || u.email === userId));
-
-    if (currentUser) {
-      if (currentUser.id) validUserIds.add(currentUser.id);
-      if (currentUser.email) {
-        validUserIds.add(`google_${currentUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`);
-      }
-    }
-    if (userId.includes('subodh') || (currentUser && currentUser.email && currentUser.email.includes('subodh'))) {
-      validUserIds.add('google_subodhram3350_gmail_com');
-    }
     const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin');
 
     // 1. Delete from Local JSON storage
@@ -2707,14 +2756,25 @@ app.post('/api/admin/complete-invite', (req, res) => {
 app.get('/api/stats', authenticate, async (req, res) => {
   try {
     const userId = req.userId;
-    let userExpenses = [];
+    const users = getLocalUsers();
+    const validUserIds = getUserAliasIds(userId, users);
+    const expensesMap = new Map();
 
     if (useFirebase) {
-      const snapshot = await db.collection('expenses').where('userId', '==', userId).get();
-      snapshot.forEach(doc => userExpenses.push(doc.data()));
-    } else {
-      userExpenses = getLocalExpenses().filter(e => e.userId === userId);
+      for (const uid of validUserIds) {
+        try {
+          const snapshot = await db.collection('expenses').where('userId', '==', uid).get();
+          snapshot.forEach(doc => expensesMap.set(doc.id, doc.data()));
+        } catch (_) {}
+      }
     }
+
+    const localAll = getLocalExpenses();
+    localAll.filter(e => e && validUserIds.has(e.userId)).forEach(e => {
+      if (!expensesMap.has(e.id)) expensesMap.set(e.id, e);
+    });
+
+    const userExpenses = Array.from(expensesMap.values());
 
     const totalExpense = userExpenses.reduce((sum, e) => sum + (e.total || 0), 0);
     const totalReceipts = userExpenses.reduce((sum, e) => sum + ((e.receipts && e.receipts.length) || 0), 0);
@@ -2951,6 +3011,7 @@ app.listen(PORT, () => {
     getLocalExpenses,
     saveLocalExpenses,
     getLocalUsers,
+    saveLocalUsers,
     uploadToCloudinary,
     saveExpenseToDb
   });
