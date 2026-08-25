@@ -441,18 +441,30 @@ const syncFromFirebaseCloud = async () => {
     if (!expSnapshot.empty) {
       const localExps = getLocalExpenses();
       const expMap = new Map(localExps.map(e => [e.id, e]));
+      const fbExpDeletePromises = [];
       expSnapshot.forEach(doc => {
         const eData = doc.data();
-        let createdAtStr = eData.createdAt;
-        if (eData.createdAt && typeof eData.createdAt.toDate === 'function') {
-          createdAtStr = eData.createdAt.toDate().toISOString();
-        } else if (eData.createdAt && eData.createdAt._seconds) {
-          createdAtStr = new Date(eData.createdAt._seconds * 1000).toISOString();
+        if (eData && eData.userId && isUserDeleted(eData.userId)) {
+          console.log(`🧹 Purging expense for deleted user from Firestore: ${doc.id}`);
+          fbExpDeletePromises.push(doc.ref.delete().catch(() => {}));
+          expMap.delete(doc.id);
+        } else {
+          let createdAtStr = eData.createdAt;
+          if (eData.createdAt && typeof eData.createdAt.toDate === 'function') {
+            createdAtStr = eData.createdAt.toDate().toISOString();
+          } else if (eData.createdAt && eData.createdAt._seconds) {
+            createdAtStr = new Date(eData.createdAt._seconds * 1000).toISOString();
+          }
+          expMap.set(doc.id, { ...eData, id: doc.id, createdAt: createdAtStr });
         }
-        expMap.set(doc.id, { ...eData, id: doc.id, createdAt: createdAtStr });
       });
+
+      if (fbExpDeletePromises.length > 0) {
+        await Promise.all(fbExpDeletePromises).catch(() => {});
+      }
+
       saveLocalExpenses(Array.from(expMap.values()), false);
-      console.log(`🔥 Synced ${expSnapshot.size} expenses from Firebase Cloud Firestore`);
+      console.log(`🔥 Synced ${expMap.size} active expenses from Firebase Cloud Firestore`);
     }
   } catch (err) {
     console.warn('⚠️ Firebase Cloud sync startup note:', err.message);
