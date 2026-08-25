@@ -208,6 +208,20 @@ try {
     }
   }
 
+  // Built-in Firebase Service Account fallback for Cloud / Render deployment
+  if (!serviceAccount) {
+    try {
+      serviceAccount = {
+        type: "service_account",
+        project_id: "nothing-5c8b8",
+        private_key_id: "125d922dc9ce54480cb314ac7faf4cf42caea204",
+        private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDAeYmoEewnOKkw\nVuDHrVZVHEU2BtdwlbWnTZ9jKjH7Lie5nbfbl/G79QJk5ZBgSl9jczY3pdDr+Qzw\nBT/9DNcTfu/KlsiKGKrwtpRrxKL1ATXCKeGxlqWXznPjxz/0DzRWAywPbdLaFbz1\nejrlJJbjMrmQV8yVFyDS6HYGwfniI7PAaagIqGhn2YN0MvNR8diC6vNKD464ZZqw\nibeQ5FvWvlWr2Ds1Bl4CUYbWDh5cBv2TXk6D6potum1UVGnKUoCq29KqvN/+fSw4\nN0I6nNqc3aNcVNf5CDPw6WJzufVCj17FCZYoHaCoW+G40mmHbkNxtmM2Y/Xz2Cb9\neZzLXEHrAgMBAAECggEAPhfXc2uYwkxytIAKkxBV/i4ZG+VYIl+B01/k0BKAPla1\nBRofAs5Bc5AGvjMbAR1tKYG1F328aSwW4uXmr0Wxqv3z8Oj0+CweFXrpZdzxb1X9\nGE73mxmNAWzekTip5pvzF959G9sjvyxtIcpVbq//p3spRyoz+1MTSUcqMGLqsOug\nfkZTd7FOQBhN0qQJXUD2O4Sr2CINE2/PmUFz7ZZoyeRw8zZDZ+UF2gSHaeohGvzD\n5dBDdRc6TXrQ17AgYSw++lXiH/jnz4KD6KNFYOGZ5vzJnv0r5pV9IpYHjAbtqYfh\nxnGIWt1R062425n3Bf+J39TTs2bw1EPUOh3/9jszzQKBgQD4vKZ++zFLPUtfQnqB\n7bTFwEU7nvJ0vNc8yvXGEUUk7w333vecoP3fkzdFvL1C2pOazdKTCg71kqdpGzmR\nw1JTzWvZA8QsrEB6PMOcpJV/bqPINFdvrJCQR2UvMWL5gA1I4/PlZlvrtH49lIei\nFiUpMClrnATiWV6KT7coMkyEJQKBgQDGGFGCQRqba7pCTupStKC06kRTbp8vQ12n\nlMQy5SC9FGPZjrkN2gtXqBkLVrLLmAvhGlBtt9s5/uAoXcgEINUORCwMTQATuoi+\nE5sMDQFY1idlSNSDTys4mX0zNDc6IuI73wXIVsu31ZtE3qELEWGDs+95Vz9LpnqA\niJvJXxdIzwKBgQCcLO8pWZTo1fKGPFppTBQt+fw+ZB192LgYLqNEmsFcYFDX6oJ0\nMM1WXLveqJP47v6wuzzVIAKmhE9i+joaYJZHkfp+RxQcrIbLeW2k494OJizl3p9r\nueEHBhztFcg8Of+dXatcxPlANJLzHVhQGDF6/Ad1zn9uk4h9tXGd5n8OlQKBgB7y\nIZmVjhCFjb1aEqUE7q4UgsP93gRGI9VQGi5ROQIQs2CDOUl+rJLvAaqRyrCfegua\nTsI1HJw8wsvLirmKX34xDCiHxuFOHJqE+Y2yYml8Wv8pl3lD3t6iq7paB96fIHR1\n7LNVS9HWHsFtff76oh8u9tQf2xV4Vl7J+HxGzJ5lAoGBAKklfpreoJhEajUJq8yT\yhn19KbvULDaoIfebEkTEMtQ/l6zlfeHXMPO5hp6gTDk/j0tb2NMBmk1nQxj/ODS\nsdSBs4Q65w7zgBIV64HlyDiOwbsvY5YUuwsjJ59GWgy+sHUIIMfzZbKd3YzjmrDg\nLeHYdsHAjlIxaSYy4RQo+88N\n-----END PRIVATE KEY-----\n",
+        client_email: "firebase-adminsdk-sj3vj@nothing-5c8b8.iam.gserviceaccount.com",
+        client_id: "117480865016098978079"
+      };
+    } catch (_) {}
+  }
+
   if (serviceAccount) {
     const certConfig = {
       projectId: serviceAccount.project_id || serviceAccount.projectId || 'nothing-5c8b8',
