@@ -392,63 +392,29 @@ const syncFromFirebaseCloud = async () => {
   try {
     console.log('🔄 Pulling master database state from Firebase Cloud Firestore...');
 
-    // 0. Sync deleted_users archive from Firestore into local deleted_users blacklist
-    try {
-      const delSnapshot = await db.collection('deleted_users').get();
-      if (!delSnapshot.empty) {
-        delSnapshot.forEach(doc => {
-          const dData = doc.data();
-          if (dData.email) addDeletedUser(dData.email);
-          if (dData.originalId) addDeletedUser(dData.originalId);
-          if (dData.cleanId) addDeletedUser(dData.cleanId);
-        });
-      }
-    } catch (delErr) {
-      console.warn('Deleted users archive sync note:', delErr.message);
-    }
-
-    // 1. Sync Users from Firebase Firestore (ignoring and purging deleted users)
+    // 1. Sync Users from Firebase Firestore into local cache (READ ONLY - NO AUTO DELETE ON STARTUP)
     const usersSnapshot = await db.collection('users').get();
     if (!usersSnapshot.empty) {
       const cloudUsers = getLocalUsers();
-      const fbDeletePromises = [];
-
       usersSnapshot.forEach(doc => {
         const uData = doc.data();
         const uid = doc.id;
-        const uEmail = uData ? uData.email : '';
         if (uid && uData) {
-          if (isUserDeleted(uid) || (uEmail && isUserDeleted(uEmail))) {
-            console.log(`🧹 Purging deleted user doc from Firestore users collection: ${uid}`);
-            fbDeletePromises.push(doc.ref.delete().catch(() => {}));
-            delete cloudUsers[uid];
-          } else {
-            cloudUsers[uid] = { ...(cloudUsers[uid] || {}), ...uData, id: uid };
-          }
+          cloudUsers[uid] = { ...(cloudUsers[uid] || {}), ...uData, id: uid };
         }
       });
-
-      if (fbDeletePromises.length > 0) {
-        await Promise.all(fbDeletePromises).catch(() => {});
-      }
-
       saveLocalUsers(cloudUsers, false);
-      console.log(`🔥 Synced active users from Firebase Cloud Firestore (Purged ${fbDeletePromises.length} deleted)`);
+      console.log(`🔥 Synced ${Object.keys(cloudUsers).length} active users from Firebase Cloud Firestore`);
     }
 
-    // 2. Sync Expenses from Firebase Firestore
+    // 2. Sync Expenses from Firebase Firestore into local cache (READ ONLY - NO AUTO DELETE ON STARTUP)
     const expSnapshot = await db.collection('expenses').get();
     if (!expSnapshot.empty) {
       const localExps = getLocalExpenses();
       const expMap = new Map(localExps.map(e => [e.id, e]));
-      const fbExpDeletePromises = [];
       expSnapshot.forEach(doc => {
         const eData = doc.data();
-        if (eData && eData.userId && isUserDeleted(eData.userId)) {
-          console.log(`🧹 Purging expense for deleted user from Firestore: ${doc.id}`);
-          fbExpDeletePromises.push(doc.ref.delete().catch(() => {}));
-          expMap.delete(doc.id);
-        } else {
+        if (eData && (eData.id || doc.id)) {
           let createdAtStr = eData.createdAt;
           if (eData.createdAt && typeof eData.createdAt.toDate === 'function') {
             createdAtStr = eData.createdAt.toDate().toISOString();
@@ -458,11 +424,6 @@ const syncFromFirebaseCloud = async () => {
           expMap.set(doc.id, { ...eData, id: doc.id, createdAt: createdAtStr });
         }
       });
-
-      if (fbExpDeletePromises.length > 0) {
-        await Promise.all(fbExpDeletePromises).catch(() => {});
-      }
-
       saveLocalExpenses(Array.from(expMap.values()), false);
       console.log(`🔥 Synced ${expMap.size} active expenses from Firebase Cloud Firestore`);
     }
