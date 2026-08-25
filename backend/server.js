@@ -3443,6 +3443,7 @@ app.listen(PORT, () => {
         expenses.unshift(newExpense);
       }
       saveLocalExpenses(expenses, true);
+      broadcastEvent('expenses_updated', newExpense);
 
       if (useFirebase && db) {
         await db.collection('expenses').doc(newExpense.id).set({

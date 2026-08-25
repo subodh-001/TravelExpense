@@ -40,7 +40,7 @@ function getCloudinaryUserFolderName(subFolder = '', dateInput = null) {
   return `expense_receipts/${cleanName}/${monthFolder}/${dayFolder}`;
 }
 
-const DEFAULT_USER_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><circle cx="64" cy="64" r="64" fill="%23cbd5e1"/><circle cx="64" cy="48" r="26" fill="%23ffffff"/><path d="M64 82c-28 0-48 14-48 30v16h96V112c0-16-20-30-48-30z" fill="%23ffffff"/></svg>`;
+const DEFAULT_USER_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48Y2lyY2xlIGN4PSI2NCIgY3k9IjY0IiByPSI2NCIgZmlsbD0iI2NiZDVlMSIvPjxjaXJjbGUgY3g9IjY0IiBjeT0iNDgiIHI9IjI2IiBmaWxsPSIjZmZmZmZmIi8+PHBhdGggZD0iTTY0IDgyYy0yOCAwLTQ4IDE0LTQ4IDMwdjE2aDk2VjExMmMwLTE2LTIwLTMwLTQ4LTMweiIgZmlsbD0iI2ZmZmZmZiIvPjwvc3ZnPg==`;
 
 function getUserAvatarUrl(user) {
   if (!user) return DEFAULT_USER_AVATAR;
