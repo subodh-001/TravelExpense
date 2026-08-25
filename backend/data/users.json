@@ -12,7 +12,7 @@
     "whatsappVerified": false,
     "phone": "",
     "telegramChatId": "",
-    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=SubodhRam",
+    "picture": "",
     "telegramUsername": "",
     "updatedAt": "2026-08-25T13:11:32.163Z"
   },
@@ -22,7 +22,7 @@
     "email": "nothingsubodh@gmail.com",
     "role": "admin",
     "verified": true,
-    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=NothingSubodh",
+    "picture": "",
     "updatedAt": "2026-08-25T16:35:59.705Z"
   }
 }

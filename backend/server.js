@@ -1457,7 +1457,7 @@ app.post('/api/user/profile', async (req, res) => {
       id,
       name: name || existingUser.name || 'Traveler',
       email: email || existingUser.email || 'user@example.com',
-      picture: (picture && typeof picture === 'string' && (picture.startsWith('http') || picture.startsWith('data:image'))) ? picture : (existingUser.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'Traveler')}`),
+      picture: (picture && typeof picture === 'string' && (picture.startsWith('http') || picture.startsWith('data:image')) && !picture.includes('dicebear')) ? picture : (existingUser.picture && !existingUser.picture.includes('dicebear') ? existingUser.picture : ''),
       role: role || existingUser.role || 'user',
       phone: cleanPhone || existingUser.phone || '',
       whatsapp: cleanPhone || existingUser.whatsapp || '',
