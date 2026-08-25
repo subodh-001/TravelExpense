@@ -446,9 +446,57 @@ const syncFromFirebaseCloud = async () => {
   }
 };
 
-// Trigger Cloud Sync immediately if Firebase initialized
+// 🔄 Automatic 2-Way Background Sync Worker (Local DB <-> Firebase Firestore)
+async function runAutoSyncWorker() {
+  if (!useFirebase || !db) return;
+  try {
+    const localExps = getLocalExpenses();
+    const snap = await db.collection('expenses').get();
+    const cloudMap = new Map();
+    snap.docs.forEach(doc => cloudMap.set(doc.id, doc.data()));
+
+    let pushedCount = 0;
+    let pulledCount = 0;
+
+    // 1. Push any local expenses missing in Firebase to Firebase Firestore
+    for (const exp of localExps) {
+      if (exp && exp.id && !cloudMap.has(exp.id)) {
+        await db.collection('expenses').doc(exp.id).set({
+          ...exp,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        pushedCount++;
+      }
+    }
+
+    // 2. Pull any Firebase expenses missing locally into Local DB
+    const localIds = new Set(localExps.map(e => e && e.id).filter(Boolean));
+    const mergedExps = [...localExps];
+
+    cloudMap.forEach((cExp, cId) => {
+      if (!localIds.has(cId)) {
+        mergedExps.unshift({ ...cExp, id: cId });
+        pulledCount++;
+      }
+    });
+
+    if (pulledCount > 0) {
+      saveLocalExpenses(mergedExps, false);
+    }
+
+    if (pushedCount > 0 || pulledCount > 0) {
+      console.log(`🔄 Auto-Sync Worker: Pushed ${pushedCount} & Pulled ${pulledCount} entries to/from Firebase!`);
+    }
+  } catch (err) {
+    console.warn('⚠️ Auto-sync worker note:', err.message);
+  }
+}
+
+// Trigger Cloud Sync & Background Auto-Sync Timer
 if (useFirebase && db) {
   syncFromFirebaseCloud();
+  setTimeout(runAutoSyncWorker, 3000);
+  setInterval(runAutoSyncWorker, 30000); // Continuous auto-sync every 30 seconds
 }
 
 const getLocalInvites = () => {
