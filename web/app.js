@@ -40,27 +40,26 @@ function getCloudinaryUserFolderName(subFolder = '', dateInput = null) {
   return `expense_receipts/${cleanName}/${monthFolder}/${dayFolder}`;
 }
 
-const DEFAULT_USER_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48Y2lyY2xlIGN4PSI2NCIgY3k9IjY0IiByPSI2NCIgZmlsbD0iI2NiZDVlMSIvPjxjaXJjbGUgY3g9IjY0IiBjeT0iNDgiIHI9IjI2IiBmaWxsPSIjZmZmZmZmIi8+PHBhdGggZD0iTTY0IDgyYy0yOCAwLTQ4IDE0LTQ4IDMwdjE2aDk2VjExMmMwLTE2LTIwLTMwLTQ4LTMweiIgZmlsbD0iI2ZmZmZmZiIvPjwvc3ZnPg==`;
+const DEFAULT_USER_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23e2e8f0"/><circle cx="100" cy="75" r="42" fill="%2364748b"/><path d="M 20 185 C 20 130 50 120 100 120 C 150 120 180 130 180 185 Z" fill="%2364748b"/></svg>`;
 
 function getUserAvatarUrl(user) {
   if (!user) return DEFAULT_USER_AVATAR;
 
-  // 1. If user is current logged in user and has an active real picture in state
+  // 1. If user is current logged in user and has an active picture in state, use it
   if (typeof state !== 'undefined' && state && state.currentGoogleUser && state.currentGoogleUser.picture) {
     const activeEmail = (state.currentGoogleUser.email || '').toLowerCase();
     const targetEmail = (typeof user === 'object' && user ? (user.email || '') : (typeof user === 'string' ? user : '')).toLowerCase();
     if (activeEmail && targetEmail && activeEmail === targetEmail) {
-      const activePic = state.currentGoogleUser.picture;
-      if (activePic && typeof activePic === 'string' && (activePic.startsWith('http') || activePic.startsWith('data:image')) && !activePic.includes('dicebear')) {
-        return activePic;
+      if (state.currentGoogleUser.picture.startsWith('http') || state.currentGoogleUser.picture.startsWith('data:image')) {
+        return state.currentGoogleUser.picture;
       }
     }
   }
 
-  // 2. Check user's own picture property
+  // 2. Otherwise check user's own picture property
   let pic = typeof user === 'object' && user ? (user.picture || user.avatar || '') : (typeof user === 'string' ? user : '');
   
-  if (pic && typeof pic === 'string' && (pic.startsWith('http://') || pic.startsWith('https://') || pic.startsWith('data:image')) && !pic.includes('dicebear')) {
+  if (pic && typeof pic === 'string' && (pic.startsWith('http://') || pic.startsWith('https://') || pic.startsWith('data:image'))) {
     return pic;
   }
   
@@ -765,7 +764,7 @@ async function handleSaveProfile(e) {
     return;
   }
 
-  const picture = state.pendingProfilePhotoUrl || state.currentGoogleUser.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
+  const picture = state.pendingProfilePhotoUrl || state.currentGoogleUser.picture || '';
   
   const payload = {
     id: state.currentGoogleUser.id,
@@ -845,7 +844,7 @@ function handleCustomGoogleSignIn() {
   const name = email.split('@')[0].replace(/[\._]/g, ' ');
   const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
   const id = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
-  const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+  const picture = '';
 
   selectGoogleAccount(id, capitalizedName, email, picture);
   customGoogleEmail.value = '';
@@ -2063,7 +2062,7 @@ async function checkSharedViewUrl() {
       id: sharedUserId,
       name: cleanName,
       email: sharedUserId.includes('@') ? sharedUserId : `${sharedUserId}@gmail.com`,
-      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(sharedUserId)}`
+      picture: ''
     };
 
     // Hide admin action controls for viewer mode
@@ -2603,7 +2602,7 @@ async function verifyOtpCode() {
     const cleanName = (name || email.split('@')[0]).replace(/[\._]/g, ' ');
     const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
     const userId = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
-    const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+    const picture = '';
 
     const user = { id: userId, name: capitalizedName, email, picture };
     showToast(`🎉 OTP Verified! Account Created (${email})`);
@@ -4602,7 +4601,7 @@ function selectGoogleAccount(name, email) {
   const cleanName = name || email.split('@')[0].replace(/[\._]/g, ' ');
   const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
   const id = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
-  const picture = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+  const picture = '';
 
   const user = { id, name: capitalizedName, email, picture };
   

@@ -1092,7 +1092,7 @@ app.post('/api/auth/register', (req, res) => {
     const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
     const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
     const users = getLocalUsers();
-    const picture = (existingUser && existingUser.picture) || users[userId]?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`;
+    const picture = (existingUser && existingUser.picture) || users[userId]?.picture || '';
 
     users[userId] = {
       ...(existingUser || {}),
@@ -1156,7 +1156,7 @@ app.post('/api/auth/google', (req, res) => {
       id: userId,
       name: existing.name || capitalizedName,
       email: cleanEmail,
-      picture: userPic || existing.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`,
+      picture: userPic || existing.picture || '',
       verified: true,
       role: existing.role || 'user',
       updatedAt: new Date().toISOString()
@@ -1364,7 +1364,7 @@ app.post('/api/auth/verify-otp', (req, res) => {
       id: userId,
       name: existing.name || capitalizedName,
       email: cleanEmail,
-      picture: existing.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`,
+      picture: existing.picture || '',
       verified: true,
       updatedAt: new Date().toISOString()
     };
@@ -1457,7 +1457,7 @@ app.post('/api/user/profile', async (req, res) => {
       id,
       name: name || existingUser.name || 'Traveler',
       email: email || existingUser.email || 'user@example.com',
-      picture: (picture && typeof picture === 'string' && (picture.startsWith('http') || picture.startsWith('data:image')) && !picture.includes('dicebear')) ? picture : (existingUser.picture && !existingUser.picture.includes('dicebear') ? existingUser.picture : ''),
+      picture: (picture && typeof picture === 'string' && (picture.startsWith('http') || picture.startsWith('data:image'))) ? picture : (existingUser.picture || ''),
       role: role || existingUser.role || 'user',
       phone: cleanPhone || existingUser.phone || '',
       whatsapp: cleanPhone || existingUser.whatsapp || '',
@@ -1608,7 +1608,7 @@ app.post('/api/admin/invite-admin', async (req, res) => {
       id: userId,
       name: users[userId]?.name || capitalizedName,
       email: cleanEmail,
-      picture: users[userId]?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`,
+      picture: users[userId]?.picture || '',
       role: targetRole,
       verified: true,
       createdAt: users[userId]?.createdAt || new Date().toISOString(),
@@ -1846,7 +1846,7 @@ app.post('/api/admin/add-member', async (req, res) => {
       id: userId,
       name: capitalizedName,
       email: cleanEmail,
-      picture: users[userId]?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`,
+      picture: users[userId]?.picture || '',
       verified: true,
       role: role === 'admin' ? 'admin' : (users[userId]?.role || 'user'),
       createdAt: users[userId]?.createdAt || new Date().toISOString(),
@@ -2970,7 +2970,7 @@ app.post('/api/admin/invite-member', async (req, res) => {
         id: userId,
         name: capitalizedName,
         email: cleanEmail,
-        picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`,
+        picture: '',
         verified: true,
         role: roleToSet,
         createdAt: new Date().toISOString(),
@@ -3443,7 +3443,6 @@ app.listen(PORT, () => {
         expenses.unshift(newExpense);
       }
       saveLocalExpenses(expenses, true);
-      broadcastEvent('expenses_updated', newExpense);
 
       if (useFirebase && db) {
         await db.collection('expenses').doc(newExpense.id).set({
