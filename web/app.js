@@ -479,27 +479,29 @@ function performSignOut() {
     iconClass: 'fa-right-from-bracket',
     btnText: 'Sign Out',
     onConfirm: () => {
-      if (state.currentGoogleUser && state.currentGoogleUser.id) {
-        try { localStorage.removeItem(`cached_expenses_${state.currentGoogleUser.id}`); } catch (e) {}
-      }
-      try { localStorage.removeItem('cached_expenses'); } catch (e) {}
-      try { localStorage.removeItem('google_user'); } catch (e) {}
-      state.currentGoogleUser = null;
-      state.expenses = [];
-      state.filteredExpenses = [];
-      state.isReadOnlySharedView = false;
-      state.sharedMode = false;
-
-      // Clean URL bar on sign out
-      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
-
-      switchAppPage('landing');
-
+      performSilentSignOut();
       showToast('👋 Signed out successfully');
-      updateUserProfileUI();
     }
   });
+}
+
+function performSilentSignOut() {
+  if (state.currentGoogleUser && state.currentGoogleUser.id) {
+    try { localStorage.removeItem(`cached_expenses_${state.currentGoogleUser.id}`); } catch (e) {}
+  }
+  try { localStorage.removeItem('cached_expenses'); } catch (e) {}
+  try { localStorage.removeItem('google_user'); } catch (e) {}
+  state.currentGoogleUser = null;
+  state.expenses = [];
+  state.filteredExpenses = [];
+  state.isReadOnlySharedView = false;
+  state.sharedMode = false;
+
+  const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+  window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+
+  switchAppPage('landing');
+  updateUserProfileUI();
 }
 
 function toggleUserSideDrawer() {
@@ -862,7 +864,18 @@ async function fetchWithAuth(url, options = {}) {
     'user-id': user.id,
     ...(options.headers || {})
   };
-  return fetch(url, { ...options, headers });
+  const res = await fetch(url, { ...options, headers });
+  if (res.status === 401) {
+    try {
+      const clone = res.clone();
+      const data = await clone.json();
+      if (data.error && data.error.toLowerCase().includes('deleted')) {
+        console.warn('⚠️ Account deleted by Administrator. Purging session...');
+        performSilentSignOut();
+      }
+    } catch (e) {}
+  }
+  return res;
 }
 
 // ==================== LOAD & FILTER DATA ====================
