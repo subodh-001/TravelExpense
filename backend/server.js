@@ -1458,8 +1458,9 @@ app.post('/api/user/profile', async (req, res) => {
     const { id, name, email, picture, password, role, phone, whatsapp } = req.body;
     if (!id) return res.status(400).json({ error: 'User ID is required' });
 
-    if (email) removeDeletedUser(email);
-    if (id) removeDeletedUser(id);
+    if (isUserDeleted(id) || (email && isUserDeleted(email))) {
+      return res.status(401).json({ error: 'Unauthorized: Account deleted by Administrator' });
+    }
 
     const users = getLocalUsers();
     const existingUser = users[id] || {};
@@ -1775,7 +1776,9 @@ app.get('/api/admin/users', async (req, res) => {
     let totalSystemPending = 0;
     let totalSystemPaid = 0;
 
-    const usersList = Object.values(usersObj).map(user => {
+    const usersList = Object.values(usersObj)
+      .filter(user => user && user.id && !isUserDeleted(user.id) && (!user.email || !isUserDeleted(user.email)))
+      .map(user => {
       const userCleanId = user.email ? `google_${user.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
       const userExpenses = allExpenses.filter(e => {
         if (!e || !e.userId) return false;
