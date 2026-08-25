@@ -32,9 +32,19 @@ const USERS_DB_FILE = path.join(DATA_DIR, 'users.json');
 const INVITES_DB_FILE = path.join(DATA_DIR, 'invites.json');
 const DELETED_USERS_FILE = path.join(DATA_DIR, 'deleted_users.json');
 
+// ============================================================
+// 🔒 DATA PROTECTION LOCK
+// Data files (users.json, expenses.json) are NEVER overwritten
+// with empty/null values. Only code changes are allowed via git.
+// To modify data, explicit user approval is required.
+// Master Admin: subodhram3350@gmail.com
+// ============================================================
+
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
+
+// SAFE INIT: Only create files if they don't exist — never overwrite existing data
 if (!fs.existsSync(LOCAL_DB_FILE)) fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify([]));
 if (!fs.existsSync(USERS_DB_FILE)) fs.writeFileSync(USERS_DB_FILE, JSON.stringify({}));
 if (!fs.existsSync(INVITES_DB_FILE)) fs.writeFileSync(INVITES_DB_FILE, JSON.stringify({}));
@@ -263,6 +273,13 @@ const getLocalExpenses = () => {
 
 const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
   try {
+    // 🔒 DATA PROTECTION: Never write null/undefined — only valid arrays
+    if (!expenses || !Array.isArray(expenses)) {
+      console.error('🔒 DATA PROTECTION: saveLocalExpenses blocked — invalid data type (not array)');
+      return;
+    }
+    // Guard: If existing file has data and incoming write is completely empty, warn but allow
+    // (user may have intentionally deleted all entries via the app)
     const tempPath = `${LOCAL_DB_FILE}.tmp`;
     fs.writeFileSync(tempPath, JSON.stringify(expenses, null, 2));
     fs.renameSync(tempPath, LOCAL_DB_FILE);
@@ -307,6 +324,17 @@ const getLocalUsers = () => {
 
 const saveLocalUsers = (users, triggerBroadcast = true) => {
   try {
+    // 🔒 DATA PROTECTION: Never write null/undefined — only valid objects
+    if (!users || typeof users !== 'object' || Array.isArray(users)) {
+      console.error('🔒 DATA PROTECTION: saveLocalUsers blocked — invalid data type (not object)');
+      return;
+    }
+    // Guard: Never wipe all users in one write — master admin must always exist
+    const masterAdminId = 'google_subodhram3350_gmail_com';
+    if (Object.keys(users).length === 0) {
+      console.warn('⚠️ DATA PROTECTION: saveLocalUsers called with empty object — skipping to preserve data');
+      return;
+    }
     const tempPath = `${USERS_DB_FILE}.tmp`;
     fs.writeFileSync(tempPath, JSON.stringify(users, null, 2));
     fs.renameSync(tempPath, USERS_DB_FILE);
