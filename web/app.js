@@ -43,28 +43,31 @@ function getCloudinaryUserFolderName(subFolder = '', dateInput = null) {
 const DEFAULT_USER_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><circle cx="64" cy="64" r="64" fill="%23cbd5e1"/><circle cx="64" cy="48" r="26" fill="%23ffffff"/><path d="M64 82c-28 0-48 14-48 30v16h96V112c0-16-20-30-48-30z" fill="%23ffffff"/></svg>`;
 
 function getUserAvatarUrl(user) {
-  if (!user) return DEFAULT_USER_AVATAR;
+  if (!user) return `https://api.dicebear.com/7.x/avataaars/svg?seed=Member`;
 
-  // 1. If user is current logged in user and has an active real picture in state
+  // 1. If user is current logged in user and has a custom uploaded/Google picture in state
   if (typeof state !== 'undefined' && state && state.currentGoogleUser && state.currentGoogleUser.picture) {
     const activeEmail = (state.currentGoogleUser.email || '').toLowerCase();
     const targetEmail = (typeof user === 'object' && user ? (user.email || '') : (typeof user === 'string' ? user : '')).toLowerCase();
     if (activeEmail && targetEmail && activeEmail === targetEmail) {
       const activePic = state.currentGoogleUser.picture;
-      if (activePic && typeof activePic === 'string' && !activePic.includes('<') && (activePic.startsWith('http') || activePic.startsWith('data:image')) && !activePic.includes('dicebear')) {
+      if (activePic && typeof activePic === 'string' && !activePic.includes('<') && (activePic.startsWith('http://') || activePic.startsWith('https://') || activePic.startsWith('data:image'))) {
         return activePic;
       }
     }
   }
 
-  // 2. Check user's own picture property
+  // 2. Check user's own picture property if custom uploaded
+  let name = (typeof user === 'object' && user) ? (user.name || user.email || 'Traveler') : (typeof user === 'string' && user ? user : 'Traveler');
   let pic = typeof user === 'object' && user ? (user.picture || user.avatar || '') : (typeof user === 'string' ? user : '');
 
-  if (pic && typeof pic === 'string' && !pic.includes('<') && (pic.startsWith('http://') || pic.startsWith('https://') || pic.startsWith('data:image')) && !pic.includes('dicebear')) {
+  if (pic && typeof pic === 'string' && !pic.includes('<') && (pic.startsWith('http://') || pic.startsWith('https://') || pic.startsWith('data:image'))) {
     return pic;
   }
 
-  return DEFAULT_USER_AVATAR;
+  // 3. Return Dicebear avatar seed (matches screenshot exactly!)
+  const cleanSeed = encodeURIComponent(name);
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanSeed}`;
 }
 
 // Default Google User Profile
