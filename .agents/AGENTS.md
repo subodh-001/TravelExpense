@@ -23,9 +23,9 @@ These rules are **mandatory** for ALL AI agents working on this project.
    - `db.exec('DELETE FROM users')` or `db.exec('DELETE FROM expenses')`
    - Any script that wipes or resets these files
 
-3. **NEVER push data files to git.** These are gitignored by design.
-   - `backend/data/*.json` — runtime data, must NEVER be committed
-   - `backend/data/*.sqlite` — runtime database, must NEVER be committed
+3. **ALWAYS keep data JSON files tracked in git:**
+   - `backend/data/*.json` (`users.json`, `expenses.json`, `invites.json`, `deleted_users.json`) MUST stay committed in git.
+   - This ensures Render server always deploys with the full current database state and never wipes or resets to 0 entries.
 
 4. **NEVER modify `deleted_users.json` manually** unless the user explicitly says:
    > "delete [specific user] from deleted_users.json"
