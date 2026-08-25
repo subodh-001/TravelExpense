@@ -1,33 +1,4 @@
 {
-  "google_user_test_99_gmail_com": {
-    "id": "google_user_test_99_gmail_com",
-    "name": "User 99",
-    "email": "user_test_99@gmail.com",
-    "passwordHash": "29fe5f91a54c416bd44a48640b7b286a205cc1bd85741fa2a599e6d41ed5884b",
-    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=User%2099",
-    "verified": true,
-    "updatedAt": "2026-08-25T12:22:05.343Z"
-  },
-  "google_newadmin_test_gmail_com": {
-    "id": "google_newadmin_test_gmail_com",
-    "name": "Newadmin test",
-    "email": "newadmin_test@gmail.com",
-    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Newadmin%20test",
-    "role": "admin",
-    "verified": true,
-    "createdAt": "2026-08-25T12:43:42.388Z",
-    "updatedAt": "2026-08-25T12:43:42.388Z"
-  },
-  "google_newmember_test_gmail_com": {
-    "id": "google_newmember_test_gmail_com",
-    "name": "New Member Test",
-    "email": "newmember_test@gmail.com",
-    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=New%20Member%20Test",
-    "verified": true,
-    "role": "user",
-    "createdAt": "2026-08-25T12:43:43.980Z",
-    "updatedAt": "2026-08-25T12:43:43.980Z"
-  },
   "google_subodhram3350_gmail_com": {
     "id": "google_subodhram3350_gmail_com",
     "name": "Subodh Ram",
@@ -36,34 +7,5 @@
     "role": "super_admin",
     "verified": true,
     "updatedAt": "2026-08-25T13:11:32.163Z"
-  },
-  "google_sync_test_user_gmail_com": {
-    "id": "google_sync_test_user_gmail_com",
-    "name": "Sync Test User",
-    "email": "sync_test_user@gmail.com",
-    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sync%20Test%20User",
-    "verified": true,
-    "role": "user",
-    "createdAt": "2026-08-25T12:45:25.374Z",
-    "updatedAt": "2026-08-25T12:45:25.374Z"
-  },
-  "google_audit_admin_gmail_com": {
-    "id": "google_audit_admin_gmail_com",
-    "name": "Audit admin",
-    "email": "audit_admin@gmail.com",
-    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Audit%20admin",
-    "role": "admin",
-    "verified": true,
-    "createdAt": "2026-08-25T12:50:25.404Z",
-    "updatedAt": "2026-08-25T12:50:25.404Z"
-  },
-  "google_audit_newreg_gmail_com": {
-    "id": "google_audit_newreg_gmail_com",
-    "name": "Audit New Reg",
-    "email": "audit_newreg@gmail.com",
-    "passwordHash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
-    "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Audit%20New%20Reg",
-    "verified": true,
-    "updatedAt": "2026-08-25T12:50:27.753Z"
   }
 }

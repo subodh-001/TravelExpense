@@ -2173,9 +2173,11 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
           });
 
           // Now delete from Firestore users collection
-          if (userId)           db.collection('users').doc(userId).delete().catch(() => {});
-          if (userCleanId)      db.collection('users').doc(userCleanId).delete().catch(() => {});
-          if (matchedTarget?.id) db.collection('users').doc(matchedTarget.id).delete().catch(() => {});
+          const userDeletePromises = [];
+          if (userId)           userDeletePromises.push(db.collection('users').doc(userId).delete().catch(() => {}));
+          if (userCleanId)      userDeletePromises.push(db.collection('users').doc(userCleanId).delete().catch(() => {}));
+          if (matchedTarget?.id) userDeletePromises.push(db.collection('users').doc(matchedTarget.id).delete().catch(() => {}));
+          await Promise.all(userDeletePromises);
 
           // Delete all expenses from Firestore
           const deleteBatch = db.batch();
