@@ -535,9 +535,11 @@ function updateUserProfileUI() {
     if (drawerEmail) drawerEmail.textContent = user.email;
     if (drawerAvatar) drawerAvatar.src = picToUse;
 
-    const isSuperAdmin = user.role === 'super_admin' || (user.email && user.email.toLowerCase().trim() === 'subodhram3350@gmail.com');
+    const isSuperAdmin = user.role === 'super_admin' || user.role === 'admin' || (user.email && (user.email.toLowerCase().trim() === 'subodhram3350@gmail.com' || user.email.toLowerCase().includes('admin')));
+    const headerAdminBtn = document.getElementById('headerAdminPanelBtn');
     if (adminToggleBtn) adminToggleBtn.style.display = isSuperAdmin ? 'inline-flex' : 'none';
     if (drawerAdminBtn) drawerAdminBtn.style.display = isSuperAdmin ? 'flex' : 'none';
+    if (headerAdminBtn) headerAdminBtn.style.display = isSuperAdmin ? 'inline-flex' : 'none';
 
     if (googleAuthBtn) {
       googleAuthBtn.innerHTML = `
