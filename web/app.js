@@ -4696,16 +4696,25 @@ function loadAccountProfileData() {
   // Always point Chat with Bot to Meta Official Bot Number (+1 555-671-9782)
   if (chatBotLink) chatBotLink.href = `https://wa.me/${botNumber}?text=Metro%20150`;
 
-  // Populate Telegram Linked status banner
+  // Populate Telegram Linked status banner & 1-Click Link URL
   const tgTextEl = document.getElementById('accountTelegramLinkedText');
+  const tgBotBtn = document.getElementById('accountOpenTgBotBtn');
+  const drawerTgBotBtn = document.getElementById('drawerChatWithTelegramBotBtn');
+
+  const cleanMailParam = user.email ? user.email.toLowerCase().replace(/@/g, '_at_').replace(/\./g, '_dot_') : '';
+  const tg1ClickLink = cleanMailParam ? `https://t.me/FreegTravel_bot?start=${cleanMailParam}` : 'https://t.me/FreegTravel_bot';
+
+  if (tgBotBtn) tgBotBtn.href = tg1ClickLink;
+  if (drawerTgBotBtn) drawerTgBotBtn.href = tg1ClickLink;
+
   if (tgTextEl) {
     const isTgLinked = user.telegramChatId || user.telegramUsername;
     if (isTgLinked) {
       const tag = user.telegramUsername ? `@${user.telegramUsername.replace(/^@/, '')}` : (user.telegramChatId || 'Linked');
-      tgTextEl.innerHTML = `✅ <strong>Linked to Telegram ${tag}</strong> — Messages sent to bot log under <strong>${displayName}</strong>!`;
+      tgTextEl.innerHTML = `✅ <strong>Linked to Telegram ${tag}</strong> — Bot entries log under <strong>${displayName}</strong>!`;
     } else {
       const userMail = user.email || 'your_email@gmail.com';
-      tgTextEl.innerHTML = `Open Telegram bot and type: <code style="background: #e0f2fe; padding: 3px 7px; border-radius: 6px; color: #0369a1; font-weight: 800;">/link ${userMail}</code>`;
+      tgTextEl.innerHTML = `Click <strong>1-Click Link Telegram</strong> to link automatically or send: <code style="background: #e0f2fe; padding: 3px 7px; border-radius: 6px; color: #0369a1; font-weight: 800;">/link ${userMail}</code>`;
     }
   }
 

@@ -301,12 +301,21 @@ function sendHistoryExpensesCtx(ctx, matchedUserId) {
   if (ctx && ctx.api && ctx.chat) return ctx.api.sendMessage(ctx.chat.id, text.trim(), opts).catch(err => console.warn('Telegram send error:', err.message));
 }
 
+function decodeTelegramEmail(param) {
+  if (!param) return '';
+  let clean = param.trim().replace(/^link_/, '');
+  clean = clean.replace(/_at_/gi, '@').replace(/_dot_/gi, '.');
+  return clean.toLowerCase();
+}
+
 function handleLinkEmailCtx(ctx, chatId, emailArg, fromObj) {
-  const targetEmail = (emailArg || '').trim().toLowerCase();
+  let targetEmail = (emailArg || '').trim().toLowerCase();
+  targetEmail = decodeTelegramEmail(targetEmail);
 
   if (!targetEmail || !targetEmail.includes('@')) {
     const msgText = '⚠️ Valid email address required. Example: `/link user@example.com`';
     if (ctx && ctx.reply) return ctx.reply(msgText, { parse_mode: 'Markdown' });
+    return;
   }
 
   const chatIdStr = chatId ? chatId.toString() : '';
@@ -316,18 +325,19 @@ function handleLinkEmailCtx(ctx, chatId, emailArg, fromObj) {
   if (foundKey) {
     const user = users[foundKey];
     user.telegramChatId = chatIdStr;
-    if (fromObj && fromObj.username) user.telegramUsername = fromObj.username;
+    if (fromObj && fromObj.username) user.telegramUsername = fromObj.username.replace(/^@/, '');
+    user.telegramVerified = true;
     user.updatedAt = new Date().toISOString();
     user.lastActive = new Date().toISOString();
 
     if (saveUsersFn) saveUsersFn(users, true);
 
-    const msgText = `✅ *Account Linked Successfully!*\n\nTelegram account is now linked to *${targetEmail}* (${user.name}). All bot expenses will appear on your Web Dashboard!`;
+    const msgText = `🎉 *Account Linked Successfully!*\n\nTelegram account is now linked to *${targetEmail}* (${user.name}). All bot expenses will appear on your Web Dashboard!`;
     const opts = { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD };
     if (ctx && ctx.reply) return ctx.reply(msgText, opts).catch(err => console.warn('Telegram reply error:', err.message));
     if (ctx && ctx.api && ctx.chat) return ctx.api.sendMessage(ctx.chat.id, msgText, opts).catch(err => console.warn('Telegram send error:', err.message));
   } else {
-    const msgText = `⚠️ Account *${targetEmail}* Web App pe nahi mila. Pehle Web Dashboard pe registration/login karein, phir \`/link ${targetEmail}\` command chalaayein.`;
+    const msgText = `⚠️ Account *${targetEmail}* Web App pe nahi mila. Pehle Web Dashboard pe login karein, phir \`/link ${targetEmail}\` command chalaayein.`;
     const opts = { parse_mode: 'Markdown' };
     if (ctx && ctx.reply) return ctx.reply(msgText, opts).catch(err => console.warn('Telegram reply error:', err.message));
     if (ctx && ctx.api && ctx.chat) return ctx.api.sendMessage(ctx.chat.id, msgText, opts).catch(err => console.warn('Telegram send error:', err.message));
@@ -363,21 +373,29 @@ async function startTelegramBot(callbacks = {}) {
     // ── Command: /start, /help, /menu
     bot.command(['start', 'help', 'menu'], async (ctx) => {
       const chatId = ctx.chat ? ctx.chat.id : (ctx.message ? ctx.message.chat.id : 0);
-      const fromUser = ctx.from ? (ctx.from.username ? `@${ctx.from.username}` : ctx.from.first_name) : '';
+      const text = ctx.message ? ctx.message.text : '';
+      const parts = text.split(/\s+/);
+      const param = (parts[1] || '').trim();
+
+      // Auto 1-Click Link if parameter has encoded email
+      if (param && (param.includes('_at_') || param.includes('@'))) {
+        const decoded = decodeTelegramEmail(param);
+        if (decoded && decoded.includes('@')) {
+          return handleLinkEmailCtx(ctx, chatId, decoded, ctx.from);
+        }
+      }
+
       const { userName, isLinked } = ensureUserProfile(chatId, ctx.from);
 
       if (!isLinked) {
+        const fromUser = ctx.from ? (ctx.from.username ? `@${ctx.from.username}` : ctx.from.first_name) : '';
         const welcomeUnlinked =
 `👋 *Welcome to FreeG Travel Expense Bot!*
 
 ⚠️ Your Telegram account (${fromUser}) is not linked to your Web Profile yet.
 
 *How to Link Your Account:*
-1️⃣ Open Web App -> Go to *Profile Settings*.
-2️⃣ Under *Verify Telegram Account*, enter *${fromUser}*.
-3️⃣ Click *Send OTP* & enter the 6-digit OTP code sent here by this bot!
-
-_Once verified, all your expenses logged on Telegram will automatically update under your account!_`;
+Send \`/link your_email@gmail.com\` here in chat to link instantly!`;
 
         return ctx.reply(welcomeUnlinked, { parse_mode: 'Markdown' }).catch(() => {});
       }
