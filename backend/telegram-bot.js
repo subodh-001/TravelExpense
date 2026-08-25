@@ -80,28 +80,7 @@ function ensureUserProfile(chatId, fromObj) {
     userEmail = existing.email || '';
     userName = existing.name || fullName;
   } else {
-    // 2. Try to fallback to master admin account if email is subodhram3350@gmail.com
-    const adminKey = Object.keys(users).find(key => {
-      const u = users[key];
-      return u && u.email && u.email.toLowerCase() === 'subodhram3350@gmail.com';
-    });
-
-    if (adminKey && chatIdStr) {
-      const adminUser = users[adminKey];
-      if (!adminUser.telegramChatId) {
-        adminUser.telegramChatId = chatIdStr;
-        if (fromUsername) adminUser.telegramUsername = fromUsername;
-        adminUser.lastActive = new Date().toISOString();
-        if (saveUsersFn) saveUsersFn(users, false);
-        
-        matchedUserId = adminUser.id || adminKey;
-        userEmail = adminUser.email;
-        userName = adminUser.name;
-        return { matchedUserId, userEmail, userName };
-      }
-    }
-
-    // 3. New Telegram user -> Create User Profile automatically in database
+    // New Telegram user -> Create User Profile automatically in database
     const newUserObj = {
       id: matchedUserId,
       name: fullName,
@@ -231,7 +210,7 @@ function sendMonthlySummaryCtx(ctx, matchedUserId) {
   const currentMonth = new Date().toISOString().substring(0, 7);
   const allExpenses = getExpensesFn ? getExpensesFn() : [];
 
-  const userExpenses = allExpenses.filter(e => e && (e.userId === matchedUserId || e.userId.startsWith('telegram_')));
+  const userExpenses = allExpenses.filter(e => e && e.userId === matchedUserId);
   const monthExpenses = userExpenses.filter(e => e.date && e.date.startsWith(currentMonth));
   const totalLogged = monthExpenses.reduce((s, e) => s + (e.total || 0), 0);
   const paidTotal = monthExpenses.filter(e => e.paymentStatus === 'paid').reduce((s, e) => s + (e.total || 0), 0);
@@ -253,7 +232,7 @@ function sendMonthlySummaryCtx(ctx, matchedUserId) {
 function sendHistoryExpensesCtx(ctx, matchedUserId) {
   const allExpenses = getExpensesFn ? getExpensesFn() : [];
   const userExpenses = allExpenses
-    .filter(e => e && (e.userId === matchedUserId || e.userId.startsWith('telegram_')))
+    .filter(e => e && e.userId === matchedUserId)
     .sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
     .slice(0, 5);
 

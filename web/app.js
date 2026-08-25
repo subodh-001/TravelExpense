@@ -422,6 +422,11 @@ function saveGoogleUser(user) {
     role: user.role || 'user'
   };
 
+  if (!state.currentGoogleUser || state.currentGoogleUser.id !== safeUser.id) {
+    state.expenses = [];
+    state.filteredExpenses = [];
+  }
+
   state.currentGoogleUser = safeUser;
   state.isReadOnlySharedView = false;
   state.sharedMode = false;
@@ -465,8 +470,14 @@ function performSignOut() {
     iconClass: 'fa-right-from-bracket',
     btnText: 'Sign Out',
     onConfirm: () => {
-      localStorage.removeItem('google_user');
+      if (state.currentGoogleUser && state.currentGoogleUser.id) {
+        try { localStorage.removeItem(`cached_expenses_${state.currentGoogleUser.id}`); } catch (e) {}
+      }
+      try { localStorage.removeItem('cached_expenses'); } catch (e) {}
+      try { localStorage.removeItem('google_user'); } catch (e) {}
       state.currentGoogleUser = null;
+      state.expenses = [];
+      state.filteredExpenses = [];
       state.isReadOnlySharedView = false;
       state.sharedMode = false;
 
@@ -847,17 +858,25 @@ async function loadExpenses() {
   if (!state.currentGoogleUser) {
     state.currentGoogleUser = getStoredGoogleUser();
   }
-  try {
-    const user = state.currentGoogleUser || DEFAULT_GOOGLE_USER;
-    const url = `${API_BASE_URL}/expenses`;
+  const user = state.currentGoogleUser;
+  if (!user || !user.id) {
+    state.expenses = [];
+    populateMonthSelector();
+    applyFilters();
+    populateUserMonthSelector();
+    renderUserEntriesList();
+    return;
+  }
 
+  try {
+    const url = `${API_BASE_URL}/expenses`;
     const res = await fetchWithAuth(url);
     const data = await res.json();
 
     if (data.success) {
       state.expenses = data.expenses || [];
       try {
-        localStorage.setItem('cached_expenses', JSON.stringify(state.expenses));
+        localStorage.setItem(`cached_expenses_${user.id}`, JSON.stringify(state.expenses));
       } catch (e) {}
       populateMonthSelector();
       applyFilters();
@@ -865,15 +884,20 @@ async function loadExpenses() {
       renderUserEntriesList();
     } else {
       console.error('Failed to load expenses:', data.error);
+      state.expenses = [];
+      populateMonthSelector();
+      applyFilters();
+      populateUserMonthSelector();
+      renderUserEntriesList();
     }
   } catch (err) {
     console.error('Error fetching expenses:', err);
     try {
-      const cached = localStorage.getItem('cached_expenses');
-      if (cached) {
-        state.expenses = JSON.parse(cached);
-      }
-    } catch (e) {}
+      const cached = localStorage.getItem(`cached_expenses_${user.id}`);
+      state.expenses = cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      state.expenses = [];
+    }
     populateMonthSelector();
     applyFilters();
     populateUserMonthSelector();

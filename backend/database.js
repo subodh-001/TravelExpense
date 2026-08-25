@@ -65,6 +65,16 @@ function syncJSONToSQLite() {
         }
       });
       insertManyUsers(usersObj);
+
+      // Prune SQLite users table to remove deleted users
+      const validUserIds = new Set(Object.values(usersObj).map(u => u.id || '').filter(Boolean));
+      const sqlUsers = db.prepare('SELECT id FROM users').all();
+      for (const row of sqlUsers) {
+        if (!validUserIds.has(row.id)) {
+          db.prepare('DELETE FROM expenses WHERE user_id = ?').run(row.id);
+          db.prepare('DELETE FROM users WHERE id = ?').run(row.id);
+        }
+      }
     }
 
     if (fs.existsSync(expensesPath)) {
@@ -76,9 +86,14 @@ function syncJSONToSQLite() {
 
       const insertManyExp = db.transaction((expList) => {
         for (const e of expList) {
+          if (!e.id) continue;
+          const uId = e.userId || 'unknown';
+          db.prepare(`INSERT OR IGNORE INTO users (id, name, email) VALUES (?, ?, ?)`).run(
+            uId, 'Traveler', uId.includes('@') ? uId : `${uId}@system.local`
+          );
           insertExp.run(
             e.id,
-            e.userId || '',
+            uId,
             e.date || '',
             e.location || '',
             e.notes || '',
@@ -91,6 +106,15 @@ function syncJSONToSQLite() {
         }
       });
       insertManyExp(expArray);
+
+      // Prune SQLite expenses table to remove deleted expenses
+      const validExpIds = new Set(expArray.map(e => e.id).filter(Boolean));
+      const sqlExps = db.prepare('SELECT id FROM expenses').all();
+      for (const row of sqlExps) {
+        if (!validExpIds.has(row.id)) {
+          db.prepare('DELETE FROM expenses WHERE id = ?').run(row.id);
+        }
+      }
     }
   } catch (err) {
     console.error('⚠️ SQLite Sync Error:', err.message);

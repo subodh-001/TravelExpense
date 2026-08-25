@@ -8,6 +8,7 @@ const path = require('path');
 const crypto = require('crypto');
 const dns = require('dns');
 require('dotenv').config();
+const { db: sqliteDb, syncJSONToSQLite } = require('./database');
 
 if (dns.setDefaultResultOrder) {
   try {
@@ -56,9 +57,11 @@ const addDeletedUser = (userOrId) => {
     const addIfNew = (str) => {
       if (!str) return;
       const clean = str.toLowerCase().trim();
-      if (!deleted.includes(clean)) deleted.push(clean);
-      const cleanGoogle = `google_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
-      if (!deleted.includes(cleanGoogle)) deleted.push(cleanGoogle);
+      // Strip any leading google_ prefixes to get the base key
+      const base = clean.replace(/^(google_)+/, '');
+      const googleKey = `google_${base}`;
+      if (!deleted.includes(base)) deleted.push(base);
+      if (!deleted.includes(googleKey)) deleted.push(googleKey);
     };
 
     if (typeof userOrId === 'string') {
@@ -73,12 +76,56 @@ const addDeletedUser = (userOrId) => {
   }
 };
 
+const removeDeletedUser = (userOrId) => {
+  try {
+    const deleted = getDeletedUsers();
+    if (!deleted || !deleted.length) return;
+    const toRemove = new Set();
+    const addClean = (str) => {
+      if (!str) return;
+      const clean = str.toLowerCase().trim();
+      const base = clean.replace(/^(google_)+/, '');
+      toRemove.add(base);
+      toRemove.add(`google_${base}`);
+    };
+    if (typeof userOrId === 'string') addClean(userOrId);
+    else if (userOrId && typeof userOrId === 'object') {
+      addClean(userOrId.id);
+      addClean(userOrId.email);
+    }
+    const filtered = deleted.filter(d => {
+      const dBase = (d || '').toLowerCase().trim().replace(/^(google_)+/, '');
+      return !toRemove.has(dBase) && !toRemove.has(`google_${dBase}`);
+    });
+    if (filtered.length !== deleted.length) {
+      fs.writeFileSync(DELETED_USERS_FILE, JSON.stringify(filtered, null, 2));
+    }
+  } catch (e) {
+    console.error('Error removing deleted user:', e);
+  }
+};
+
 const isUserDeleted = (userIdOrEmail) => {
   if (!userIdOrEmail) return false;
-  const deleted = getDeletedUsers();
   const clean = userIdOrEmail.toLowerCase().trim();
-  const cleanGoogle = `google_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`;
-  return deleted.includes(clean) || deleted.includes(cleanGoogle);
+  const base = clean.replace(/^(google_)+/, '');
+  const googleKey = `google_${base}`;
+
+  // If user exists in active users database, they are NOT deleted
+  try {
+    const raw = fs.readFileSync(USERS_DB_FILE, 'utf8');
+    const users = JSON.parse(raw || '{}');
+    if (users[clean] || users[googleKey]) return false;
+    for (const k in users) {
+      const u = users[k];
+      if (u && ((u.id && u.id.toLowerCase() === clean) || (u.email && u.email.toLowerCase() === clean))) {
+        return false;
+      }
+    }
+  } catch (e) {}
+
+  const deleted = getDeletedUsers();
+  return deleted.includes(base) || deleted.includes(googleKey) || deleted.includes(clean);
 };
 
 // Daily automated snapshot backup function
@@ -220,6 +267,7 @@ const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
     fs.writeFileSync(tempPath, JSON.stringify(expenses, null, 2));
     fs.renameSync(tempPath, LOCAL_DB_FILE);
     createDataBackup();
+    try { syncJSONToSQLite(); } catch (sqErr) {}
     if (triggerBroadcast) {
       broadcastEvent('EXPENSES_UPDATED');
     }
@@ -254,20 +302,6 @@ const getLocalUsers = () => {
     }
   }
 
-  // Filter out any blacklisted deleted users
-  const deleted = getDeletedUsers();
-  if (deleted.length > 0) {
-    Object.keys(users).forEach(key => {
-      const u = users[key];
-      const kClean = key.toLowerCase().trim();
-      const eClean = (u && u.email) ? u.email.toLowerCase().trim() : '';
-      const idClean = (u && u.id) ? u.id.toLowerCase().trim() : '';
-      if (deleted.includes(kClean) || deleted.includes(eClean) || deleted.includes(idClean)) {
-        delete users[key];
-      }
-    });
-  }
-
   return users;
 };
 
@@ -277,6 +311,7 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
     fs.writeFileSync(tempPath, JSON.stringify(users, null, 2));
     fs.renameSync(tempPath, USERS_DB_FILE);
     createDataBackup();
+    try { syncJSONToSQLite(); } catch (sqErr) {}
     if (triggerBroadcast) {
       broadcastEvent('USERS_UPDATED');
     }
@@ -388,25 +423,23 @@ const triggerCloudSync = async () => {
         let usersChanged = false;
         let expensesChanged = false;
 
-        // ✅ FIX: Apply deletedUsers from remote — purge locally if deleted on Live
+        // Apply deletedUsers from remote ONLY IF user is NOT active in local users DB
         if (Array.isArray(data.deletedUsers) && data.deletedUsers.length > 0) {
           data.deletedUsers.forEach(delId => {
-            addDeletedUser(delId);
             const clean = (delId || '').toLowerCase().trim();
-            Object.keys(lUsers).forEach(k => {
-              const u = lUsers[k];
-              if (
-                k.toLowerCase() === clean ||
-                (u && u.id && u.id.toLowerCase() === clean) ||
-                (u && u.email && u.email.toLowerCase() === clean)
-              ) {
-                delete lUsers[k];
-                usersChanged = true;
-              }
-            });
-            const before = lExpenses.length;
-            lExpenses = lExpenses.filter(e => (e.userId || '').toLowerCase().trim() !== clean);
-            if (lExpenses.length !== before) expensesChanged = true;
+            const isActiveLocally = Object.values(lUsers).some(u => 
+              u && (
+                (u.id && u.id.toLowerCase() === clean) ||
+                (u.email && u.email.toLowerCase() === clean) ||
+                (u.email && `google_${u.email.replace(/[^a-zA-Z0-9]/g, '_')}`.toLowerCase() === clean)
+              )
+            );
+            if (!isActiveLocally) {
+              addDeletedUser(delId);
+              const before = lExpenses.length;
+              lExpenses = lExpenses.filter(e => (e.userId || '').toLowerCase().trim() !== clean);
+              if (lExpenses.length !== before) expensesChanged = true;
+            }
           });
         }
 
@@ -577,10 +610,6 @@ function getUserAliasIds(userId, users = null) {
     }
   }
 
-  if (userId.includes('subodh') || (currentUser && currentUser.email && currentUser.email.includes('subodh'))) {
-    validUserIds.add('google_subodhram3350_gmail_com');
-  }
-
   return validUserIds;
 }
 
@@ -608,29 +637,26 @@ app.post('/api/sync/import', (req, res) => {
     let usersChanged = false;
     let expensesChanged = false;
 
-    // 1. Process and record deleted users blacklist
+    // 1. Process and record deleted users blacklist ONLY IF user is NOT active in local users DB
     if (Array.isArray(deletedUsers) && deletedUsers.length > 0) {
       deletedUsers.forEach(delId => {
-        addDeletedUser(delId);
         const clean = (delId || '').toLowerCase().trim();
-        Object.keys(lUsers).forEach(k => {
-          const u = lUsers[k];
-          if (
-            k.toLowerCase() === clean ||
-            (u && u.id && u.id.toLowerCase() === clean) ||
-            (u && u.email && u.email.toLowerCase() === clean)
-          ) {
-            delete lUsers[k];
-            usersChanged = true;
-          }
-        });
-
-        const initialLength = lExpenses.length;
-        lExpenses = lExpenses.filter(e => {
-          const eUid = (e.userId || '').toLowerCase().trim();
-          return eUid !== clean;
-        });
-        if (lExpenses.length !== initialLength) expensesChanged = true;
+        const isActiveLocally = Object.values(lUsers).some(u => 
+          u && (
+            (u.id && u.id.toLowerCase() === clean) ||
+            (u.email && u.email.toLowerCase() === clean) ||
+            (u.email && `google_${u.email.replace(/[^a-zA-Z0-9]/g, '_')}`.toLowerCase() === clean)
+          )
+        );
+        if (!isActiveLocally) {
+          addDeletedUser(delId);
+          const initialLength = lExpenses.length;
+          lExpenses = lExpenses.filter(e => {
+            const eUid = (e.userId || '').toLowerCase().trim();
+            return eUid !== clean;
+          });
+          if (lExpenses.length !== initialLength) expensesChanged = true;
+        }
       });
     }
 
@@ -917,6 +943,11 @@ app.post('/api/auth/register', (req, res) => {
 
     const cleanEmail = email.toLowerCase().trim();
     const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    
+    // Un-blacklist user if re-registering
+    removeDeletedUser(cleanEmail);
+    removeDeletedUser(userId);
+
     const existingUser = findUserByEmail(cleanEmail);
 
     if (existingUser && existingUser.passwordHash) {
@@ -947,6 +978,66 @@ app.post('/api/auth/register', (req, res) => {
     console.log(`👤 Registered new user account: ${cleanEmail}`);
     res.json({ success: true, user: safeUser });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Google Sign-In & Auth Handler
+app.post('/api/auth/google', (req, res) => {
+  try {
+    const { credential, email, name, picture, id } = req.body;
+    let userEmail = email;
+    let userName = name;
+    let userPic = picture;
+    let googleId = id;
+
+    if (credential) {
+      try {
+        const payload = JSON.parse(Buffer.from(credential.split('.')[1], 'base64').toString('utf8'));
+        userEmail = payload.email || userEmail;
+        userName = payload.name || userName;
+        userPic = payload.picture || userPic;
+        googleId = payload.sub ? `google_${payload.sub}` : googleId;
+      } catch (e) {}
+    }
+
+    if (!userEmail) {
+      return res.status(400).json({ error: 'Valid email address is required for Google Sign In' });
+    }
+
+    const cleanEmail = userEmail.toLowerCase().trim();
+    const userId = googleId || `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const cleanName = (userName || cleanEmail.split('@')[0]).replace(/[\._]/g, ' ');
+    const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+
+    // Un-blacklist user on sign in
+    removeDeletedUser(cleanEmail);
+    removeDeletedUser(userId);
+
+    const users = getLocalUsers();
+    const existing = users[userId] || findUserByEmail(cleanEmail) || {};
+
+    const userData = {
+      ...existing,
+      id: userId,
+      name: existing.name || capitalizedName,
+      email: cleanEmail,
+      picture: userPic || existing.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`,
+      verified: true,
+      role: existing.role || 'user',
+      updatedAt: new Date().toISOString()
+    };
+
+    users[userId] = userData;
+    saveLocalUsers(users);
+
+    const safeUser = { ...userData };
+    delete safeUser.passwordHash;
+
+    console.log(`🎉 Google Auth successful for: ${cleanEmail} (${userId})`);
+    res.json({ success: true, user: safeUser });
+  } catch (err) {
+    console.error('Google Auth error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1127,6 +1218,10 @@ app.post('/api/auth/verify-otp', (req, res) => {
     const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
     const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
+    // Un-blacklist user on OTP verification
+    removeDeletedUser(cleanEmail);
+    removeDeletedUser(userId);
+
     const users = getLocalUsers();
     const existing = users[userId] || {};
 
@@ -1208,6 +1303,9 @@ app.post('/api/user/profile', async (req, res) => {
   try {
     const { id, name, email, picture, password, role, phone, whatsapp } = req.body;
     if (!id) return res.status(400).json({ error: 'User ID is required' });
+
+    if (email) removeDeletedUser(email);
+    if (id) removeDeletedUser(id);
 
     const users = getLocalUsers();
     const existingUser = users[id] || {};
@@ -1346,17 +1444,42 @@ const adminInviteStore = new Map();
 // Send Super Admin Invitation Link via Email
 app.post('/api/admin/invite-admin', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, name, role } = req.body;
     if (!email || !email.includes('@')) {
       return res.status(400).json({ error: 'Valid email address is required' });
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    // Un-blacklist email/ID if previously marked deleted
+    removeDeletedUser(cleanEmail);
+    removeDeletedUser(userId);
+
     const token = uuidv4();
     const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 
     adminInviteStore.set(token, { email: cleanEmail, expiresAt });
     console.log(`👑 Created Super Admin Invitation Token for ${cleanEmail}: ${token}`);
+
+    // Immediately persist user in DB as Admin
+    const users = getLocalUsers();
+    const cleanName = (name || cleanEmail.split('@')[0]).replace(/[\._]/g, ' ');
+    const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    const targetRole = role === 'super_admin' ? 'super_admin' : 'admin';
+
+    users[userId] = {
+      ...(users[userId] || {}),
+      id: userId,
+      name: users[userId]?.name || capitalizedName,
+      email: cleanEmail,
+      picture: users[userId]?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`,
+      role: targetRole,
+      verified: true,
+      createdAt: users[userId]?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    saveLocalUsers(users);
 
     const protocol = req.protocol || 'http';
     const host = req.get('host') || 'localhost:3000';
@@ -1374,7 +1497,7 @@ app.post('/api/admin/invite-admin', async (req, res) => {
             </div>
             <h2 style="color: #0f172a; font-size: 22px; font-weight: 800; margin-bottom: 8px;">FreeG Wifi — Super Admin Invitation</h2>
             <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
-              You have been invited to become a <strong>Super Admin</strong> for FreeG Wifi. Accepting this invitation grants you full administrative privileges to view all system users and expense amounts.
+              You have been granted <strong>Super Admin</strong> access for FreeG Wifi. Accepting this invitation grants you full administrative privileges to view all system users and expense amounts.
             </p>
             <div style="text-align: center; margin-bottom: 28px;">
               <a href="${approvalLink}" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 800; font-size: 16px; display: inline-block; box-shadow: 0 4px 14px rgba(79,70,229,0.35);">
@@ -1395,8 +1518,9 @@ app.post('/api/admin/invite-admin', async (req, res) => {
 
     res.json({
       success: true,
-      message: `Super Admin Invitation Link sent to ${cleanEmail}`,
-      approvalLink
+      message: `Admin role granted and added to user directory for ${cleanEmail}`,
+      approvalLink,
+      user: users[userId]
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1431,6 +1555,10 @@ app.get('/api/admin/accept-invite', (req, res) => {
 
     const cleanEmail = invite.email;
     const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    removeDeletedUser(cleanEmail);
+    removeDeletedUser(userId);
+
     const users = getLocalUsers();
     const existing = users[userId] || {};
 
@@ -1560,30 +1688,36 @@ app.get('/api/admin/users', async (req, res) => {
 
 app.post('/api/admin/add-member', async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, role } = req.body;
     if (!email || !email.includes('@')) {
       return res.status(400).json({ error: 'Valid email address is required' });
     }
     const cleanEmail = email.toLowerCase().trim();
     const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    // Un-blacklist email/ID if previously marked deleted
+    removeDeletedUser(cleanEmail);
+    removeDeletedUser(userId);
+
     const users = getLocalUsers();
 
-    if (users[userId]) {
-      return res.status(400).json({ error: 'Member with this email already exists' });
-    }
+    const cleanName = (name || cleanEmail.split('@')[0]).replace(/[\._]/g, ' ');
+    const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
 
     users[userId] = {
+      ...(users[userId] || {}),
       id: userId,
-      name: name || cleanEmail.split('@')[0],
+      name: capitalizedName,
       email: cleanEmail,
-      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || cleanEmail)}`,
+      picture: users[userId]?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`,
       verified: true,
-      role: 'user',
-      createdAt: new Date().toISOString(),
+      role: role === 'admin' ? 'admin' : (users[userId]?.role || 'user'),
+      createdAt: users[userId]?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
     saveLocalUsers(users);
 
+    console.log(`👤 Admin added new member: ${cleanEmail} (${capitalizedName})`);
     res.json({ success: true, user: users[userId] });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1592,7 +1726,7 @@ app.post('/api/admin/add-member', async (req, res) => {
 
 app.post('/api/admin/edit-member', async (req, res) => {
   try {
-    const { userId, name, email } = req.body;
+    const { userId, name, email, role } = req.body;
     if (!userId) return res.status(400).json({ error: 'User ID is required' });
 
     const users = getLocalUsers();
@@ -1600,6 +1734,7 @@ app.post('/api/admin/edit-member', async (req, res) => {
 
     if (name) users[userId].name = name.trim();
     if (email && email.includes('@')) users[userId].email = email.toLowerCase().trim();
+    if (role) users[userId].role = role;
     users[userId].updatedAt = new Date().toISOString();
 
     saveLocalUsers(users);
@@ -1962,6 +2097,17 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
         }
       }
 
+      // Delete from local SQLite database
+      try {
+        if (sqliteDb) {
+          sqliteDb.prepare('DELETE FROM users WHERE id = ? OR email = ?').run(userId, matchedTarget?.email || userId);
+          if (userCleanId) sqliteDb.prepare('DELETE FROM users WHERE id = ?').run(userCleanId);
+          sqliteDb.prepare('DELETE FROM expenses WHERE user_id = ? OR user_id = ?').run(userId, userCleanId || userId);
+        }
+      } catch (sqDelErr) {
+        console.warn('SQLite user deletion note:', sqDelErr.message);
+      }
+
       console.log(`🗑️ Permanently deleted member account: ${userId} (${matchedTarget?.email || ''})`);
       
       // ✅ AUTO-SYNC: Immediately broadcast deletion to Render Live Host
@@ -2221,8 +2367,8 @@ app.get('/api/expenses', async (req, res) => {
       userId = req.headers['user-id'];
     }
 
-    if (!userId || userId === 'user_123' || userId === 'google_user') {
-      return res.status(401).json({ error: 'Unauthorized: user-id required' });
+    if (!userId || userId === 'user_123' || userId === 'google_user' || isUserDeleted(userId)) {
+      return res.status(401).json({ error: 'Unauthorized: Account deleted or invalid' });
     }
 
     // Collect all valid user ID aliases (Google sub ID, Telegram ID, WhatsApp ID, Email)
@@ -2625,9 +2771,32 @@ app.post('/api/admin/invite-member', async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    // Un-blacklist if previously deleted
+    removeDeletedUser(cleanEmail);
+    removeDeletedUser(userId);
+
     const token = crypto.randomBytes(24).toString('hex');
     const roleToSet = role === 'admin' ? 'admin' : 'user';
 
+    const users = getLocalUsers();
+    const cleanName = (name || cleanEmail.split('@')[0]).replace(/[\._]/g, ' ');
+    const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+
+    if (!users[userId]) {
+      users[userId] = {
+        id: userId,
+        name: capitalizedName,
+        email: cleanEmail,
+        picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(capitalizedName)}`,
+        verified: true,
+        role: roleToSet,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      saveLocalUsers(users);
+    }
     const invites = getLocalInvites();
     invites[token] = {
       token,
@@ -2721,6 +2890,11 @@ app.post('/api/admin/complete-invite', (req, res) => {
 
     const cleanEmail = inv.email.toLowerCase().trim();
     const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+    // Un-blacklist user
+    removeDeletedUser(cleanEmail);
+    removeDeletedUser(userId);
+
     const users = getLocalUsers();
     const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
 
