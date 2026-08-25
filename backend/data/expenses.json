@@ -1,5 +1,27 @@
 [
   {
+    "id": "exp_tg_metro_100_restored",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-25",
+    "location": "Metro",
+    "notes": "Metro",
+    "paymentStatus": "pending",
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 100
+      }
+    ],
+    "total": 100,
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1787682900/expense_receipts/Subodh_Ram/August_2026/25_Aug_2026/file_1787682900.jpg"
+    ],
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1787682900/expense_receipts/Subodh_Ram/August_2026/25_Aug_2026/file_1787682900.jpg",
+    "createdAt": "2026-08-25T19:29:31.587Z",
+    "updatedAt": "2026-08-25T19:29:31.588Z",
+    "source": "Telegram Bot"
+  },
+  {
     "id": "exp_5fcd4783",
     "userId": "google_nothingsubodh_gmail_com",
     "date": "2026-08-25",
