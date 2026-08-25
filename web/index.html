@@ -507,35 +507,20 @@
             </div>
           </div>
 
-          <!-- Telegram Account Verification Section -->
+          <!-- Telegram Account Integration Section -->
           <div style="border-top: 1px dashed #cbd5e1; padding-top: 18px; margin-top: 18px; margin-bottom: 18px;">
             <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-              <i class="fa-brands fa-telegram" style="color: #0088cc;"></i> Verify Telegram Account
+              <i class="fa-brands fa-telegram" style="color: #0088cc;"></i> Telegram Bot Integration
             </h4>
 
-            <!-- Verified badge (shown after success) -->
-            <div id="accountTelegramLinkedStatus" style="display: none; font-size: 0.82rem; color: #0369a1; font-weight: 700; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; align-items: center; gap: 8px;"></div>
-
-            <!-- Step 1: Enter Telegram Username & Send OTP -->
-            <div id="tgOtpStep1" style="display: flex; gap: 8px;">
-              <input type="text" id="accountTelegramUsernameInput" placeholder="Enter Telegram username (e.g. @username)" style="flex: 1; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 0.88rem; box-sizing: border-box; min-width: 0;" />
-              <button type="button" id="tgSendOtpBtn" onclick="handleSendTelegramOTP()" style="background: #0088cc; color: #ffffff; border: none; border-radius: 10px; font-weight: 800; font-size: 0.85rem; padding: 10px 16px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
-                <i class="fa-solid fa-paper-plane"></i> Send OTP
-              </button>
-            </div>
-
-            <!-- Step 2: Enter OTP (hidden until OTP sent) -->
-            <div id="tgOtpStep2" style="display: none; margin-top: 10px; flex-direction: column; gap: 10px;">
-              <p style="font-size: 0.8rem; color: #0369a1; font-weight: 700; margin: 0; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 6px;">
-                <i class="fa-brands fa-telegram"></i> OTP sent to your Telegram (@FreegTravel_bot). Check your Telegram app!
-              </p>
-              <div style="display: flex; gap: 8px;">
-                <input type="text" id="accountTelegramOtpInput" maxlength="6" placeholder="_ _ _ _ _ _" style="flex: 1; padding: 10px 14px; border: 2px solid #0088cc; border-radius: 10px; font-weight: 800; font-size: 1.1rem; letter-spacing: 8px; text-align: center; box-sizing: border-box; min-width: 0;" />
-                <button type="button" id="tgVerifyOtpBtn" onclick="handleVerifyTelegramOTP()" style="background: #0f172a; color: #ffffff; border: none; border-radius: 10px; font-weight: 800; font-size: 0.85rem; padding: 10px 16px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
-                  <i class="fa-solid fa-shield-check"></i> Verify & Link
-                </button>
+            <div id="accountTelegramLinkedStatus" style="font-size: 0.85rem; color: #0369a1; font-weight: 700; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fa-brands fa-telegram" style="font-size: 1.3rem; color: #0088cc;"></i>
+                <span id="accountTelegramLinkedText">Open Telegram bot and type: <code style="background: #e0f2fe; padding: 3px 7px; border-radius: 6px; color: #0369a1; font-weight: 800;">/link your_email</code></span>
               </div>
-              <button type="button" onclick="document.getElementById('tgOtpStep2').style.display='none'; document.getElementById('tgOtpStep1').style.display='flex';" style="font-size: 0.75rem; color: #94a3b8; background: none; border: none; cursor: pointer; text-align: left; padding: 0; font-weight: 600;">← Change username</button>
+              <a href="https://t.me/FreegTravel_bot" target="_blank" style="background: #0088cc; color: white; border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 700; padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                <i class="fa-solid fa-paper-plane"></i> Open Telegram Bot
+              </a>
             </div>
           </div>
           <!-- Form: Change Password (Collapsible Accordion) -->
