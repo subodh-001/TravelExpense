@@ -1858,7 +1858,7 @@ app.post('/api/admin/add-member', async (req, res) => {
     const cleanName = (name || cleanEmail.split('@')[0]).replace(/[\._]/g, ' ');
     const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
 
-    users[userId] = {
+    const newUserObj = {
       ...(users[userId] || {}),
       id: userId,
       name: capitalizedName,
@@ -1869,7 +1869,18 @@ app.post('/api/admin/add-member', async (req, res) => {
       createdAt: users[userId]?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+
+    users[userId] = newUserObj;
     saveLocalUsers(users);
+
+    // 🔥 Direct await write to Firebase Firestore
+    if (useFirebase && db) {
+      await db.collection('users').doc(userId).set(newUserObj, { merge: true }).catch(err => {
+        console.warn('Firebase add-member note:', err.message);
+      });
+      const delDocs = await db.collection('deleted_users').where('email', '==', cleanEmail).get().catch(() => ({ docs: [] }));
+      delDocs.docs.forEach(doc => doc.ref.delete().catch(() => {}));
+    }
 
     console.log(`👤 Admin added new member: ${cleanEmail} (${capitalizedName})`);
     res.json({ success: true, user: users[userId] });
@@ -1892,6 +1903,14 @@ app.post('/api/admin/edit-member', async (req, res) => {
     users[userId].updatedAt = new Date().toISOString();
 
     saveLocalUsers(users);
+
+    // 🔥 Direct await write to Firebase Firestore
+    if (useFirebase && db) {
+      await db.collection('users').doc(userId).set(users[userId], { merge: true }).catch(err => {
+        console.warn('Firebase edit-member note:', err.message);
+      });
+    }
+
     res.json({ success: true, user: users[userId] });
   } catch (err) {
     res.status(500).json({ error: err.message });
