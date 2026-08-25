@@ -216,39 +216,57 @@ async function persistExpense(expense) {
   }
 }
 
+// ─── Safe Telegram Reply Helper (Guarantees 100% delivery with HTML mode + Plain text fallback)
+async function safeReplyCtx(ctx, text, replyMarkup = MAIN_KEYBOARD) {
+  if (!ctx) return;
+  const opts = replyMarkup ? { parse_mode: 'HTML', reply_markup: replyMarkup } : { parse_mode: 'HTML' };
+  try {
+    if (ctx.reply) return await ctx.reply(text, opts);
+    if (ctx.api && ctx.chat) return await ctx.api.sendMessage(ctx.chat.id, text, opts);
+  } catch (err) {
+    console.warn('⚠️ HTML Telegram reply note, falling back to plain text:', err.message);
+    const plainOpts = replyMarkup ? { reply_markup: replyMarkup } : {};
+    try {
+      const plainText = text.replace(/<[^>]*>/g, '');
+      if (ctx.reply) return await ctx.reply(plainText, plainOpts);
+      if (ctx.api && ctx.chat) return await ctx.api.sendMessage(ctx.chat.id, plainText, plainOpts);
+    } catch (e2) {
+      console.error('❌ Safe Telegram reply error:', e2.message);
+    }
+  }
+}
+
 // ─── Helper Response Functions
 function sendGreetingMenuCtx(ctx, userName = 'Traveler') {
   const text =
-`🤖 *FGTech Travel Expense Bot* ✈️
+`🤖 <b>FGTech Travel Expense Bot</b> ✈️
 
-Namaste *${userName}*! Main aapka travel expense assistant hun.
+Namaste <b>${userName}</b>! Main aapka travel expense assistant hun.
 
-📝 *Expense Log Karne ke Tarike:*
+📝 <b>Expense Log Karne ke Tarike:</b>
 
-*One-line (fastest):*
-• \`Metro 150\`
-• \`Ola 280 Andheri to Bandra\`
-• \`Food 120 Lunch\`
+<b>One-line (fastest):</b>
+• <code>Metro 150</code>
+• <code>Ola 280 Andheri to Bandra</code>
+• <code>Food 120 Lunch</code>
 
-*Step-by-step (multi-message):*
-1️⃣ Pehle bhejo: \`Uber Andheri\`
-2️⃣ Phir amount: \`280\`
+<b>Step-by-step (multi-message):</b>
+1️⃣ Pehle bhejo: <code>Uber Andheri</code>
+2️⃣ Phir amount: <code>280</code>
 3️⃣ Optional: Bill/ticket ki photo bhejo
 
-📸 *Bill Photo ke saath:*
-• Photo + caption: \`Local 40\`
+📸 <b>Bill Photo ke saath:</b>
+• Photo + caption: <code>Local 40</code>
 • Ya pehle expense bhejo, phir photo bhejo
 
-📊 *Other Commands:*
-• \`/summary\` — Monthly total & balance
-• \`/history\` — Recent 5 entries
-• \`/link user@email.com\` — Web Dashboard account se link karo
+📊 <b>Other Commands:</b>
+• <code>/summary</code> — Monthly total & balance
+• <code>/history</code> — Recent 5 entries
+• <code>/link user@email.com</code> — Web Dashboard account se link karo
 
-🚀 Try karo: *Metro 150*`;
+🚀 Try karo: <b>Metro 150</b>`;
 
-  const opts = { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD };
-  if (ctx && ctx.reply) return ctx.reply(text, opts).catch(err => console.warn('Telegram reply error:', err.message));
-  if (ctx && ctx.api && ctx.chat) return ctx.api.sendMessage(ctx.chat.id, text, opts).catch(err => console.warn('Telegram send error:', err.message));
+  return safeReplyCtx(ctx, text, MAIN_KEYBOARD);
 }
 
 function sendMonthlySummaryCtx(ctx, matchedUserId) {
@@ -262,16 +280,14 @@ function sendMonthlySummaryCtx(ctx, matchedUserId) {
   const pendingTotal = monthExpenses.filter(e => e.paymentStatus !== 'paid').reduce((s, e) => s + (e.total || 0), 0);
 
   const text =
-`📊 *Monthly Travel Summary — ${currentMonth}*
+`📊 <b>Monthly Travel Summary — ${currentMonth}</b>
 
-💰 *Total Logged:* ₹${totalLogged.toLocaleString('en-IN')}
-✅ *Paid/Settled:* ₹${paidTotal.toLocaleString('en-IN')}
-⏳ *Pending Balance:* ₹${pendingTotal.toLocaleString('en-IN')}
-🧾 *Total Entries:* ${monthExpenses.length}`;
+💰 <b>Total Logged:</b> ₹${totalLogged.toLocaleString('en-IN')}
+✅ <b>Paid/Settled:</b> ₹${paidTotal.toLocaleString('en-IN')}
+⏳ <b>Pending Balance:</b> ₹${pendingTotal.toLocaleString('en-IN')}
+🧾 <b>Total Entries:</b> ${monthExpenses.length}`;
 
-  const opts = { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD };
-  if (ctx && ctx.reply) return ctx.reply(text, opts).catch(err => console.warn('Telegram reply error:', err.message));
-  if (ctx && ctx.api && ctx.chat) return ctx.api.sendMessage(ctx.chat.id, text, opts).catch(err => console.warn('Telegram send error:', err.message));
+  return safeReplyCtx(ctx, text, MAIN_KEYBOARD);
 }
 
 function sendHistoryExpensesCtx(ctx, matchedUserId) {
@@ -281,24 +297,20 @@ function sendHistoryExpensesCtx(ctx, matchedUserId) {
     .sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
     .slice(0, 5);
 
-  const opts = { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD };
-
   if (userExpenses.length === 0) {
-    const emptyMsg = '📂 *Koi entries nahi hain abhi.* Type karo `Metro 150` to start!';
-    if (ctx && ctx.reply) return ctx.reply(emptyMsg, opts).catch(err => console.warn('Telegram reply error:', err.message));
-    if (ctx && ctx.api && ctx.chat) return ctx.api.sendMessage(ctx.chat.id, emptyMsg, opts).catch(err => console.warn('Telegram send error:', err.message));
+    const emptyMsg = '📂 <b>Koi entries nahi hain abhi.</b> Type karo <code>Metro 150</code> to start!';
+    return safeReplyCtx(ctx, emptyMsg, MAIN_KEYBOARD);
   }
 
-  let text = '📜 *Recent 5 Travel Entries:*\n\n';
+  let text = '📜 <b>Recent 5 Travel Entries:</b>\n\n';
   userExpenses.forEach((exp, idx) => {
     const emoji = CATEGORY_EMOJIS[exp.location] || '📌';
     const status = exp.paymentStatus === 'paid' ? '✅ Paid' : '⏳ Pending';
     const receipt = (exp.receipts && exp.receipts.length > 0) ? ' 📎' : '';
-    text += `${idx + 1}. *${exp.date}* — ${emoji} ${exp.location}${receipt}\n   💰 ₹${exp.total} (${status})\n   📝 ${exp.notes || '—'}\n\n`;
+    text += `${idx + 1}. <b>${exp.date}</b> — ${emoji} ${exp.location}${receipt}\n   💰 ₹${exp.total} (${status})\n   📝 ${exp.notes || '—'}\n\n`;
   });
 
-  if (ctx && ctx.reply) return ctx.reply(text.trim(), opts).catch(err => console.warn('Telegram reply error:', err.message));
-  if (ctx && ctx.api && ctx.chat) return ctx.api.sendMessage(ctx.chat.id, text.trim(), opts).catch(err => console.warn('Telegram send error:', err.message));
+  return safeReplyCtx(ctx, text.trim(), MAIN_KEYBOARD);
 }
 
 function decodeTelegramEmail(param) {
@@ -313,9 +325,8 @@ function handleLinkEmailCtx(ctx, chatId, emailArg, fromObj) {
   targetEmail = decodeTelegramEmail(targetEmail);
 
   if (!targetEmail || !targetEmail.includes('@')) {
-    const msgText = '⚠️ Valid email address required. Example: `/link user@example.com`';
-    if (ctx && ctx.reply) return ctx.reply(msgText, { parse_mode: 'Markdown' });
-    return;
+    const msgText = '⚠️ Valid email address required. Example: <code>/link user@example.com</code>';
+    return safeReplyCtx(ctx, msgText, null);
   }
 
   const chatIdStr = chatId ? chatId.toString() : '';
@@ -332,15 +343,11 @@ function handleLinkEmailCtx(ctx, chatId, emailArg, fromObj) {
 
     if (saveUsersFn) saveUsersFn(users, true);
 
-    const msgText = `🎉 *Account Linked Successfully!*\n\nTelegram account is now linked to *${targetEmail}* (${user.name}). All bot expenses will appear on your Web Dashboard!`;
-    const opts = { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD };
-    if (ctx && ctx.reply) return ctx.reply(msgText, opts).catch(err => console.warn('Telegram reply error:', err.message));
-    if (ctx && ctx.api && ctx.chat) return ctx.api.sendMessage(ctx.chat.id, msgText, opts).catch(err => console.warn('Telegram send error:', err.message));
+    const msgText = `🎉 <b>Account Linked Successfully!</b>\n\nTelegram account (@${fromObj && fromObj.username ? fromObj.username : 'user'}) is now linked to <b>${targetEmail}</b> (${user.name}). All bot expenses will appear on your Web Dashboard!`;
+    return safeReplyCtx(ctx, msgText, MAIN_KEYBOARD);
   } else {
-    const msgText = `⚠️ Account *${targetEmail}* Web App pe nahi mila. Pehle Web Dashboard pe login karein, phir \`/link ${targetEmail}\` command chalaayein.`;
-    const opts = { parse_mode: 'Markdown' };
-    if (ctx && ctx.reply) return ctx.reply(msgText, opts).catch(err => console.warn('Telegram reply error:', err.message));
-    if (ctx && ctx.api && ctx.chat) return ctx.api.sendMessage(ctx.chat.id, msgText, opts).catch(err => console.warn('Telegram send error:', err.message));
+    const msgText = `⚠️ Account <b>${targetEmail}</b> Web App pe nahi mila. Pehle Web Dashboard pe login karein, phir <code>/link ${targetEmail}</code> command chalaayein.`;
+    return safeReplyCtx(ctx, msgText, null);
   }
 }
 
