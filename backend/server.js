@@ -663,10 +663,12 @@ const uploadToCloudinary = async (fileBuffer, mimeType, folder = 'expense_receip
     const fileName = `upload_${Date.now()}.${ext}`;
 
     const targetFolder = folder.startsWith('expense_receipts') ? folder : `expense_receipts/${folder}`;
+    const fileId = `file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const fullPublicId = `${targetFolder}/${fileId}`;
 
     let body = '';
     body += buildPart('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    body += buildPart('folder', targetFolder);
+    body += buildPart('public_id', fullPublicId);
     body += `--${boundary}${nl}`;
     body += `Content-Disposition: form-data; name="file"; filename="${fileName}"${nl}`;
     body += `Content-Type: ${mimeType}${nl}${nl}`;

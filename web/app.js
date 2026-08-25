@@ -660,10 +660,12 @@ async function handleProfilePhotoSelect(e) {
     const compressedFile = await compressImage(file, 400, 0.8);
 
     // 2. Upload directly to Cloudinary (vrxb6o67 / expense_receipts)
+    const userFolder = getCloudinaryUserFolderName('profile');
+    const fileName = `profile_${Date.now()}`;
     const cloudFormData = new FormData();
     cloudFormData.append('file', compressedFile);
     cloudFormData.append('upload_preset', CLOUDINARY.uploadPreset);
-    cloudFormData.append('folder', getCloudinaryUserFolderName('profile'));
+    cloudFormData.append('public_id', `${userFolder}/${fileName}`);
 
     const cloudRes = await fetch(CLOUDINARY_UPLOAD_URL, {
       method: 'POST',
@@ -1049,10 +1051,12 @@ function renderView() {
 async function uploadFileToStorage(file) {
   if (!file) return '';
   try {
+    const userFolder = getCloudinaryUserFolderName();
+    const fileName = `receipt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const cloudFormData = new FormData();
     cloudFormData.append('file', file);
     cloudFormData.append('upload_preset', CLOUDINARY.uploadPreset);
-    cloudFormData.append('folder', getCloudinaryUserFolderName());
+    cloudFormData.append('public_id', `${userFolder}/${fileName}`);
 
     const cloudRes = await fetch(CLOUDINARY_UPLOAD_URL, {
       method: 'POST',
@@ -2267,10 +2271,12 @@ async function uploadMultipleReceiptFiles(filesList) {
 
       // 2. Direct upload to Cloudinary (vrxb6o67 / expense_receipts)
       try {
+        const userFolder = getCloudinaryUserFolderName();
+        const fileName = `bulk_${Date.now()}_${i + 1}_${Math.random().toString(36).substring(2, 7)}`;
         const cloudFormData = new FormData();
         cloudFormData.append('file', fileToUpload);
         cloudFormData.append('upload_preset', CLOUDINARY.uploadPreset);
-        cloudFormData.append('folder', getCloudinaryUserFolderName());
+        cloudFormData.append('public_id', `${userFolder}/${fileName}`);
 
         const cloudRes = await fetch(CLOUDINARY_UPLOAD_URL, {
           method: 'POST',
