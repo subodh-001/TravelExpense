@@ -367,7 +367,12 @@ async function startTelegramBot(callbacks = {}) {
     console.log('🤖 Telegram Travel Expense Bot CONNECTED & ONLINE! (@FreegTravel_bot) 🚀');
 
     bot.catch((err) => {
-      console.warn('⚠️ Telegram bot error:', err && (err.message || err));
+      const msg = err && (err.message || String(err));
+      if (msg.includes('409') || msg.includes('Conflict') || msg.includes('getUpdates')) {
+        console.warn('⚠️ Telegram bot polling note: Dual container deployment conflict handled gracefully.');
+        return;
+      }
+      console.warn('⚠️ Telegram bot note:', msg);
     });
 
     // ── Command: /start, /help, /menu
@@ -652,7 +657,19 @@ ${emoji} *Category:* ${finalCategory}
     try {
       await bot.api.deleteWebhook({ drop_pending_updates: true }).catch(() => {});
     } catch (_) {}
-    bot.startPolling();
+
+    bot.startPolling({
+      drop_pending_updates: true,
+      allowed_updates: ['message', 'callback_query']
+    }).catch(pollErr => {
+      const msg = pollErr && (pollErr.message || String(pollErr));
+      if (msg.includes('409') || msg.includes('Conflict')) {
+        console.warn('⚠️ Telegram Bot 409 Conflict Note: Dual container deployment on Render detected. Handled gracefully.');
+      } else {
+        console.warn('⚠️ Telegram Bot Polling Note:', msg);
+      }
+    });
+
     return bot;
   } catch (err) {
     console.error('❌ Error starting Telegram Bot:', err.message);
