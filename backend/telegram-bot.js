@@ -474,89 +474,105 @@ Send \`/link your_email@gmail.com\` here in chat to link instantly!`;
       if (!isLinked) {
         const fromUser = (ctx.from && ctx.from.username) ? `@${ctx.from.username}` : (msg.from && msg.from.first_name ? msg.from.first_name : 'User');
         const unlinkedWarning =
-`⚠️ *Telegram Account Not Linked!*
+`⚠️ <b>Telegram Account Not Linked!</b>
 
-Hello *${fromUser}*, your Telegram account is not linked to any Web Profile yet.
+Hello <b>${fromUser}</b>, your Telegram account is not linked to any Web Profile yet.
 
-*How to Link Your Account:*
-1️⃣ Open Web App -> Go to *Profile Settings*.
-2️⃣ Under *Verify Telegram Account*, enter *${fromUser}*.
-3️⃣ Click *Send OTP* & enter the 6-digit OTP code sent here by this bot!
-
-_Once verified, all your travel expenses logged on Telegram will automatically update under your account!_`;
-
-        return ctx.reply(unlinkedWarning, { parse_mode: 'Markdown' }).catch(() => {});
+<b>How to Link:</b>
+Send <code>/link your_email@gmail.com</code> here to link instantly!`;
+        return safeReplyCtx(ctx, unlinkedWarning, null);
       }
 
+      const now = Date.now();
+      // Look up any active context for this user
+      let userContext = userContextStore.get(matchedUserId)
+        || userContextStore.get(chatIdStr)
+        || userContextStore.get(`telegram_${chatIdStr}`)
+        || null;
+      // Expire context older than 10 minutes
+      if (userContext && (now - userContext.timestamp > 600000)) {
+        userContext = null;
+        userContextStore.delete(matchedUserId);
+        userContextStore.delete(chatIdStr);
+        userContextStore.delete(`telegram_${chatIdStr}`);
+      }
+
+      // ── Upload photo if present ──
       let receiptUrl = null;
       if (isPhoto) {
         const largestPhoto = msg.photo[msg.photo.length - 1];
         receiptUrl = await handlePhotoUpload(largestPhoto.file_id, ctx);
       }
 
-      const now = Date.now();
-      const userContext = userContextStore.get(matchedUserId) || userContextStore.get(chatIdStr) || userContextStore.get(`telegram_${chatIdStr}`);
       const parsed = textOnly ? parseExpenseMessage(textOnly) : null;
 
       // ══════════════════════════════════════════════════
-      // CASE A: Photo Message (Attach to recent expense or draft)
+      // CASE A: PHOTO ONLY (no parseable expense text / no caption)
+      //         OR PHOTO + CAPTION that is a location-only (partial)
+      //         -> Store photo and ask for expense details
       // ══════════════════════════════════════════════════
-      if (isPhoto && receiptUrl && (!parsed || parsed.isCommand)) {
-        // 1. Check in-memory userContextStore
-        let targetExp = userContext ? (userContext.lastExpenseObj || null) : null;
-
-        // 2. Fallback: Search DB for user's most recent expense created in last 10 minutes
-        if (!targetExp && getExpensesFn) {
+      if (isPhoto && receiptUrl && (!parsed || parsed.isCommand || (parsed && parsed.isPartial && !parsed.amount))) {
+        // First check: does user have a very recent expense (<10 min) to attach this to?
+        let recentExp = userContext ? (userContext.lastExpenseObj || null) : null;
+        if (!recentExp && getExpensesFn) {
           const allExps = getExpensesFn();
           const tenMinsAgo = now - 600000;
-          targetExp = allExps.find(e =>
+          recentExp = allExps.find(e =>
             e &&
             (e.userId === matchedUserId || e.userId === `telegram_${chatIdStr}` || e.userId === chatIdStr) &&
             (new Date(e.createdAt || e.updatedAt || 0).getTime() > tenMinsAgo)
           ) || null;
         }
 
-        if (targetExp) {
-          if (!targetExp.receipts) targetExp.receipts = [];
-          if (!targetExp.receipts.includes(receiptUrl)) {
-            targetExp.receipts.push(receiptUrl);
-          }
-          targetExp.paymentBillUrl = receiptUrl;
-          targetExp.updatedAt = new Date().toISOString();
+        if (recentExp) {
+          // Attach to the last recent expense
+          if (!recentExp.receipts) recentExp.receipts = [];
+          if (!recentExp.receipts.includes(receiptUrl)) recentExp.receipts.push(receiptUrl);
+          recentExp.paymentBillUrl = receiptUrl;
+          recentExp.updatedAt = new Date().toISOString();
 
-          await persistExpense(targetExp);
+          await persistExpense(recentExp);
           userContextStore.delete(matchedUserId);
           userContextStore.delete(chatIdStr);
           userContextStore.delete(`telegram_${chatIdStr}`);
 
           const confirmMsg =
-`📎 *Receipt Photo Attached!*
+`📎 <b>Receipt Photo Attached!</b>
 
-📅 *Date:* ${targetExp.date}
-${CATEGORY_EMOJIS[targetExp.location] || '📌'} *Category:* ${targetExp.location}
-💰 *Amount:* ₹${(targetExp.total || 0).toLocaleString('en-IN')}
-📝 *Notes:* ${targetExp.notes || targetExp.location}
-✅ *Photo linked to entry in Database!*`;
-
-          return ctx.reply(confirmMsg, { parse_mode: 'Markdown', reply_markup: MAIN_KEYBOARD })
-            .catch(err => console.warn('Telegram reply error:', err.message));
-        } else if (userContext && userContext.draftCategory && (now - userContext.timestamp < 600000)) {
-          const ctxData = { ...userContext, pendingReceiptUrl: receiptUrl, timestamp: now };
-          userContextStore.set(matchedUserId, ctxData);
-          userContextStore.set(chatIdStr, ctxData);
-          return ctx.reply('📸 *Receipt photo saved!* Ab amount bhejein (e.g. `280`) to complete the entry.', { parse_mode: 'Markdown' })
-            .catch(err => console.warn('Telegram reply error:', err.message));
-        } else {
-          const ctxData = { pendingReceiptUrl: receiptUrl, timestamp: now };
-          userContextStore.set(matchedUserId, ctxData);
-          userContextStore.set(chatIdStr, ctxData);
-          return ctx.reply('📸 *Receipt photo received!* Ab travel details aur amount bhejein (e.g. `Metro 150`) to log the expense.', { parse_mode: 'Markdown' })
-            .catch(err => console.warn('Telegram reply error:', err.message));
+📅 <b>Date:</b> ${recentExp.date}
+${CATEGORY_EMOJIS[recentExp.location] || '📌'} <b>Category:</b> ${recentExp.location}
+💰 <b>Amount:</b> ₹${(recentExp.total || 0).toLocaleString('en-IN')}
+📝 <b>Notes:</b> ${recentExp.notes || recentExp.location}
+✅ <b>Photo linked to entry in Database!</b>`;
+          return safeReplyCtx(ctx, confirmMsg, MAIN_KEYBOARD);
         }
+
+        // No recent expense -> Save photo in context and ask for details
+        const ctxData = {
+          ...(userContext || {}),
+          pendingReceiptUrl: receiptUrl,
+          draftCategory: (parsed && parsed.isPartial) ? parsed.category : (userContext ? userContext.draftCategory : null),
+          draftNotes: (parsed && parsed.isPartial) ? parsed.comment : (userContext ? userContext.draftNotes : null),
+          timestamp: now
+        };
+        userContextStore.set(matchedUserId, ctxData);
+        userContextStore.set(chatIdStr, ctxData);
+
+        if (parsed && parsed.isPartial && parsed.category) {
+          const emoji = CATEGORY_EMOJIS[parsed.category] || '📌';
+          return safeReplyCtx(ctx,
+            `📸 <b>Photo + Location saved!</b> ${emoji} <b>${parsed.comment || parsed.category}</b>\n\n💬 Ab sirf amount bhejein (e.g. <code>280</code>) to log this expense!`,
+            null
+          );
+        }
+        return safeReplyCtx(ctx,
+          '📸 <b>Receipt photo received!</b>\n\n💬 Ab expense details bhejein (e.g. <code>Metro 150</code> ya <code>Ola Andheri 280</code>) to log the expense!',
+          null
+        );
       }
 
       // ══════════════════════════════════════════════════
-      // CASE B: Command in message text (e.g. "hii", "hello", "help", "summary")
+      // CASE B: Command keywords (help, summary, history)
       // ══════════════════════════════════════════════════
       if (parsed && parsed.isCommand) {
         if (parsed.command === 'help') return sendGreetingMenuCtx(ctx, userName);
@@ -566,9 +582,9 @@ ${CATEGORY_EMOJIS[targetExp.location] || '📌'} *Category:* ${targetExp.locatio
       }
 
       // ══════════════════════════════════════════════════
-      // CASE C: Partial text (location without amount)
+      // CASE C: Partial text (location without amount) — no photo
       // ══════════════════════════════════════════════════
-      if (parsed && !parsed.isCommand && parsed.isPartial) {
+      if (parsed && !parsed.isCommand && parsed.isPartial && !parsed.amount) {
         const pendingUrl = receiptUrl || (userContext ? userContext.pendingReceiptUrl : null);
         const ctxData = {
           draftCategory: parsed.category,
@@ -580,32 +596,37 @@ ${CATEGORY_EMOJIS[targetExp.location] || '📌'} *Category:* ${targetExp.locatio
         userContextStore.set(chatIdStr, ctxData);
 
         const emoji = CATEGORY_EMOJIS[parsed.category] || '📌';
-        return ctx.reply(
-          `📍 *Location recorded:* ${parsed.comment}\n${emoji} *Category:* ${parsed.category}\n\n💬 Ab amount bhejein (e.g. \`280\`) to complete this entry!`,
-          { parse_mode: 'Markdown' }
-        ).catch(err => console.warn('Telegram reply error:', err.message));
+        return safeReplyCtx(ctx,
+          `📍 <b>Location recorded:</b> ${parsed.comment || parsed.category}\n${emoji} <b>Category:</b> ${parsed.category}\n\n💬 Ab amount bhejein (e.g. <code>280</code>) — ya pehle bill photo bhej sakte ho!`,
+          null
+        );
       }
 
       // ══════════════════════════════════════════════════
-      // CASE D: Full expense entry (has amount)
+      // CASE D: Full expense entry (has amount) — with or without photo
       // ══════════════════════════════════════════════════
       if (parsed && !parsed.isCommand && parsed.amount > 0) {
         let finalCategory = parsed.category;
         let finalNotes = parsed.comment || parsed.category;
         let finalReceipts = receiptUrl ? [receiptUrl] : [];
 
+        // Merge from userContext if within 10 min window
         if (userContext && (now - userContext.timestamp < 600000)) {
           if (userContext.draftCategory && userContext.draftCategory !== 'Others') {
             finalCategory = userContext.draftCategory;
           }
-          if (userContext.draftNotes && userContext.draftNotes !== finalNotes) {
-            finalNotes = `${userContext.draftNotes} — ${finalNotes}`;
+          if (userContext.draftNotes) {
+            finalNotes = parsed.comment && parsed.comment !== userContext.draftNotes
+              ? `${userContext.draftNotes} — ${parsed.comment}`
+              : userContext.draftNotes;
           }
-          if (!receiptUrl && userContext.pendingReceiptUrl) {
+          // Always pick up any pending receipt from prior photo message
+          if (userContext.pendingReceiptUrl && !finalReceipts.includes(userContext.pendingReceiptUrl)) {
             finalReceipts.push(userContext.pendingReceiptUrl);
           }
           userContextStore.delete(matchedUserId);
           userContextStore.delete(chatIdStr);
+          userContextStore.delete(`telegram_${chatIdStr}`);
         }
 
         const expenseDate = parsed.dateStr || new Date().toISOString().slice(0, 10);
@@ -629,32 +650,31 @@ ${CATEGORY_EMOJIS[targetExp.location] || '📌'} *Category:* ${targetExp.locatio
 
         await persistExpense(newExpense);
 
-        // Store in userContextStore under all possible user identifiers
+        // Save in context so next photo message can attach to this expense
         const ctxData = { lastExpenseObj: newExpense, timestamp: now };
         userContextStore.set(matchedUserId, ctxData);
         userContextStore.set(chatIdStr, ctxData);
         userContextStore.set(`telegram_${chatIdStr}`, ctxData);
 
         const emoji = CATEGORY_EMOJIS[finalCategory] || '📌';
-        const photoTag = finalReceipts.length > 0 ? '\n📎 *Receipt attached!*' : '\n💡 _Bill/ticket photo hai toh abhi bhej sakte ho!_';
+        const photoTag = finalReceipts.length > 0
+          ? '\n📎 <b>Receipt attached!</b>'
+          : '\n💡 <i>Bill/ticket photo hai toh abhi bhej sakte ho!</i>';
 
         const confirmText =
-`✅ *Travel Expense Logged & Saved to Database!*
+`✅ <b>Travel Expense Logged &amp; Saved!</b>
 
-📅 *Date:* ${expenseDate}
-${emoji} *Category:* ${finalCategory}
-💰 *Amount:* ₹${parsed.amount.toLocaleString('en-IN')}
-📝 *Notes:* ${finalNotes}${photoTag}
-👤 *Account:* ${userName} (${userEmail || 'Telegram'})`;
+📅 <b>Date:</b> ${expenseDate}
+${emoji} <b>Category:</b> ${finalCategory}
+💰 <b>Amount:</b> ₹${parsed.amount.toLocaleString('en-IN')}
+📝 <b>Notes:</b> ${finalNotes}${photoTag}
+👤 <b>Account:</b> ${userName} (${userEmail || 'Telegram'})`;
 
-        return ctx.reply(confirmText, {
-          parse_mode: 'Markdown',
-          reply_markup: MAIN_KEYBOARD
-        }).catch(err => console.warn('Telegram reply error:', err.message));
+        return safeReplyCtx(ctx, confirmText, MAIN_KEYBOARD);
       }
 
       // ══════════════════════════════════════════════════
-      // CASE E: Unknown text -> show greeting
+      // CASE E: Unknown / unrecognized text -> show menu
       // ══════════════════════════════════════════════════
       if (textOnly) {
         return sendGreetingMenuCtx(ctx, userName);
