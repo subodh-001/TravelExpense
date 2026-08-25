@@ -371,6 +371,54 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
   }
 };
 
+// 🔥 Automatic Cloud Sync: Pulls master DB state directly from Firebase Firestore on server startup
+const syncFromFirebaseCloud = async () => {
+  if (!useFirebase || !db) return;
+  try {
+    console.log('🔄 Pulling master database state from Firebase Cloud Firestore...');
+    // 1. Sync Users from Firebase Firestore
+    const usersSnapshot = await db.collection('users').get();
+    if (!usersSnapshot.empty) {
+      const cloudUsers = getLocalUsers();
+      usersSnapshot.forEach(doc => {
+        const uData = doc.data();
+        const uid = doc.id;
+        if (uid && uData) {
+          cloudUsers[uid] = { ...(cloudUsers[uid] || {}), ...uData, id: uid };
+        }
+      });
+      saveLocalUsers(cloudUsers, false);
+      console.log(`🔥 Synced ${usersSnapshot.size} users from Firebase Cloud Firestore`);
+    }
+
+    // 2. Sync Expenses from Firebase Firestore
+    const expSnapshot = await db.collection('expenses').get();
+    if (!expSnapshot.empty) {
+      const localExps = getLocalExpenses();
+      const expMap = new Map(localExps.map(e => [e.id, e]));
+      expSnapshot.forEach(doc => {
+        const eData = doc.data();
+        let createdAtStr = eData.createdAt;
+        if (eData.createdAt && typeof eData.createdAt.toDate === 'function') {
+          createdAtStr = eData.createdAt.toDate().toISOString();
+        } else if (eData.createdAt && eData.createdAt._seconds) {
+          createdAtStr = new Date(eData.createdAt._seconds * 1000).toISOString();
+        }
+        expMap.set(doc.id, { ...eData, id: doc.id, createdAt: createdAtStr });
+      });
+      saveLocalExpenses(Array.from(expMap.values()), false);
+      console.log(`🔥 Synced ${expSnapshot.size} expenses from Firebase Cloud Firestore`);
+    }
+  } catch (err) {
+    console.warn('⚠️ Firebase Cloud sync startup note:', err.message);
+  }
+};
+
+// Trigger Cloud Sync immediately if Firebase initialized
+if (useFirebase && db) {
+  syncFromFirebaseCloud();
+}
+
 const getLocalInvites = () => {
   try {
     const raw = fs.readFileSync(INVITES_DB_FILE, 'utf8');
