@@ -13,6 +13,15 @@ const CLOUDINARY = {
 };
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/upload`;
 
+function getCloudinaryUserFolderName(subFolder = '') {
+  const user = (typeof state !== 'undefined' && state.currentUser) || (typeof getStoredGoogleUser === 'function' && getStoredGoogleUser());
+  let name = user ? (user.name || user.displayName || user.email || user.id) : 'guest_user';
+  if (!name || name === 'undefined') name = 'guest_user';
+  const cleanName = String(name).trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+  const basePath = `expense_receipts/${cleanName}`;
+  return subFolder ? `${basePath}/${subFolder}` : basePath;
+}
+
 const DEFAULT_USER_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc1IiByPSI0MiIgZmlsbD0iIzljYTNiZiIvPjxwYXRoIGQ9Ik0gMjAgMTg1IEMgMjAgMTMwIDUwIDEyMCAxMDAgMTIwIEMgMTUwIDEyMCAxODAgMTMwIDE4MCAxODUgWiIgZmlsbD0iIzljYTNiZiIvPjwvc3ZnPg==`;
 
 function getUserAvatarUrl(user) {
@@ -650,6 +659,7 @@ async function handleProfilePhotoSelect(e) {
     const cloudFormData = new FormData();
     cloudFormData.append('file', compressedFile);
     cloudFormData.append('upload_preset', CLOUDINARY.uploadPreset);
+    cloudFormData.append('folder', getCloudinaryUserFolderName('profile'));
 
     const cloudRes = await fetch(CLOUDINARY_UPLOAD_URL, {
       method: 'POST',
@@ -1027,6 +1037,7 @@ async function uploadFileToStorage(file) {
     const cloudFormData = new FormData();
     cloudFormData.append('file', file);
     cloudFormData.append('upload_preset', CLOUDINARY.uploadPreset);
+    cloudFormData.append('folder', getCloudinaryUserFolderName());
 
     const cloudRes = await fetch(CLOUDINARY_UPLOAD_URL, {
       method: 'POST',
@@ -2244,7 +2255,7 @@ async function uploadMultipleReceiptFiles(filesList) {
         const cloudFormData = new FormData();
         cloudFormData.append('file', fileToUpload);
         cloudFormData.append('upload_preset', CLOUDINARY.uploadPreset);
-        cloudFormData.append('folder', 'receipts');
+        cloudFormData.append('folder', getCloudinaryUserFolderName());
 
         const cloudRes = await fetch(CLOUDINARY_UPLOAD_URL, {
           method: 'POST',

@@ -292,7 +292,7 @@ function handleLinkEmailCtx(ctx, chatId, emailArg, fromObj) {
 /**
  * Main Telegram Bot Initialization
  */
-function startTelegramBot(callbacks = {}) {
+async function startTelegramBot(callbacks = {}) {
   const token = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
 
   getExpensesFn = callbacks.getLocalExpenses;
@@ -549,6 +549,9 @@ ${emoji} *Category:* ${finalCategory}
       }
     });
 
+    try {
+      await bot.api.deleteWebhook({ drop_pending_updates: true }).catch(() => {});
+    } catch (_) {}
     bot.startPolling();
     return bot;
   } catch (err) {

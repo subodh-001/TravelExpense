@@ -391,19 +391,49 @@ const syncFromFirebaseCloud = async () => {
   if (!useFirebase || !db) return;
   try {
     console.log('🔄 Pulling master database state from Firebase Cloud Firestore...');
-    // 1. Sync Users from Firebase Firestore
+
+    // 0. Sync deleted_users archive from Firestore into local deleted_users blacklist
+    try {
+      const delSnapshot = await db.collection('deleted_users').get();
+      if (!delSnapshot.empty) {
+        delSnapshot.forEach(doc => {
+          const dData = doc.data();
+          if (dData.email) addDeletedUser(dData.email);
+          if (dData.originalId) addDeletedUser(dData.originalId);
+          if (dData.cleanId) addDeletedUser(dData.cleanId);
+        });
+      }
+    } catch (delErr) {
+      console.warn('Deleted users archive sync note:', delErr.message);
+    }
+
+    // 1. Sync Users from Firebase Firestore (ignoring and purging deleted users)
     const usersSnapshot = await db.collection('users').get();
     if (!usersSnapshot.empty) {
       const cloudUsers = getLocalUsers();
+      const fbDeletePromises = [];
+
       usersSnapshot.forEach(doc => {
         const uData = doc.data();
         const uid = doc.id;
+        const uEmail = uData ? uData.email : '';
         if (uid && uData) {
-          cloudUsers[uid] = { ...(cloudUsers[uid] || {}), ...uData, id: uid };
+          if (isUserDeleted(uid) || (uEmail && isUserDeleted(uEmail))) {
+            console.log(`🧹 Purging deleted user doc from Firestore users collection: ${uid}`);
+            fbDeletePromises.push(doc.ref.delete().catch(() => {}));
+            delete cloudUsers[uid];
+          } else {
+            cloudUsers[uid] = { ...(cloudUsers[uid] || {}), ...uData, id: uid };
+          }
         }
       });
+
+      if (fbDeletePromises.length > 0) {
+        await Promise.all(fbDeletePromises).catch(() => {});
+      }
+
       saveLocalUsers(cloudUsers, false);
-      console.log(`🔥 Synced ${usersSnapshot.size} users from Firebase Cloud Firestore`);
+      console.log(`🔥 Synced active users from Firebase Cloud Firestore (Purged ${fbDeletePromises.length} deleted)`);
     }
 
     // 2. Sync Expenses from Firebase Firestore
@@ -588,7 +618,26 @@ const upload = multer({
 const CLOUDINARY_CLOUD_NAME = 'vrxb6o67';
 const CLOUDINARY_UPLOAD_PRESET = 'expense_receipts'; // unsigned preset
 
-const uploadToCloudinary = async (fileBuffer, mimeType, folder = 'payment_bills') => {
+const getCloudinaryUserFolderName = (userIdOrObj, subFolder = '') => {
+  if (!userIdOrObj) return subFolder ? `expense_receipts/guest_user/${subFolder}` : 'expense_receipts/guest_user';
+  let name = 'guest_user';
+  if (typeof userIdOrObj === 'object') {
+    name = userIdOrObj.name || userIdOrObj.displayName || userIdOrObj.email || userIdOrObj.id || 'user';
+  } else {
+    try {
+      const users = getLocalUsers();
+      const user = users[userIdOrObj] || Object.values(users).find(u => u && (u.id === userIdOrObj || u.email === userIdOrObj));
+      name = user ? (user.name || user.displayName || user.email || userIdOrObj) : userIdOrObj;
+    } catch (e) {
+      name = userIdOrObj;
+    }
+  }
+  const cleanName = String(name).trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+  const basePath = `expense_receipts/${cleanName}`;
+  return subFolder ? `${basePath}/${subFolder}` : basePath;
+};
+
+const uploadToCloudinary = async (fileBuffer, mimeType, folder = 'expense_receipts') => {
   const https = require('https');
   return new Promise((resolve, reject) => {
     // Build multipart/form-data manually (compatible with Node.js built-in https)
@@ -601,9 +650,11 @@ const uploadToCloudinary = async (fileBuffer, mimeType, folder = 'payment_bills'
     const ext = mimeType.split('/')[1] || 'png';
     const fileName = `upload_${Date.now()}.${ext}`;
 
+    const targetFolder = folder.startsWith('expense_receipts') ? folder : `expense_receipts/${folder}`;
+
     let body = '';
     body += buildPart('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    body += buildPart('folder', folder);
+    body += buildPart('folder', targetFolder);
     body += `--${boundary}${nl}`;
     body += `Content-Disposition: form-data; name="file"; filename="${fileName}"${nl}`;
     body += `Content-Type: ${mimeType}${nl}${nl}`;
@@ -1845,7 +1896,8 @@ app.post('/api/admin/update-settlement-bill', upload.single('paymentProof'), asy
 
     if (action === 'update' && req.file) {
       try {
-        paymentBillUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, 'payment_bills');
+        const userFolder = getCloudinaryUserFolderName(userId, 'payment_bills');
+        paymentBillUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, userFolder);
       } catch (cloudErr) {
         // Fallback to local disk if Cloudinary fails
         const ext = path.extname(req.file.originalname) || '.png';
@@ -1950,7 +2002,8 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
     let paymentBillUrl = '';
     if (req.file) {
       try {
-        paymentBillUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, 'payment_bills');
+        const userFolder = getCloudinaryUserFolderName(targetUser || userId, 'payment_bills');
+        paymentBillUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, userFolder);
       } catch (cloudErr) {
         // Fallback to local disk if Cloudinary fails
         const ext = path.extname(req.file.originalname) || '.png';
@@ -2172,11 +2225,31 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
             note: 'Permanently deleted by admin. This record is for audit purposes only.'
           });
 
-          // Now delete from Firestore users collection
+          // Now delete from Firestore users collection (scan all docs for matching email/id)
           const userDeletePromises = [];
           if (userId)           userDeletePromises.push(db.collection('users').doc(userId).delete().catch(() => {}));
           if (userCleanId)      userDeletePromises.push(db.collection('users').doc(userCleanId).delete().catch(() => {}));
           if (matchedTarget?.id) userDeletePromises.push(db.collection('users').doc(matchedTarget.id).delete().catch(() => {}));
+
+          // Scan all users in Firestore to wipe any orphaned docs matching email or clean ID
+          const targetEmail = (matchedTarget?.email || userId || '').toLowerCase().trim();
+          const targetClean = (targetEmail.replace(/[^a-zA-Z0-9]/g, '_'));
+          
+          const allFbUsers = await db.collection('users').get().catch(() => ({ docs: [] }));
+          allFbUsers.docs.forEach(doc => {
+            const dData = doc.data() || {};
+            const dId = doc.id.toLowerCase();
+            const dEmail = (dData.email || '').toLowerCase().trim();
+            if (
+              dId === (userId || '').toLowerCase() ||
+              (userCleanId && dId === userCleanId.toLowerCase()) ||
+              (matchedTarget?.id && dId === matchedTarget.id.toLowerCase()) ||
+              (targetEmail && (dEmail === targetEmail || dId.includes(targetClean)))
+            ) {
+              userDeletePromises.push(doc.ref.delete().catch(() => {}));
+            }
+          });
+
           await Promise.all(userDeletePromises);
 
           // Delete all expenses from Firestore
@@ -2652,9 +2725,10 @@ app.post('/api/expenses/:expenseId/receipts',
       } else {
         // Cloudinary upload fallback (when Firebase Storage not connected)
         try {
+          const userFolder = getCloudinaryUserFolderName(userId, 'receipts');
           fileUrl = await uploadToCloudinary(
             file.buffer, file.mimetype,
-            `receipts/${userId}/${expenseId}`
+            userFolder
           );
         } catch (cloudErr) {
           // Last resort: local disk

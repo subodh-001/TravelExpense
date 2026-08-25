@@ -1,1 +1,114 @@
-[]
+[
+  {
+    "userId": "google_newuser123_gmail_com",
+    "date": "2026-08-25",
+    "location": "Metro",
+    "notes": "Metro",
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 50
+      }
+    ],
+    "total": 50,
+    "paymentStatus": "pending",
+    "receipts": [],
+    "createdAt": {
+      "_seconds": 1787660230,
+      "_nanoseconds": 935000000
+    },
+    "updatedAt": {
+      "_seconds": 1787660230,
+      "_nanoseconds": 935000000
+    }
+  },
+  {
+    "date": "2026-08-11",
+    "createdAt": "2026-08-21T17:15:08.412Z",
+    "total": 80,
+    "notes": "Ola/Uber",
+    "settledAt": "2026-08-22T12:00:00.000Z",
+    "paymentBillUrl": "",
+    "location": "Ola/Uber",
+    "id": "exp_404e57fa",
+    "userId": "google_subodhram3350_gmail_com",
+    "paymentStatus": "paid"
+  },
+  {
+    "id": "exp_tg_mt7la4fh",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-24",
+    "location": "Metro",
+    "notes": "Andheri",
+    "paymentStatus": "pending",
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 100
+      }
+    ],
+    "total": 100,
+    "receipts": [],
+    "createdAt": "2026-08-24T18:48:25.325Z",
+    "updatedAt": "2026-08-24T18:48:25.325Z",
+    "source": "Telegram Bot"
+  },
+  {
+    "id": "exp_tg_mt7lndk7",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-24",
+    "location": "Local",
+    "notes": "Andheri",
+    "paymentStatus": "pending",
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 100
+      }
+    ],
+    "total": 100,
+    "receipts": [],
+    "createdAt": "2026-08-24T18:58:43.687Z",
+    "updatedAt": "2026-08-24T18:58:43.687Z",
+    "source": "Telegram Bot"
+  },
+  {
+    "date": "2026-08-24",
+    "receipts": [],
+    "createdAt": "2026-08-24T19:04:15.280Z",
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 500
+      }
+    ],
+    "total": 500,
+    "notes": "Marol",
+    "location": "Local",
+    "id": "exp_tg_mt7luhf4",
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "paymentStatus": "pending",
+    "updatedAt": "2026-08-24T19:04:15.281Z"
+  },
+  {
+    "date": "2026-08-25",
+    "notes": "Andheri",
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "receipts": [],
+    "createdAt": "2026-08-25T08:59:54.490Z",
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 400
+      }
+    ],
+    "total": 400,
+    "paymentBillUrl": null,
+    "location": "Metro",
+    "id": "exp_tg_mt8fp52y_qnv1",
+    "paymentStatus": "pending",
+    "updatedAt": "2026-08-25T08:59:54.491Z"
+  }
+]
