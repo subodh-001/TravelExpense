@@ -46,10 +46,7 @@ function getUserAvatarUrl(user) {
   if (!user) return DEFAULT_USER_AVATAR;
   let pic = typeof user === 'string' ? user : (user.picture || user.avatar || '');
   if (!pic || typeof pic !== 'string') return DEFAULT_USER_AVATAR;
-  if (pic.includes('<svg') || pic.includes('alt=') || pic.includes('style=') || pic.includes('dicebear') || pic.includes('ui-avatars')) {
-    return DEFAULT_USER_AVATAR;
-  }
-  if (pic.startsWith('http') || pic.startsWith('data:image')) {
+  if (pic.startsWith('http://') || pic.startsWith('https://') || pic.startsWith('data:image')) {
     return pic;
   }
   return DEFAULT_USER_AVATAR;
@@ -694,7 +691,28 @@ async function handleProfilePhotoSelect(e) {
       const cloudData = await cloudRes.json();
       state.pendingProfilePhotoUrl = cloudData.secure_url;
       profilePhotoPreview.src = cloudData.secure_url;
-      profilePhotoStatus.textContent = '✓ Photo uploaded to Cloudinary!';
+      profilePhotoStatus.textContent = '✓ Photo uploaded successfully!';
+
+      // Auto-save picture URL to backend & Firestore immediately across system
+      if (state.currentGoogleUser) {
+        state.currentGoogleUser.picture = cloudData.secure_url;
+        try { localStorage.setItem('google_user', JSON.stringify(state.currentGoogleUser)); } catch (e) {}
+        fetch(`${API_BASE_URL}/user/profile`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: state.currentGoogleUser.id,
+            name: state.currentGoogleUser.name,
+            email: state.currentGoogleUser.email,
+            picture: cloudData.secure_url
+          })
+        }).then(() => {
+          updateUserProfileUI();
+          if (typeof loadSuperAdminData === 'function' && (window.location.hash === '#superadmin' || state.currentPage === 'superadmin')) {
+            loadSuperAdminData();
+          }
+        }).catch(err => console.warn('Auto profile photo save note:', err));
+      }
     } else {
       console.warn('Cloudinary direct photo upload status:', cloudRes.status);
       profilePhotoStatus.textContent = '❌ Cloudinary busy. Using lightweight photo preview.';

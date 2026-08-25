@@ -1457,7 +1457,7 @@ app.post('/api/user/profile', async (req, res) => {
       id,
       name: name || existingUser.name || 'Traveler',
       email: email || existingUser.email || 'user@example.com',
-      picture: (picture && !picture.includes('alt=') && !picture.includes('dicebear') && !picture.includes('ui-avatars')) ? picture : (existingUser.picture || DEFAULT_USER_AVATAR),
+      picture: (picture && typeof picture === 'string' && (picture.startsWith('http') || picture.startsWith('data:image'))) ? picture : (existingUser.picture || DEFAULT_USER_AVATAR),
       role: role || existingUser.role || 'user',
       phone: cleanPhone || existingUser.phone || '',
       whatsapp: cleanPhone || existingUser.whatsapp || '',
