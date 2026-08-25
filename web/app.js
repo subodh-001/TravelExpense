@@ -43,16 +43,13 @@ function getCloudinaryUserFolderName(subFolder = '', dateInput = null) {
 const DEFAULT_USER_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc1IiByPSI0MiIgZmlsbD0iIzljYTNiZiIvPjxwYXRoIGQ9Ik0gMjAgMTg1IEMgMjAgMTMwIDUwIDEyMCAxMDAgMTIwIEMgMTUwIDEyMCAxODAgMTMwIDE4MCAxODUgWiIgZmlsbD0iIzljYTNiZiIvPjwvc3ZnPg==`;
 
 function getUserAvatarUrl(user) {
-  if (!user) return DEFAULT_USER_AVATAR;
+  if (!user) return `https://api.dicebear.com/7.x/avataaars/svg?seed=Member`;
   let pic = typeof user === 'string' ? user : (user.picture || user.avatar || '');
-  if (!pic || typeof pic !== 'string') return DEFAULT_USER_AVATAR;
-  if (pic.includes('<svg') || pic.includes('alt=') || pic.includes('style=') || pic.includes('dicebear') || pic.includes('ui-avatars')) {
-    return DEFAULT_USER_AVATAR;
-  }
-  if (pic.startsWith('http') || pic.startsWith('data:image')) {
+  if (pic && typeof pic === 'string' && (pic.startsWith('http://') || pic.startsWith('https://') || pic.startsWith('data:image'))) {
     return pic;
   }
-  return DEFAULT_USER_AVATAR;
+  const cleanSeed = encodeURIComponent((typeof user === 'object' && (user.name || user.email)) ? (user.name || user.email) : 'Member');
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanSeed}`;
 }
 
 // Default Google User Profile
