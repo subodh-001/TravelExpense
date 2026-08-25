@@ -29,10 +29,6 @@ mobile/.flutter-plugins-dependencies
 # Local database backups & temp files
 backend/data/backups/
 backend/data/baileys_auth_info/
-backend/data/expenses.json
-backend/data/users.json
-backend/data/invites.json
-backend/data/deleted_users.json
 backend/data/*.sqlite
 backend/data/*.sqlite-shm
 backend/data/*.sqlite-wal

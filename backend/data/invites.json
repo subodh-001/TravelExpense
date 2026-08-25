@@ -1,0 +1,18 @@
+{
+  "0067efb715488ae4bfef738bbea61aaa4b0d146645a18295": {
+    "token": "0067efb715488ae4bfef738bbea61aaa4b0d146645a18295",
+    "email": "sonidheeraj961@gmail.com",
+    "name": "Dheeraj Soni",
+    "role": "user",
+    "createdAt": "2026-08-22T11:08:30.561Z",
+    "expiresAt": "2026-08-29T11:08:30.561Z"
+  },
+  "eb99cca0fe25fbcfa6285797f6f558ff28d2b9892e530469": {
+    "token": "eb99cca0fe25fbcfa6285797f6f558ff28d2b9892e530469",
+    "email": "admininvite_test@gmail.com",
+    "name": "Admin Invite Test",
+    "role": "user",
+    "createdAt": "2026-08-25T12:22:03.612Z",
+    "expiresAt": "2026-09-01T12:22:03.612Z"
+  }
+}
