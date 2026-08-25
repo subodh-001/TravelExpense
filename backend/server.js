@@ -278,8 +278,6 @@ const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
       console.error('🔒 DATA PROTECTION: saveLocalExpenses blocked — invalid data type (not array)');
       return;
     }
-    // Guard: If existing file has data and incoming write is completely empty, warn but allow
-    // (user may have intentionally deleted all entries via the app)
     const tempPath = `${LOCAL_DB_FILE}.tmp`;
     fs.writeFileSync(tempPath, JSON.stringify(expenses, null, 2));
     fs.renameSync(tempPath, LOCAL_DB_FILE);
@@ -287,6 +285,23 @@ const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
     try { syncJSONToSQLite(); } catch (sqErr) {}
     if (triggerBroadcast) {
       broadcastEvent('EXPENSES_UPDATED');
+    }
+
+    // 🔥 Auto-sync Expenses to Firebase Cloud Firestore in background
+    if (useFirebase && db && Array.isArray(expenses)) {
+      setImmediate(async () => {
+        try {
+          const batch = db.batch();
+          expenses.forEach(e => {
+            if (!e || !e.id) return;
+            batch.set(db.collection('expenses').doc(e.id), {
+              ...e,
+              updatedAt: e.updatedAt || new Date().toISOString()
+            }, { merge: true });
+          });
+          await batch.commit();
+        } catch (fbErr) { /* silent backup */ }
+      });
     }
   } catch (err) {
     console.error('Error writing LOCAL_DB_FILE:', err);
