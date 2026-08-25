@@ -610,17 +610,21 @@ ${CATEGORY_EMOJIS[recentExp.location] || '📌'} <b>Category:</b> ${recentExp.lo
         let finalNotes = parsed.comment || parsed.category;
         let finalReceipts = receiptUrl ? [receiptUrl] : [];
 
-        // Merge from userContext if within 10 min window
+        // Merge from userContext ONLY if current message is amount-only (no location in this message)
+        // This ensures "Metro" → "280" merges correctly, but "Metro" → "Ola 280" creates a NEW Ola entry
+        const currentMsgHasLocation = parsed.category && parsed.category !== 'Others';
         if (userContext && (now - userContext.timestamp < 600000)) {
-          if (userContext.draftCategory && userContext.draftCategory !== 'Others') {
+          // Only override category if: (1) context has a draftCategory AND (2) current msg has no specific location
+          if (userContext.draftCategory && !currentMsgHasLocation) {
             finalCategory = userContext.draftCategory;
           }
-          if (userContext.draftNotes) {
+          // Only override notes if: context has draftNotes AND current msg has no location
+          if (userContext.draftNotes && !currentMsgHasLocation) {
             finalNotes = parsed.comment && parsed.comment !== userContext.draftNotes
               ? `${userContext.draftNotes} — ${parsed.comment}`
               : userContext.draftNotes;
           }
-          // Always pick up any pending receipt from prior photo message
+          // Always pick up any pending receipt from prior photo message regardless
           if (userContext.pendingReceiptUrl && !finalReceipts.includes(userContext.pendingReceiptUrl)) {
             finalReceipts.push(userContext.pendingReceiptUrl);
           }
