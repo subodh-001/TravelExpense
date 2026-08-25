@@ -109,16 +109,40 @@ async function restoreAuthFromFirebase(db) {
   }
 }
 
-// Category mapping helper
+// Smart Expanded Category mapping helper
 const CATEGORY_MAP = [
-  { category: 'Metro', keywords: ['metro', 'subway', 'underground'] },
-  { category: 'Local', keywords: ['local', 'train', 'local train', 'railway', 'station'] },
-  { category: 'Auto/Rapido', keywords: ['auto', 'rapido', 'rickshaw', 'autorickshaw'] },
-  { category: 'Ola/Uber', keywords: ['ola', 'uber', 'cab', 'taxi', 'indrive', 'blusmart'] },
-  { category: 'Porter', keywords: ['porter', 'coolie', 'luggage'] },
-  { category: 'Courier', keywords: ['courier', 'parcel', 'speedpost', 'post'] },
-  { category: 'Food', keywords: ['food', 'lunch', 'dinner', 'breakfast', 'snacks', 'chai', 'tea', 'coffee', 'hotel'] },
-  { category: 'Others', keywords: ['other', 'others', 'misc', 'toll', 'parking', 'ticket'] }
+  {
+    category: 'Metro',
+    keywords: ['metro', 'subway', 'monorail', 'underground', 'm1', 'm2', 'line1', 'line2', 'versova', 'ghatkopar', 'dahanukar']
+  },
+  {
+    category: 'Local',
+    keywords: ['local', 'train', 'railway', 'station', 'suburban', 'ticket', 'pass', 'ticketless', 'borivali', 'churchgate', 'csmt', 'dadar', 'andheri', 'thane']
+  },
+  {
+    category: 'Auto/Rapido',
+    keywords: ['auto', 'rapido', 'rickshaw', 'autorickshaw', 'e-rickshaw', 'erickshaw', 'tuk tuk', 'tuktuk', 'share auto', 'shareauto']
+  },
+  {
+    category: 'Ola/Uber',
+    keywords: ['ola', 'uber', 'cab', 'taxi', 'indrive', 'in driver', 'indriver', 'blusmart', 'yatri', 'namma', 'snap-e']
+  },
+  {
+    category: 'Porter',
+    keywords: ['porter', 'coolie', 'luggage', 'samman', ' सामान', 'कुली']
+  },
+  {
+    category: 'Courier',
+    keywords: ['courier', 'parcel', 'speedpost', 'post', 'dtdc', 'blue dart', 'bluedart', 'amazon', 'flipkart', 'delhivery', 'shiprocket']
+  },
+  {
+    category: 'Food',
+    keywords: ['food', 'lunch', 'dinner', 'breakfast', 'snacks', 'chai', 'tea', 'coffee', 'hotel', 'khana', 'nashta', 'zomato', 'swiggy', 'biryani', 'burger', 'pizza', 'samosa', 'dosa', 'maggi', 'canteen', 'mess', 'restaurant', 'restro', 'juice', 'pani puri']
+  },
+  {
+    category: 'Others',
+    keywords: ['other', 'others', 'misc', 'toll', 'parking', 'petrol', 'diesel', 'fuel', 'recharge', 'fastag', 'challan', 'repair', 'puncture', 'air', 'mechanic']
+  }
 ];
 
 function extractDateFromText(text) {
@@ -173,7 +197,18 @@ function extractDateFromText(text) {
     }
   }
 
-  // 5. Keyword: yesterday / kal
+  // 5. Keyword: parso / day before yesterday
+  const parsoMatch = text.match(/\b(parso|parson|day before yesterday)\b/i);
+  if (parsoMatch) {
+    const parso = new Date(now);
+    parso.setDate(parso.getDate() - 2);
+    const y = parso.getFullYear();
+    const m = String(parso.getMonth() + 1).padStart(2, '0');
+    const d = String(parso.getDate()).padStart(2, '0');
+    return { dateStr: `${y}-${m}-${d}`, matchStr: parsoMatch[0] };
+  }
+
+  // 6. Keyword: yesterday / kal
   const kwMatch = text.match(/\b(yesterday|kal)\b/i);
   if (kwMatch) {
     const yesterday = new Date(now);
@@ -194,18 +229,29 @@ function parseExpenseMessage(text) {
   const clean = text.trim();
   if (!clean) return null;
 
-  // Check for commands first
   const lower = clean.toLowerCase();
-  if (['help', 'menu', 'start', 'hi', 'hello', 'hey', 'hii', 'hie', 'helo', 'namaste', 'wup'].includes(lower)) return { isCommand: true, command: 'help' };
-  if (['summary', 'total', 'balance', 'stats'].includes(lower)) return { isCommand: true, command: 'summary' };
-  if (['history', 'recent', 'list', 'entries'].includes(lower)) return { isCommand: true, command: 'history' };
+
+  // Smart Command Matching (Hinglish + English natural phrases)
+  const helpKeywords = ['help', 'menu', 'start', 'hi', 'hello', 'hey', 'hii', 'hie', 'helo', 'namaste', 'wup', 'bhai', 'sun', 'kaise ho', 'kya haal', 'kya hal'];
+  const summaryKeywords = ['summary', 'total', 'balance', 'stats', 'kitna hua', 'kitna kharcha', 'hisab', 'hisaab', 'total expense', 'kitna baki', 'aaj ka total', 'month summary', 'kitna kharch hua', 'kharcha'];
+  const historyKeywords = ['history', 'recent', 'list', 'entries', 'dikhao', 'purana', 'kya kya daala', 'show entries', 'last expenses', 'recent entries'];
+
+  if (helpKeywords.some(k => lower === k || lower.startsWith(k + ' ') || lower.endsWith(' ' + k))) {
+    if (!/\d+/.test(lower)) return { isCommand: true, command: 'help' };
+  }
+  if (summaryKeywords.some(k => lower.includes(k))) {
+    if (!/\d+/.test(lower)) return { isCommand: true, command: 'summary' };
+  }
+  if (historyKeywords.some(k => lower.includes(k))) {
+    if (!/\d+/.test(lower)) return { isCommand: true, command: 'history' };
+  }
   if (lower.startsWith('link ')) return { isCommand: true, command: 'link', arg: clean.substring(5).trim() };
 
   // Extract custom date if specified
   const { dateStr, matchStr } = extractDateFromText(clean);
 
-  // Regex to extract amount (e.g. 150, rs 150, ₹150, 150rs, 150.50)
-  const amountMatch = clean.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d{1,2})?)\s*(?:rs\.?|rupees)?/i);
+  // Smart Amount Regex: Matches 150, rs 150, ₹150, 150rs, 150.50, 150/-, 150 ka, ka 150
+  const amountMatch = clean.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d{1,2})?)\s*(?:rs\.?|rupees|rupaye|rupiya|\/-)?/i);
 
   // Determine category
   let matchedCategory = 'Others';
@@ -238,21 +284,28 @@ function parseExpenseMessage(text) {
   const amount = parseFloat(amountMatch[1]);
   if (isNaN(amount) || amount <= 0) return null;
 
-
-  // Extract comment/notes (remove amount, custom date, and category keyword from raw text)
+  // Extract comment/notes (remove amount, custom date, filler words, and category keyword from raw text)
   let comment = clean;
   comment = comment.replace(amountMatch[0], ' ');
   if (matchStr) {
     comment = comment.replace(matchStr, ' ');
   }
+
+  // Remove filler conversational words (bhai, ka, ki, tha, gaye, liya, rupees, rs, etc.)
+  const fillerWords = ['bhai', 'bro', 'kal', 'parso', 'today', 'yesterday', 'ka', 'ki', 'ke', 'tha', 'gaye', 'liya', 'diya', 'hua', 'rs', 'rupees', 'rupaye', 'rupiya', 'inr'];
   for (const item of CATEGORY_MAP) {
     for (const kw of item.keywords) {
       const regex = new RegExp(`\\b${kw}\\b`, 'gi');
       comment = comment.replace(regex, ' ');
     }
   }
+  for (const fw of fillerWords) {
+    const regex = new RegExp(`\\b${fw}\\b`, 'gi');
+    comment = comment.replace(regex, ' ');
+  }
+
   comment = comment.replace(/\s+/g, ' ').replace(/^[-:,.\s]+|[-:,.\s]+$/g, '').trim();
-  if (!comment) comment = matchedCategory;
+  if (!comment || comment.length < 2) comment = matchedCategory;
 
   return {
     isCommand: false,
