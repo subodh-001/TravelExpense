@@ -40,29 +40,30 @@ function getCloudinaryUserFolderName(subFolder = '', dateInput = null) {
   return `expense_receipts/${cleanName}/${monthFolder}/${dayFolder}`;
 }
 
-const DEFAULT_USER_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23e2e8f0"/><circle cx="100" cy="75" r="42" fill="%2364748b"/><path d="M 20 185 C 20 130 50 120 100 120 C 150 120 180 130 180 185 Z" fill="%2364748b"/></svg>`;
+const DEFAULT_USER_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><circle cx="64" cy="64" r="64" fill="%23cbd5e1"/><circle cx="64" cy="48" r="26" fill="%23ffffff"/><path d="M64 82c-28 0-48 14-48 30v16h96V112c0-16-20-30-48-30z" fill="%23ffffff"/></svg>`;
 
 function getUserAvatarUrl(user) {
   if (!user) return DEFAULT_USER_AVATAR;
 
-  // 1. If user is current logged in user and has an active picture in state, use it
+  // 1. If user is current logged in user and has an active real picture in state
   if (typeof state !== 'undefined' && state && state.currentGoogleUser && state.currentGoogleUser.picture) {
     const activeEmail = (state.currentGoogleUser.email || '').toLowerCase();
     const targetEmail = (typeof user === 'object' && user ? (user.email || '') : (typeof user === 'string' ? user : '')).toLowerCase();
     if (activeEmail && targetEmail && activeEmail === targetEmail) {
-      if (state.currentGoogleUser.picture.startsWith('http') || state.currentGoogleUser.picture.startsWith('data:image')) {
-        return state.currentGoogleUser.picture;
+      const activePic = state.currentGoogleUser.picture;
+      if (activePic && typeof activePic === 'string' && !activePic.includes('<') && (activePic.startsWith('http') || activePic.startsWith('data:image')) && !activePic.includes('dicebear')) {
+        return activePic;
       }
     }
   }
 
-  // 2. Otherwise check user's own picture property
+  // 2. Check user's own picture property
   let pic = typeof user === 'object' && user ? (user.picture || user.avatar || '') : (typeof user === 'string' ? user : '');
-  
-  if (pic && typeof pic === 'string' && (pic.startsWith('http://') || pic.startsWith('https://') || pic.startsWith('data:image'))) {
+
+  if (pic && typeof pic === 'string' && !pic.includes('<') && (pic.startsWith('http://') || pic.startsWith('https://') || pic.startsWith('data:image')) && !pic.includes('dicebear')) {
     return pic;
   }
-  
+
   return DEFAULT_USER_AVATAR;
 }
 
