@@ -373,14 +373,7 @@ async function startTelegramBot(callbacks = {}) {
     bot = new Bot(token);
     console.log('🤖 Telegram Travel Expense Bot CONNECTED & ONLINE! (@FreegTravel_bot) 🚀');
 
-    bot.catch((err) => {
-      const msg = err && (err.message || String(err));
-      if (msg.includes('409') || msg.includes('Conflict') || msg.includes('getUpdates')) {
-        console.warn('⚠️ Telegram bot polling note: Dual container deployment conflict handled gracefully.');
-        return;
-      }
-      console.warn('⚠️ Telegram bot note:', msg);
-    });
+    // (Error handling is done via bot.on('polling_error', ...) registered later)
 
     // ── Command: /start, /help, /menu
     bot.command(['start', 'help', 'menu'], async (ctx) => {
@@ -685,21 +678,49 @@ ${emoji} <b>Category:</b> ${finalCategory}
       }
     });
 
+    // ── Global Error Handler (grammY-style bot.catch for all middleware errors)
+    bot.catch((err) => {
+      const msg = err && (err.message || String(err));
+      if (msg.includes('409') || msg.includes('Conflict')) {
+        console.warn('⚠️ Telegram 409 conflict note (dual container on Render). Old instance stopping...');
+        return;
+      }
+      if (msg.includes('ENOTFOUND') || msg.includes('EFATAL')) {
+        console.warn('⚠️ Telegram network note:', msg);
+        return;
+      }
+      console.warn('⚠️ Telegram bot error:', msg);
+    });
+
+    // ── Start Polling with graceful 409 retry
     try {
-      await bot.api.deleteWebhook({ drop_pending_updates: true }).catch(() => {});
+      await bot.api.deleteWebhook({ drop_pending_updates: true });
     } catch (_) {}
 
-    bot.startPolling({
-      drop_pending_updates: true,
-      allowed_updates: ['message', 'callback_query']
-    }).catch(pollErr => {
-      const msg = pollErr && (pollErr.message || String(pollErr));
-      if (msg.includes('409') || msg.includes('Conflict')) {
-        console.warn('⚠️ Telegram Bot 409 Conflict Note: Dual container deployment on Render detected. Handled gracefully.');
-      } else {
-        console.warn('⚠️ Telegram Bot Polling Note:', msg);
+    const runPolling = async () => {
+      while (true) {
+        try {
+          await bot.startPolling();
+          break; // clean stop
+        } catch (pollErr) {
+          const pmsg = pollErr && (pollErr.message || String(pollErr));
+          if (pmsg.includes('409') || pmsg.includes('Conflict')) {
+            console.warn('⚠️ Telegram polling 409 conflict. Waiting 12s for old container to stop...');
+            await new Promise(r => setTimeout(r, 12000));
+            // retry immediately
+          } else if (pmsg.includes('already running')) {
+            console.warn('⚠️ Polling already running, skipping restart.');
+            break;
+          } else {
+            console.warn('⚠️ Telegram polling stopped:', pmsg, '— Retrying in 10s...');
+            await new Promise(r => setTimeout(r, 10000));
+          }
+        }
       }
-    });
+    };
+
+    runPolling().catch(e => console.error('❌ Telegram polling fatal:', e && e.message));
+    console.log('✅ Telegram Bot polling started!');
 
     return bot;
   } catch (err) {
