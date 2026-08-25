@@ -4666,6 +4666,18 @@ function loadAccountProfileData() {
   // Always point Chat with Bot to Meta Official Bot Number (+1 555-671-9782)
   if (chatBotLink) chatBotLink.href = `https://wa.me/${botNumber}?text=Metro%20150`;
 
+  // Populate Telegram Username field & Linked status
+  const tgUsernameInput = document.getElementById('accountTelegramUsernameInput');
+  const tgStatus = document.getElementById('accountTelegramLinkedStatus');
+  if (tgUsernameInput) {
+    const savedTgUser = user.telegramUsername || '';
+    if (savedTgUser) tgUsernameInput.value = `@${savedTgUser.replace(/^@/, '')}`;
+    if (savedTgUser && tgStatus) {
+      tgStatus.style.display = 'flex';
+      tgStatus.innerHTML = `<i class="fa-brands fa-telegram" style="color:#0088cc;"></i> ✅ Linked to Telegram <strong>@${savedTgUser.replace(/^@/, '')}</strong> — Bot messages log under <strong>${displayName}</strong>.`;
+    }
+  }
+
   const isMasterAdmin = (user.email || '').toLowerCase() === 'subodhram3350@gmail.com' || user.role === 'super_admin' || user.role === 'admin';
   if (roleBadge) {
     if (isMasterAdmin) {
@@ -4893,6 +4905,98 @@ async function handleVerifyWhatsAppOTP() {
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-shield-check"></i> Verify';
+  }
+}
+
+async function handleSendTelegramOTP() {
+  const usernameInput = document.getElementById('accountTelegramUsernameInput');
+  const btn = document.getElementById('tgSendOtpBtn');
+  if (!usernameInput) return;
+
+  const rawUsername = usernameInput.value.trim();
+  const cleanUsername = rawUsername.replace(/^@/, '');
+  if (!cleanUsername) {
+    alert('Please enter your Telegram username (e.g. @username)');
+    return;
+  }
+
+  const user = state.currentGoogleUser || getStoredGoogleUser();
+  if (!user || !user.id) { alert('Please sign in first.'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/telegram/send-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegramUsername: cleanUsername, userId: user.id })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      document.getElementById('tgOtpStep1').style.display = 'none';
+      document.getElementById('tgOtpStep2').style.display = 'flex';
+      document.getElementById('accountTelegramOtpInput').focus();
+    } else {
+      alert(data.error || 'Failed to send OTP. Make sure you opened Telegram, searched @FreegTravel_bot, and clicked /start!');
+    }
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send OTP';
+  }
+}
+
+async function handleVerifyTelegramOTP() {
+  const usernameInput = document.getElementById('accountTelegramUsernameInput');
+  const otpInput = document.getElementById('accountTelegramOtpInput');
+  const btn = document.getElementById('tgVerifyOtpBtn');
+  if (!usernameInput || !otpInput) return;
+
+  const cleanUsername = usernameInput.value.trim().replace(/^@/, '');
+  const otp = otpInput.value.trim();
+
+  if (!otp || otp.length !== 6) {
+    alert('Please enter the 6-digit OTP code sent to your Telegram app.');
+    return;
+  }
+
+  const user = state.currentGoogleUser || getStoredGoogleUser();
+  if (!user || !user.id) { alert('Please sign in first.'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/telegram/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegramUsername: cleanUsername, otp, userId: user.id })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      const updatedUser = { ...user, telegramUsername: cleanUsername, telegramVerified: true };
+      state.currentGoogleUser = updatedUser;
+      localStorage.setItem('google_user', JSON.stringify(updatedUser));
+
+      // Hide OTP steps, show verified badge
+      document.getElementById('tgOtpStep1').style.display = 'none';
+      document.getElementById('tgOtpStep2').style.display = 'none';
+      const statusEl = document.getElementById('accountTelegramLinkedStatus');
+      if (statusEl) {
+        statusEl.style.display = 'flex';
+        statusEl.innerHTML = `<i class="fa-brands fa-telegram" style="color:#0088cc;"></i> ✅ Verified! Telegram @${cleanUsername} linked to <strong>${user.name}</strong>. All Telegram bot entries will log here!`;
+      }
+      showToast(`✅ Telegram @${cleanUsername} verified & linked!`);
+    } else {
+      alert(data.error || 'Incorrect or expired OTP. Please try again.');
+    }
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-shield-check"></i> Verify & Link';
   }
 }
 

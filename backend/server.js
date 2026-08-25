@@ -3159,7 +3159,7 @@ app.get('/api/stats', authenticate, async (req, res) => {
 
 // ---------- WHATSAPP & TELEGRAM BOT ENDPOINTS ----------
 const { startWhatsAppBot, disconnectWhatsAppBot, getWhatsAppStatus, parseExpenseMessage, requestWhatsAppPairingCode, sendWhatsAppOTP, verifyWhatsAppOTP, handleUltraMsgMessage } = require('./whatsapp-bot');
-const { startTelegramBot } = require('./telegram-bot');
+const { startTelegramBot, sendTelegramOtpMessage } = require('./telegram-bot');
 
 
 app.get('/api/whatsapp/status', (req, res) => {
@@ -3234,6 +3234,113 @@ app.post('/api/whatsapp/verify-otp', async (req, res) => {
 
     console.log(`✅ WhatsApp number +${cleanPhone} verified and linked to user ${userId}`);
     res.json({ success: true, phone: cleanPhone, message: `✅ Number +${cleanPhone} verified and linked to your account!` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------- TELEGRAM ACCOUNT VERIFICATION OTP ENDPOINTS ----------
+const telegramOtpStore = new Map();
+
+// Send OTP via Telegram Bot
+app.post('/api/telegram/send-otp', async (req, res) => {
+  try {
+    const { telegramUsername, userId } = req.body;
+    if (!telegramUsername || !userId) {
+      return res.status(400).json({ error: 'telegramUsername and userId are required' });
+    }
+
+    const cleanUsername = String(telegramUsername).trim().replace(/^@/, '').toLowerCase();
+    if (!cleanUsername) {
+      return res.status(400).json({ error: 'Valid Telegram username is required' });
+    }
+
+    // Generate 6-digit random OTP
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000;
+
+    telegramOtpStore.set(cleanUsername, { otp: generatedOtp, userId, expiresAt });
+
+    // Send OTP via Telegram Bot
+    const sendRes = await sendTelegramOtpMessage(cleanUsername, generatedOtp);
+    if (sendRes && sendRes.chatId) {
+      telegramOtpStore.get(cleanUsername).chatId = sendRes.chatId;
+    }
+
+    res.json({
+      success: true,
+      message: `🔐 Verification OTP sent to Telegram user @${cleanUsername}! Check your Telegram app.`,
+      telegramUsername: cleanUsername
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Verify Telegram OTP & Link Telegram Account to User
+app.post('/api/telegram/verify-otp', async (req, res) => {
+  try {
+    const { telegramUsername, otp, userId } = req.body;
+    if (!telegramUsername || !otp || !userId) {
+      return res.status(400).json({ error: 'telegramUsername, otp and userId are required' });
+    }
+
+    const cleanUsername = String(telegramUsername).trim().replace(/^@/, '').toLowerCase();
+    const record = telegramOtpStore.get(cleanUsername);
+
+    if (!record) {
+      return res.status(400).json({ error: 'No OTP requested for this Telegram username or OTP expired.' });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      telegramOtpStore.delete(cleanUsername);
+      return res.status(400).json({ error: 'OTP has expired. Please request a new OTP.' });
+    }
+
+    if (String(otp).trim() !== String(record.otp).trim()) {
+      return res.status(400).json({ error: 'Invalid 6-digit OTP code.' });
+    }
+
+    // Clear OTP record
+    telegramOtpStore.delete(cleanUsername);
+
+    // Link Telegram account to user in DB
+    const users = getLocalUsers();
+    const user = users[userId] || Object.values(users).find(u => u && (u.id === userId || u.email === userId));
+
+    if (!user) {
+      return res.status(404).json({ error: 'User account not found' });
+    }
+
+    const actualUserId = user.id || userId;
+
+    // Unlink any duplicate account tied to this username
+    Object.keys(users).forEach(key => {
+      if (users[key] && users[key].telegramUsername && users[key].telegramUsername.replace(/^@/, '').toLowerCase() === cleanUsername) {
+        users[key].telegramUsername = '';
+        users[key].telegramChatId = '';
+      }
+    });
+
+    user.telegramUsername = cleanUsername;
+    if (record.chatId) user.telegramChatId = record.chatId;
+    user.telegramVerified = true;
+    user.updatedAt = new Date().toISOString();
+
+    users[actualUserId] = user;
+    saveLocalUsers(users);
+
+    if (useFirebase && db) {
+      await db.collection('users').doc(actualUserId).set({
+        telegramUsername: cleanUsername,
+        telegramChatId: user.telegramChatId || '',
+        telegramVerified: true,
+        updatedAt: user.updatedAt
+      }, { merge: true }).catch(err => console.warn('Firebase telegram link note:', err.message));
+    }
+
+    console.log(`✅ Telegram @${cleanUsername} successfully verified & linked to ${user.email} (${user.name})`);
+    res.json({ success: true, message: `Telegram @${cleanUsername} linked successfully to your account!`, user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

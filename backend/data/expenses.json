@@ -1,5 +1,25 @@
 [
   {
+    "id": "exp_5fcd4783",
+    "userId": "google_nothingsubodh_gmail_com",
+    "date": "2026-08-25",
+    "location": "Auto/Rapido",
+    "notes": "aded",
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 1000
+      }
+    ],
+    "total": 1000,
+    "paymentStatus": "pending",
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1787677902/expense_receipts/nothing/August_2026/25_Aug_2026/receipt_1787677896325_a0s39.png"
+    ],
+    "createdAt": "2026-08-25T17:11:43.063Z",
+    "updatedAt": "2026-08-25T17:11:43.063Z"
+  },
+  {
     "date": "2026-08-11",
     "createdAt": "2026-08-21T17:15:08.412Z",
     "total": 80,

@@ -41,67 +41,102 @@ const MAIN_KEYBOARD = {
   ]
 };
 
-// ─── Helper: resolve/create/update telegram user profile in DB
+// ─── Helper: resolve telegram user profile in DB (Strict lookup only, zero auto-creation)
 function ensureUserProfile(chatId, fromObj) {
   const chatIdStr = chatId ? chatId.toString() : '';
   const fromUsername = fromObj ? (fromObj.username || '') : '';
   const firstName = fromObj ? (fromObj.first_name || '') : '';
   const lastName = fromObj ? (fromObj.last_name || '') : '';
-  const fullName = [firstName, lastName].filter(Boolean).join(' ') || fromUsername || `Telegram User (${chatIdStr})`;
+  const fullName = [firstName, lastName].filter(Boolean).join(' ') || (fromUsername ? `@${fromUsername}` : `Telegram User (${chatIdStr})`);
 
-  let matchedUserId = 'telegram_' + chatIdStr;
-  let userEmail = '';
-  let userName = fullName;
-
-  if (!getUsersFn) return { matchedUserId, userEmail, userName };
+  if (!getUsersFn) return { matchedUserId: null, userEmail: '', userName: fullName, isLinked: false };
 
   const users = getUsersFn();
+  const cleanFromUser = fromUsername.replace(/^@/, '').toLowerCase();
   
-  // 1. Try to find user by telegramChatId or telegramUsername
+  // Try to find user by telegramChatId or telegramUsername
   let foundKey = Object.keys(users).find(key => {
     const u = users[key];
-    return u && (
-      (u.telegramChatId && u.telegramChatId === chatIdStr) ||
-      (fromUsername && u.telegramUsername && u.telegramUsername.toLowerCase() === fromUsername.toLowerCase())
+    if (!u) return false;
+    const uChat = (u.telegramChatId || '').toString();
+    const uName = (u.telegramUsername || '').replace(/^@/, '').toLowerCase();
+    return (
+      (uChat && uChat === chatIdStr) ||
+      (cleanFromUser && uName && uName === cleanFromUser)
     );
   });
 
   if (foundKey) {
-    // User exists -> update lastActive, chatId, username
     const existing = users[foundKey];
     existing.telegramChatId = chatIdStr;
-    if (fromUsername) existing.telegramUsername = fromUsername;
+    if (fromUsername) existing.telegramUsername = fromUsername.replace(/^@/, '');
     existing.lastActive = new Date().toISOString();
     existing.updatedAt = new Date().toISOString();
     
     if (saveUsersFn) saveUsersFn(users, false);
 
-    matchedUserId = existing.id || foundKey;
-    userEmail = existing.email || '';
-    userName = existing.name || fullName;
-  } else {
-    // New Telegram user -> Create User Profile automatically in database
-    const newUserObj = {
-      id: matchedUserId,
-      name: fullName,
-      email: fromUsername ? `${fromUsername}@telegram.user` : `telegram_${chatIdStr}@telegram.user`,
-      role: 'member',
-      telegramChatId: chatIdStr,
-      telegramUsername: fromUsername,
-      verified: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      lastActive: new Date().toISOString()
+    return {
+      matchedUserId: existing.id || foundKey,
+      userEmail: existing.email || '',
+      userName: existing.name || fullName,
+      isLinked: true
     };
-
-    users[matchedUserId] = newUserObj;
-    if (saveUsersFn) saveUsersFn(users, true);
-
-    userEmail = newUserObj.email;
-    userName = newUserObj.name;
   }
 
-  return { matchedUserId, userEmail, userName };
+  // ⚠️ UNLINKED USER -> Return isLinked: false without creating any record
+  return {
+    matchedUserId: null,
+    userEmail: '',
+    userName: fullName,
+    isLinked: false
+  };
+}
+
+// ─── Helper: Send 6-Digit Verification OTP via Telegram Bot
+async function sendTelegramOtpMessage(usernameOrChatId, otpCode) {
+  if (!bot || !bot.api) {
+    throw new Error('Telegram Bot is not online or initialized.');
+  }
+
+  const users = getUsersFn ? getUsersFn() : {};
+  let targetChatId = null;
+  const cleanTarget = String(usernameOrChatId).trim().replace(/^@/, '').toLowerCase();
+
+  // Find chatId from linked users or matching string
+  Object.values(users).forEach(u => {
+    if (u) {
+      const uChat = (u.telegramChatId || '').toString();
+      const uName = (u.telegramUsername || '').replace(/^@/, '').toLowerCase();
+      if (uChat === cleanTarget || uName === cleanTarget) {
+        targetChatId = uChat;
+      }
+    }
+  });
+
+  if (!targetChatId && /^\d+$/.test(cleanTarget)) {
+    targetChatId = cleanTarget;
+  }
+
+  const otpMsg =
+`🔐 *FreeG Travel Expense Verification OTP*
+
+Your 6-digit Telegram Account Verification OTP is:
+
+👉 *${otpCode}*
+
+Enter this OTP in your Web Profile Settings -> *Verify Telegram Account* to link your Telegram account.
+This OTP will expire in 10 minutes.`;
+
+  if (targetChatId) {
+    try {
+      await bot.api.sendMessage(targetChatId, otpMsg, { parse_mode: 'Markdown' });
+      return { success: true, chatId: targetChatId };
+    } catch (err) {
+      console.warn('Direct Telegram OTP send note:', err.message);
+    }
+  }
+
+  throw new Error(`Could not send OTP to @${cleanTarget}. Please open Telegram, search @FreegTravel_bot, click /start, and try again!`);
 }
 
 // ─── Helper: download & upload photo, return permanent URL
@@ -318,21 +353,40 @@ async function startTelegramBot(callbacks = {}) {
     // ── Command: /start, /help, /menu
     bot.command(['start', 'help', 'menu'], async (ctx) => {
       const chatId = ctx.chat ? ctx.chat.id : (ctx.message ? ctx.message.chat.id : 0);
-      const { userName } = ensureUserProfile(chatId, ctx.from);
+      const fromUser = ctx.from ? (ctx.from.username ? `@${ctx.from.username}` : ctx.from.first_name) : '';
+      const { userName, isLinked } = ensureUserProfile(chatId, ctx.from);
+
+      if (!isLinked) {
+        const welcomeUnlinked =
+`👋 *Welcome to FreeG Travel Expense Bot!*
+
+⚠️ Your Telegram account (${fromUser}) is not linked to your Web Profile yet.
+
+*How to Link Your Account:*
+1️⃣ Open Web App -> Go to *Profile Settings*.
+2️⃣ Under *Verify Telegram Account*, enter *${fromUser}*.
+3️⃣ Click *Send OTP* & enter the 6-digit OTP code sent here by this bot!
+
+_Once verified, all your expenses logged on Telegram will automatically update under your account!_`;
+
+        return ctx.reply(welcomeUnlinked, { parse_mode: 'Markdown' }).catch(() => {});
+      }
       return sendGreetingMenuCtx(ctx, userName);
     });
 
     // ── Command: /summary, /total, /balance
     bot.command(['summary', 'total', 'balance'], async (ctx) => {
       const chatId = ctx.chat ? ctx.chat.id : (ctx.message ? ctx.message.chat.id : 0);
-      const { matchedUserId } = ensureUserProfile(chatId, ctx.from);
+      const { matchedUserId, isLinked } = ensureUserProfile(chatId, ctx.from);
+      if (!isLinked) return ctx.reply('⚠️ Account not linked yet. Please verify Telegram Account in Web Profile Settings.').catch(() => {});
       return sendMonthlySummaryCtx(ctx, matchedUserId);
     });
 
     // ── Command: /history, /recent, /list
     bot.command(['history', 'recent', 'list'], async (ctx) => {
       const chatId = ctx.chat ? ctx.chat.id : (ctx.message ? ctx.message.chat.id : 0);
-      const { matchedUserId } = ensureUserProfile(chatId, ctx.from);
+      const { matchedUserId, isLinked } = ensureUserProfile(chatId, ctx.from);
+      if (!isLinked) return ctx.reply('⚠️ Account not linked yet. Please verify Telegram Account in Web Profile Settings.').catch(() => {});
       return sendHistoryExpensesCtx(ctx, matchedUserId);
     });
 
@@ -353,7 +407,8 @@ async function startTelegramBot(callbacks = {}) {
       } catch (_) {}
 
       const chatId = ctx.chat ? ctx.chat.id : (ctx.callbackQuery && ctx.callbackQuery.message ? ctx.callbackQuery.message.chat.id : 0);
-      const { matchedUserId, userName } = ensureUserProfile(chatId, ctx.from);
+      const { matchedUserId, userName, isLinked } = ensureUserProfile(chatId, ctx.from);
+      if (!isLinked) return ctx.reply('⚠️ Account not linked yet. Please verify Telegram Account in Web Profile Settings.').catch(() => {});
 
       if (data === 'cmd_summary') return sendMonthlySummaryCtx(ctx, matchedUserId);
       if (data === 'cmd_history') return sendHistoryExpensesCtx(ctx, matchedUserId);
@@ -373,8 +428,25 @@ async function startTelegramBot(callbacks = {}) {
       // Ignore slash commands handled by bot.command above
       if (textOnly && textOnly.startsWith('/')) return;
 
-      // Ensure Profile created/updated
-      const { matchedUserId, userEmail, userName } = ensureUserProfile(chatId, ctx.from || msg.from);
+      // Ensure Profile is linked
+      const { matchedUserId, userEmail, userName, isLinked } = ensureUserProfile(chatId, ctx.from || msg.from);
+
+      if (!isLinked) {
+        const fromUser = (ctx.from && ctx.from.username) ? `@${ctx.from.username}` : (msg.from && msg.from.first_name ? msg.from.first_name : 'User');
+        const unlinkedWarning =
+`⚠️ *Telegram Account Not Linked!*
+
+Hello *${fromUser}*, your Telegram account is not linked to any Web Profile yet.
+
+*How to Link Your Account:*
+1️⃣ Open Web App -> Go to *Profile Settings*.
+2️⃣ Under *Verify Telegram Account*, enter *${fromUser}*.
+3️⃣ Click *Send OTP* & enter the 6-digit OTP code sent here by this bot!
+
+_Once verified, all your travel expenses logged on Telegram will automatically update under your account!_`;
+
+        return ctx.reply(unlinkedWarning, { parse_mode: 'Markdown' }).catch(() => {});
+      }
 
       let receiptUrl = null;
       if (isPhoto) {
@@ -560,4 +632,4 @@ ${emoji} *Category:* ${finalCategory}
   }
 }
 
-module.exports = { startTelegramBot };
+module.exports = { startTelegramBot, sendTelegramOtpMessage };
