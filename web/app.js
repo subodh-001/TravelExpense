@@ -13,13 +13,31 @@ const CLOUDINARY = {
 };
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/upload`;
 
-function getCloudinaryUserFolderName(subFolder = '') {
+function getCloudinaryUserFolderName(subFolder = '', dateInput = null) {
   const user = (typeof state !== 'undefined' && state.currentUser) || (typeof getStoredGoogleUser === 'function' && getStoredGoogleUser());
   let name = user ? (user.name || user.displayName || user.email || user.id) : 'guest_user';
   if (!name || name === 'undefined') name = 'guest_user';
   const cleanName = String(name).trim().replace(/[^a-zA-Z0-9_-]/g, '_');
-  const basePath = `expense_receipts/${cleanName}`;
-  return subFolder ? `${basePath}/${subFolder}` : basePath;
+
+  const now = (dateInput && !isNaN(new Date(dateInput))) ? new Date(dateInput) : new Date();
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const monthShorts = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const day = String(now.getDate()).padStart(2, '0');
+  const monthName = months[now.getMonth()];
+  const monthShort = monthShorts[now.getMonth()];
+  const year = now.getFullYear();
+
+  const monthFolder = `${monthName}_${year}`;
+  const dayFolder = `${day}_${monthShort}_${year}`;
+
+  if (subFolder === 'profile') {
+    return `expense_receipts/${cleanName}/Profile_Photos`;
+  }
+  if (subFolder === 'payment_bills') {
+    return `expense_receipts/${cleanName}/${monthFolder}/Payment_Bills`;
+  }
+  return `expense_receipts/${cleanName}/${monthFolder}/${dayFolder}`;
 }
 
 const DEFAULT_USER_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc1IiByPSI0MiIgZmlsbD0iIzljYTNiZiIvPjxwYXRoIGQ9Ik0gMjAgMTg1IEMgMjAgMTMwIDUwIDEyMCAxMDAgMTIwIEMgMTUwIDEyMCAxODAgMTMwIDE4MCAxODUgWiIgZmlsbD0iIzljYTNiZiIvPjwvc3ZnPg==`;

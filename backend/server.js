@@ -630,12 +630,11 @@ const upload = multer({
 const CLOUDINARY_CLOUD_NAME = 'vrxb6o67';
 const CLOUDINARY_UPLOAD_PRESET = 'expense_receipts'; // unsigned preset
 
-const getCloudinaryUserFolderName = (userIdOrObj, subFolder = '') => {
-  if (!userIdOrObj) return subFolder ? `expense_receipts/guest_user/${subFolder}` : 'expense_receipts/guest_user';
+const getCloudinaryUserFolderName = (userIdOrObj, subFolder = '', dateInput = null) => {
   let name = 'guest_user';
-  if (typeof userIdOrObj === 'object') {
-    name = userIdOrObj.name || userIdOrObj.displayName || userIdOrObj.email || userIdOrObj.id || 'user';
-  } else {
+  if (userIdOrObj && typeof userIdOrObj === 'object') {
+    name = userIdOrObj.name || userIdOrObj.displayName || userIdOrObj.email || userIdOrObj.id || 'guest_user';
+  } else if (userIdOrObj && typeof userIdOrObj === 'string') {
     try {
       const users = getLocalUsers();
       const user = users[userIdOrObj] || Object.values(users).find(u => u && (u.id === userIdOrObj || u.email === userIdOrObj));
@@ -645,8 +644,26 @@ const getCloudinaryUserFolderName = (userIdOrObj, subFolder = '') => {
     }
   }
   const cleanName = String(name).trim().replace(/[^a-zA-Z0-9_-]/g, '_');
-  const basePath = `expense_receipts/${cleanName}`;
-  return subFolder ? `${basePath}/${subFolder}` : basePath;
+
+  const now = (dateInput && !isNaN(new Date(dateInput))) ? new Date(dateInput) : new Date();
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const monthShorts = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const day = String(now.getDate()).padStart(2, '0');
+  const monthName = months[now.getMonth()];
+  const monthShort = monthShorts[now.getMonth()];
+  const year = now.getFullYear();
+
+  const monthFolder = `${monthName}_${year}`;
+  const dayFolder = `${day}_${monthShort}_${year}`;
+
+  if (subFolder === 'profile') {
+    return `expense_receipts/${cleanName}/Profile_Photos`;
+  }
+  if (subFolder === 'payment_bills') {
+    return `expense_receipts/${cleanName}/${monthFolder}/Payment_Bills`;
+  }
+  return `expense_receipts/${cleanName}/${monthFolder}/${dayFolder}`;
 };
 
 const uploadToCloudinary = async (fileBuffer, mimeType, folder = 'expense_receipts') => {
