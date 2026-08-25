@@ -43,6 +43,20 @@ function getCloudinaryUserFolderName(subFolder = '', dateInput = null) {
 const DEFAULT_USER_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc1IiByPSI0MiIgZmlsbD0iIzljYTNiZiIvPjxwYXRoIGQ9Ik0gMjAgMTg1IEMgMjAgMTMwIDUwIDEyMCAxMDAgMTIwIEMgMTUwIDEyMCAxODAgMTMwIDE4MCAxODUgWiIgZmlsbD0iIzljYTNiZiIvPjwvc3ZnPg==`;
 
 function getUserAvatarUrl(user) {
+  if (!user) return `https://api.dicebear.com/7.x/avataaars/svg?seed=Member`;
+
+  // 1. If user is current logged in user and has a active picture in state, use active picture for 100% consistency
+  if (typeof state !== 'undefined' && state && state.currentGoogleUser && state.currentGoogleUser.picture) {
+    const activeEmail = (state.currentGoogleUser.email || '').toLowerCase();
+    const targetEmail = (typeof user === 'object' && user ? (user.email || '') : (typeof user === 'string' ? user : '')).toLowerCase();
+    if (activeEmail && targetEmail && activeEmail === targetEmail) {
+      if (state.currentGoogleUser.picture.startsWith('http') || state.currentGoogleUser.picture.startsWith('data:image')) {
+        return state.currentGoogleUser.picture;
+      }
+    }
+  }
+
+  // 2. Otherwise check user's own picture property
   let name = (typeof user === 'object' && user) ? (user.name || user.email || 'Traveler') : (typeof user === 'string' && user ? user : 'Traveler');
   let pic = typeof user === 'object' && user ? (user.picture || user.avatar || '') : (typeof user === 'string' ? user : '');
   
@@ -4651,6 +4665,20 @@ function loadAccountProfileData() {
   if (nameEl) nameEl.textContent = displayName;
   if (emailEl) emailEl.textContent = user.email || 'user@example.com';
   if (inputName) inputName.value = displayName;
+
+  // Auto-sync real active photo to backend & database
+  if (user && user.picture && typeof user.picture === 'string' && (user.picture.startsWith('http') || user.picture.startsWith('data:image'))) {
+    fetch(`${API_BASE_URL}/user/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        picture: user.picture
+      })
+    }).catch(err => console.warn('Auto profile picture sync note:', err));
+  }
 
   // Populate WhatsApp phone field
   const phoneInput = document.getElementById('accountPhoneInput');
