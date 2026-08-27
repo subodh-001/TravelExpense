@@ -1213,12 +1213,16 @@ app.post('/api/auth/google', (req, res) => {
     const users = getLocalUsers();
     const existing = users[userId] || findUserByEmail(cleanEmail) || {};
 
+    // Preserve custom uploaded picture (Cloudinary, custom URL, or base64) over basic Google OAuth picture
+    const hasCustomPic = existing.picture && typeof existing.picture === 'string' && (existing.picture.includes('cloudinary.com') || existing.picture.startsWith('data:image') || existing.picture.includes('profile_'));
+    const finalPic = hasCustomPic ? existing.picture : (existing.picture || userPic || '');
+
     const userData = {
       ...existing,
       id: userId,
       name: existing.name || capitalizedName,
       email: cleanEmail,
-      picture: userPic || existing.picture || '',
+      picture: finalPic,
       verified: true,
       role: existing.role || 'user',
       updatedAt: new Date().toISOString()

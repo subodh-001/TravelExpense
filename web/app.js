@@ -256,6 +256,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // Render Logged In Google User Profile UI
   updateUserProfileUI();
 
+  // On page load/refresh: Sync latest profile picture & name from backend/Firestore
+  if (state.currentGoogleUser && state.currentGoogleUser.id) {
+    const activeUserId = state.currentGoogleUser.id;
+    fetch(`${API_BASE_URL}/user/profile/${encodeURIComponent(activeUserId)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success && data.user && data.user.picture) {
+          if (state.currentGoogleUser && state.currentGoogleUser.id === activeUserId) {
+            state.currentGoogleUser.picture = data.user.picture;
+            if (data.user.name) state.currentGoogleUser.name = data.user.name;
+            try { localStorage.setItem('google_user', JSON.stringify(state.currentGoogleUser)); } catch (e) {}
+            updateUserProfileUI();
+          }
+        }
+      })
+      .catch(() => {});
+  }
+
   // Setup Google Identity Services (GSI) if available
   initGoogleIdentityServices();
 
@@ -484,11 +502,22 @@ function getStoredGoogleUser() {
 function saveGoogleUser(user) {
   if (!user || !user.email) return;
 
+  // Determine best picture: prefer custom uploaded Cloudinary picture or direct URL
+  let pictureToUse = user.picture;
+  if (!pictureToUse || pictureToUse.includes('dicebear.com') || pictureToUse.includes('googleusercontent.com')) {
+    if (state.currentGoogleUser && state.currentGoogleUser.picture && (state.currentGoogleUser.picture.includes('cloudinary.com') || state.currentGoogleUser.picture.startsWith('data:image'))) {
+      pictureToUse = state.currentGoogleUser.picture;
+    }
+  }
+  if (!pictureToUse) {
+    pictureToUse = getUserAvatarUrl(user);
+  }
+
   const safeUser = {
     id: user.id || `google_${user.email.replace(/[^a-zA-Z0-9]/g, '_')}`,
     name: user.name || user.email.split('@')[0],
     email: user.email,
-    picture: getUserAvatarUrl(user),
+    picture: pictureToUse,
     role: user.role || 'user'
   };
 
