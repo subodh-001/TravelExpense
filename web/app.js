@@ -45,28 +45,56 @@ const DEFAULT_USER_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.o
 function getUserAvatarUrl(user) {
   if (!user) return `https://api.dicebear.com/7.x/avataaars/svg?seed=Member`;
 
-  // 1. If user is current logged in user and has a custom uploaded/Google picture in state
-  if (typeof state !== 'undefined' && state && state.currentGoogleUser && state.currentGoogleUser.picture) {
-    const activeEmail = (state.currentGoogleUser.email || '').toLowerCase();
-    const targetEmail = (typeof user === 'object' && user ? (user.email || '') : (typeof user === 'string' ? user : '')).toLowerCase();
-    if (activeEmail && targetEmail && activeEmail === targetEmail) {
-      const activePic = state.currentGoogleUser.picture;
-      if (activePic && typeof activePic === 'string' && !activePic.includes('<') && (activePic.startsWith('http://') || activePic.startsWith('https://') || activePic.startsWith('data:image'))) {
-        return activePic;
+  const currUser = (typeof state !== 'undefined' && state && state.currentGoogleUser) ? state.currentGoogleUser : null;
+
+  // Extract candidate identifiers from `user` input (object or string)
+  let targetId = '';
+  let targetEmail = '';
+  let targetName = '';
+  let targetPic = '';
+
+  if (typeof user === 'object' && user !== null) {
+    targetId = (user.id || user.userId || '').toLowerCase();
+    targetEmail = (user.email || '').toLowerCase();
+    targetName = user.name || user.email || 'Traveler';
+    targetPic = user.picture || user.avatar || '';
+  } else if (typeof user === 'string') {
+    const cleanStr = user.trim();
+    if (cleanStr.startsWith('http://') || cleanStr.startsWith('https://') || cleanStr.startsWith('data:image')) {
+      return user; // Directly passed photo URL
+    }
+    if (cleanStr.includes('@')) {
+      targetEmail = cleanStr.toLowerCase();
+    } else {
+      targetId = cleanStr.toLowerCase();
+    }
+    targetName = user;
+  }
+
+  // 1. If target matches current logged-in user, use current logged-in user's picture
+  if (currUser && currUser.picture) {
+    const currId = (currUser.id || '').toLowerCase();
+    const currEmail = (currUser.email || '').toLowerCase();
+    const currPic = currUser.picture;
+
+    const matchesId = targetId && currId && (targetId === currId || targetId.includes(currEmail.replace(/[^a-zA-Z0-9]/g, '_')) || currId.includes(targetId));
+    const matchesEmail = targetEmail && currEmail && targetEmail === currEmail;
+    const matchesName = currUser.name && targetName && currUser.name.toLowerCase() === targetName.toLowerCase();
+
+    if (matchesId || matchesEmail || matchesName) {
+      if (currPic && typeof currPic === 'string' && !currPic.includes('<') && (currPic.startsWith('http://') || currPic.startsWith('https://') || currPic.startsWith('data:image'))) {
+        return currPic;
       }
     }
   }
 
-  // 2. Check user's own picture property if custom uploaded
-  let name = (typeof user === 'object' && user) ? (user.name || user.email || 'Traveler') : (typeof user === 'string' && user ? user : 'Traveler');
-  let pic = typeof user === 'object' && user ? (user.picture || user.avatar || '') : (typeof user === 'string' ? user : '');
-
-  if (pic && typeof pic === 'string' && !pic.includes('<') && (pic.startsWith('http://') || pic.startsWith('https://') || pic.startsWith('data:image'))) {
-    return pic;
+  // 2. Direct picture property on passed user object
+  if (targetPic && typeof targetPic === 'string' && !targetPic.includes('<') && (targetPic.startsWith('http://') || targetPic.startsWith('https://') || targetPic.startsWith('data:image'))) {
+    return targetPic;
   }
 
-  // 3. Return Dicebear avatar seed (matches screenshot exactly!)
-  const cleanSeed = encodeURIComponent(name);
+  // 3. Fallback to Dicebear avatar seed
+  const cleanSeed = encodeURIComponent(targetName || 'Traveler');
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanSeed}`;
 }
 
