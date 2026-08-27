@@ -2944,11 +2944,12 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
     const { expenseId } = req.params;
     const userId = req.userId;
 
-    // Collect all valid user ID aliases (Google sub ID, Telegram ID, WhatsApp ID, Email)
     const users = getLocalUsers();
     const validUserIds = getUserAliasIds(userId, users);
     const currentUser = users[userId] || Object.values(users).find(u => u && (u.id === userId || u.email === userId));
     const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin');
+
+    let deletedAny = false;
 
     // 1. Delete from Local JSON storage
     const expenses = getLocalExpenses();
@@ -2959,14 +2960,13 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
         return res.status(403).json({ error: 'Unauthorized: Cannot delete expense of another user' });
       }
       expenses.splice(expIndex, 1);
-      // Write updated list to local file without background batch write
       const tempPath = `${LOCAL_DB_FILE}.tmp`;
       fs.writeFileSync(tempPath, JSON.stringify(expenses, null, 2));
       fs.renameSync(tempPath, LOCAL_DB_FILE);
-      broadcastEvent('EXPENSES_UPDATED');
+      deletedAny = true;
     }
 
-    // 2. Delete from Firebase Firestore if connected
+    // 2. ALWAYS Delete from Firebase Firestore if connected
     if (useFirebase && db) {
       try {
         const docRef = db.collection('expenses').doc(expenseId);
@@ -2976,7 +2976,6 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
           if (!isAdmin && !validUserIds.has(data.userId)) {
             return res.status(403).json({ error: 'Unauthorized: Cannot delete expense of another user' });
           }
-          // Delete receipt files from bucket if any
           for (const receipt of data.receipts || []) {
             try {
               if (receipt.fileName && bucket) {
@@ -2987,18 +2986,30 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
           }
           await docRef.delete();
           console.log(`🔥 Expense ${expenseId} deleted from Firebase Firestore`);
+          deletedAny = true;
+        } else {
+          // Force delete document in case it exists without cached read
+          await docRef.delete().catch(() => {});
         }
       } catch (fbErr) {
         console.warn('⚠️ Firebase expense delete note:', fbErr.message);
       }
     }
 
-    // 3. Delete local uploads folder if exists
+    // 3. Delete from SQLite if mirror exists
+    if (typeof dbSql !== 'undefined' && dbSql) {
+      try {
+        dbSql.prepare('DELETE FROM expenses WHERE id = ?').run(expenseId);
+      } catch (_) {}
+    }
+
+    // 4. Delete local uploads folder if exists
     const userFolder = path.join(UPLOADS_DIR, userId, expenseId);
     if (fs.existsSync(userFolder)) {
       fs.rmSync(userFolder, { recursive: true, force: true });
     }
 
+    broadcastEvent('EXPENSES_UPDATED');
     return res.json({ success: true, message: 'Expense deleted successfully!' });
   } catch (error) {
     res.status(500).json({ error: error.message });

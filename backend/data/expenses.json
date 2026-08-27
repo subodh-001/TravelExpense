@@ -1,32 +1,10 @@
 [
   {
-    "id": "exp_tg_metro_100_restored",
-    "userId": "google_subodhram3350_gmail_com",
     "date": "2026-08-25",
-    "location": "Metro",
-    "notes": "Metro",
-    "paymentStatus": "pending",
-    "entries": [
-      {
-        "type": "Metro",
-        "amount": 100
-      }
-    ],
-    "total": 100,
     "receipts": [
-      "https://res.cloudinary.com/vrxb6o67/image/upload/v1787682900/expense_receipts/Subodh_Ram/August_2026/25_Aug_2026/file_1787682900.jpg"
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1787677902/expense_receipts/nothing/August_2026/25_Aug_2026/receipt_1787677896325_a0s39.png"
     ],
-    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1787682900/expense_receipts/Subodh_Ram/August_2026/25_Aug_2026/file_1787682900.jpg",
-    "createdAt": "2026-08-25T19:29:31.587Z",
-    "updatedAt": "2026-08-25T19:29:31.588Z",
-    "source": "Telegram Bot"
-  },
-  {
-    "id": "exp_5fcd4783",
-    "userId": "google_nothingsubodh_gmail_com",
-    "date": "2026-08-25",
-    "location": "Auto/Rapido",
-    "notes": "aded",
+    "createdAt": "2026-08-25T17:11:43.063Z",
     "entries": [
       {
         "type": "Auto/Rapido",
@@ -34,11 +12,11 @@
       }
     ],
     "total": 1000,
+    "notes": "aded",
+    "location": "Auto/Rapido",
+    "id": "exp_5fcd4783",
+    "userId": "google_nothingsubodh_gmail_com",
     "paymentStatus": "pending",
-    "receipts": [
-      "https://res.cloudinary.com/vrxb6o67/image/upload/v1787677902/expense_receipts/nothing/August_2026/25_Aug_2026/receipt_1787677896325_a0s39.png"
-    ],
-    "createdAt": "2026-08-25T17:11:43.063Z",
     "updatedAt": "2026-08-25T17:11:43.063Z"
   },
   {
@@ -51,6 +29,69 @@
     "location": "Ola/Uber",
     "id": "exp_404e57fa",
     "userId": "google_subodhram3350_gmail_com",
-    "paymentStatus": "paid"
+    "paymentStatus": "paid",
+    "updatedAt": "2026-08-27T08:37:36.758Z"
+  },
+  {
+    "userId": "google_nothingsubodh_gmail_com",
+    "date": "2026-07-22",
+    "location": "Porter",
+    "notes": "Porter",
+    "entries": [
+      {
+        "type": "Porter",
+        "amount": 800
+      }
+    ],
+    "total": 800,
+    "paymentStatus": "pending",
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1787817694/expense_receipts/subodh_ram/August_2026/27_Aug_2026/receipt_1787817691795_907sl.jpg"
+    ],
+    "createdAt": "2026-08-27T08:01:35.166Z",
+    "id": "KxvYxCZlBGkbWV6gh5Uv",
+    "updatedAt": "2026-08-27T08:01:35.166Z"
+  },
+  {
+    "notes": "Warehouse",
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "createdAt": "2026-08-27T05:07:23.825Z",
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 100
+      }
+    ],
+    "total": 100,
+    "location": "Auto/Rapido",
+    "id": "exp_tg_mtb29u0h_hlqv",
+    "paymentStatus": "pending",
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1787807258/expense_receipts/telegram_receipts/file_1787807257227_nl80v.jpg"
+    ],
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1787807258/expense_receipts/telegram_receipts/file_1787807257227_nl80v.jpg",
+    "date": "2026-08-27",
+    "updatedAt": "2026-08-27T05:07:38.988Z"
+  },
+  {
+    "notes": "Tbse juhu on 26th august",
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "receipts": [],
+    "createdAt": "2026-08-27T05:09:01.674Z",
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 280
+      }
+    ],
+    "total": 280,
+    "paymentBillUrl": null,
+    "location": "Auto/Rapido",
+    "id": "exp_tg_mtb2bxii_3adh",
+    "paymentStatus": "pending",
+    "date": "2026-08-27",
+    "updatedAt": "2026-08-27T05:09:01.674Z"
   }
 ]

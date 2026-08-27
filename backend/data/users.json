@@ -7,22 +7,31 @@
     "id": "google_subodhram3350_gmail_com",
     "email": "subodhram3350@gmail.com",
     "passwordHash": "9b6a509cfcd5a026fd2fedbe3b8f7cd7a020c1db4819fab7a6e12be887c09d83",
-    "lastActive": "2026-08-25T09:00:02.161Z",
+    "lastActive": "2026-08-27T07:17:39.848Z",
     "whatsapp": "",
     "whatsappVerified": false,
     "phone": "",
-    "telegramChatId": "",
-    "picture": "",
-    "telegramUsername": "",
-    "updatedAt": "2026-08-25T13:11:32.163Z"
+    "telegramChatId": "1539961698",
+    "picture": "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 128 128\"><circle cx=\"64\" cy=\"64\" r=\"64\" fill=\"%23cbd5e1\"/><circle cx=\"64\" cy=\"48\" r=\"26\" fill=\"%23ffffff\"/><path d=\"M64 82c-28 0-48 14-48 30v16h96V112c0-16-20-30-48-30z\" fill=\"%23ffffff\"/></svg>",
+    "telegramUsername": "Grandmaster3350",
+    "updatedAt": "2026-08-27T08:34:03.797Z",
+    "telegramVerified": true
   },
   "google_nothingsubodh_gmail_com": {
     "id": "google_nothingsubodh_gmail_com",
-    "name": "Nothing Subodh",
+    "name": "subodh.ram",
     "email": "nothingsubodh@gmail.com",
     "role": "admin",
     "verified": true,
-    "picture": "",
-    "updatedAt": "2026-08-25T16:35:59.705Z"
+    "picture": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc1IiByPSI0MiIgZmlsbD0iIzljYTNiZiIvPjxwYXRoIGQ9Ik0gMjAgMTg1IEMgMjAgMTMwIDUwIDEyMCAxMDAgMTIwIEMgMTUwIDEyMCAxODAgMTMwIDE4MCAxODUgWiIgZmlsbD0iIzljYTNiZiIvPjwvc3ZnPg==",
+    "updatedAt": "2026-08-27T08:29:23.672Z",
+    "whatsapp": "",
+    "whatsappVerified": false,
+    "telegramChatId": "",
+    "telegramUsername": "",
+    "phone": "",
+    "paymentBillUrl": "",
+    "createdAt": "2026-08-27T07:59:41.925Z",
+    "passwordHash": "efdb648ca67f87e8d8a81da8d645984c8868539b8f6a194dbd6464214b5d7cfb"
   }
 }

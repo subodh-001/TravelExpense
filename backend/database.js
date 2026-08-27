@@ -1,47 +1,49 @@
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+let db = null;
+try {
+  const Database = require('better-sqlite3');
+  const dbPath = path.join(__dirname, 'data', 'travel_expense.sqlite');
+  db = new Database(dbPath);
+  db.pragma('journal_mode = WAL');
+} catch (err) {
+  console.warn('⚠️ SQLite mirror unavailable (native module note):', err.message, '— Operating in JSON + Firestore master mode.');
+}
 
-// Ensure data directory exists (important for fresh Render deployments)
-const dataDir = path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+if (db) {
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        role TEXT DEFAULT 'user',
+        picture TEXT,
+        verified INTEGER DEFAULT 1,
+        payment_bill_url TEXT,
+        updated_at TEXT
+      );
 
-const dbPath = path.join(__dirname, 'data', 'travel_expense.sqlite');
-const db = new Database(dbPath);
-
-// Enable WAL mode for high performance
-db.pragma('journal_mode = WAL');
-
-// Initialize SQL Tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    role TEXT DEFAULT 'user',
-    picture TEXT,
-    verified INTEGER DEFAULT 1,
-    payment_bill_url TEXT,
-    updated_at TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS expenses (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    date TEXT NOT NULL,
-    location TEXT,
-    notes TEXT,
-    total REAL DEFAULT 0,
-    payment_status TEXT DEFAULT 'pending',
-    payment_bill_url TEXT,
-    settled_at TEXT,
-    created_at TEXT,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-  );
-`);
+      CREATE TABLE IF NOT EXISTS expenses (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        location TEXT,
+        notes TEXT,
+        total REAL DEFAULT 0,
+        payment_status TEXT DEFAULT 'pending',
+        payment_bill_url TEXT,
+        settled_at TEXT,
+        created_at TEXT,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+      );
+    `);
+  } catch (e) {
+    console.warn('⚠️ SQLite schema init note:', e.message);
+  }
+}
 
 // Function to sync JSON data into SQLite tables
 function syncJSONToSQLite() {
+  if (!db) return;
   try {
     const usersPath = path.join(__dirname, 'data', 'users.json');
     const expensesPath = path.join(__dirname, 'data', 'expenses.json');
