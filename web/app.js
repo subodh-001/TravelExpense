@@ -1309,6 +1309,12 @@ async function handleUserSubmitExpense(e) {
       const preview = document.getElementById('uploadedPhotoPreview');
       if (preview) preview.style.display = 'none';
       await loadExpenses();
+      if (typeof loadSuperAdminData === 'function') {
+        loadSuperAdminData();
+      }
+      if (typeof currentInspectUserId !== 'undefined' && currentInspectUserId) {
+        inspectUserExpenses(currentInspectUserId);
+      }
     } else {
       alert(data.error || 'Failed to submit expense entry.');
     }
@@ -1787,6 +1793,12 @@ async function togglePaymentStatus(expenseId, currentStatus) {
     if (data.success) {
       showToast(newStatus === 'paid' ? '✅ Marked as Paid & Settled!' : '⏳ Marked as Payment Pending');
       loadExpenses();
+      if (typeof loadSuperAdminData === 'function') {
+        loadSuperAdminData();
+      }
+      if (typeof currentInspectUserId !== 'undefined' && currentInspectUserId) {
+        inspectUserExpenses(currentInspectUserId);
+      }
     }
   } catch (err) {
     console.error('Error toggling payment status:', err);
@@ -1933,6 +1945,12 @@ async function handleSaveExpense(e) {
       closeModal(addModal);
       state.editingExpenseId = null;
       loadExpenses();
+      if (typeof loadSuperAdminData === 'function') {
+        loadSuperAdminData();
+      }
+      if (typeof currentInspectUserId !== 'undefined' && currentInspectUserId) {
+        inspectUserExpenses(currentInspectUserId);
+      }
     } else {
       alert(`Error saving expense: ${data.error}`);
     }
@@ -2221,6 +2239,12 @@ function deleteExpense(expenseId) {
         if (data.success) {
           showToast('🗑️ Travel expense entry deleted');
           loadExpenses();
+          if (typeof loadSuperAdminData === 'function') {
+            loadSuperAdminData();
+          }
+          if (typeof currentInspectUserId !== 'undefined' && currentInspectUserId) {
+            inspectUserExpenses(currentInspectUserId);
+          }
         } else {
           alert(`Error deleting: ${data.error}`);
         }
@@ -3300,10 +3324,13 @@ async function loadSuperAdminData() {
       const amountSubtextEl = document.getElementById('adminSystemAmountSubtext');
       const badgeEl = document.getElementById('adminUserBadge');
 
+      const computedPendingTotal = adminUsersCache.reduce((sum, u) => sum + (u.pendingAmount || 0), 0);
+      const computedPaidTotal = adminUsersCache.reduce((sum, u) => sum + (u.paidAmount || 0), 0);
+
       if (totalUsersEl) totalUsersEl.textContent = data.totalSystemUsers || adminUsersCache.length;
-      if (totalAmountEl) totalAmountEl.textContent = `₹${(data.totalSystemAmount || 0).toLocaleString('en-IN')}`;
+      if (totalAmountEl) totalAmountEl.textContent = `₹${computedPendingTotal.toLocaleString('en-IN')}`;
       if (amountSubtextEl) {
-        amountSubtextEl.innerHTML = `⏳ Pending: <strong>₹${(data.totalSystemPendingAmount || 0).toLocaleString('en-IN')}</strong> | ✅ Paid: <strong>₹${(data.totalSystemPaidAmount || 0).toLocaleString('en-IN')}</strong>`;
+        amountSubtextEl.innerHTML = `⏳ Pending: <strong>₹${computedPendingTotal.toLocaleString('en-IN')}</strong> | ✅ Paid: <strong>₹${computedPaidTotal.toLocaleString('en-IN')}</strong>`;
       }
 
       if (badgeEl) badgeEl.textContent = `${adminUsersCache.length} Users`;

@@ -1815,8 +1815,34 @@ app.get('/api/admin/users', async (req, res) => {
     const usersObj = getLocalUsers();
     let allExpenses = getLocalExpenses();
 
+    if (useFirebase && db) {
+      try {
+        const snapshot = await db.collection('expenses').get();
+        const fbExpenses = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          let createdAtStr = data.createdAt;
+          if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            createdAtStr = data.createdAt.toDate().toISOString();
+          } else if (data.createdAt && data.createdAt._seconds) {
+            createdAtStr = new Date(data.createdAt._seconds * 1000).toISOString();
+          }
+          fbExpenses.push({ id: doc.id, ...data, createdAt: createdAtStr });
+        });
+        if (fbExpenses.length > 0) {
+          allExpenses = fbExpenses;
+        }
+      } catch (e) {
+        console.warn('Firebase admin users expenses fetch warning:', e.message);
+      }
+    }
+
     if (month && month !== 'all') {
-      allExpenses = allExpenses.filter(e => e.date && e.date.startsWith(month));
+      allExpenses = allExpenses.filter(e => {
+        if (!e) return false;
+        const d = e.date || (e.createdAt ? String(e.createdAt).slice(0, 10) : '');
+        return d && d.startsWith(month);
+      });
     }
 
     let totalSystemPending = 0;
@@ -1825,15 +1851,11 @@ app.get('/api/admin/users', async (req, res) => {
     const usersList = Object.values(usersObj)
       .filter(user => user && user.id && !isUserDeleted(user.id) && (!user.email || !isUserDeleted(user.email)))
       .map(user => {
-      const userCleanId = user.email ? `google_${user.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+      const validUserIds = getUserAliasIds(user.id, usersObj);
       const userExpenses = allExpenses.filter(e => {
         if (!e || !e.userId) return false;
         const eUid = e.userId.toLowerCase().trim();
-        return (
-          eUid === (user.id || '').toLowerCase().trim() ||
-          eUid === (user.email || '').toLowerCase().trim() ||
-          (userCleanId && eUid === userCleanId.toLowerCase())
-        );
+        return validUserIds.has(e.userId) || validUserIds.has(eUid);
       });
       
       const pendingAmount = userExpenses
@@ -2534,6 +2556,29 @@ app.put('/api/expenses/:expenseId', authenticate, async (req, res) => {
       if (notes !== undefined) updateData.notes = notes;
 
       await db.collection('expenses').doc(expenseId).update(updateData);
+
+      // ALSO update local JSON cache so local storage stays 100% in sync
+      try {
+        const expenses = getLocalExpenses();
+        const idx = expenses.findIndex(e => e.id === expenseId);
+        if (idx !== -1) {
+          expenses[idx] = {
+            ...expenses[idx],
+            date: date || expenses[idx].date,
+            location: location || expenses[idx].location,
+            notes: notes !== undefined ? notes : (expenses[idx].notes || location),
+            receipts: receipts !== undefined ? receipts : (expenses[idx].receipts || []),
+            entries: cleanEntries,
+            total,
+            paymentStatus: paymentStatus || expenses[idx].paymentStatus || 'pending',
+            updatedAt: new Date().toISOString()
+          };
+          saveLocalExpenses(expenses);
+        }
+      } catch (lErr) {
+        console.warn('Local expenses sync error on edit:', lErr.message);
+      }
+
       broadcastEvent('EXPENSES_UPDATED', { expenseId, userId });
       return res.json({ success: true, message: 'Expense updated successfully' });
     } else {
@@ -2580,6 +2625,19 @@ app.patch('/api/expenses/:expenseId/payment-status', authenticate, async (req, r
         paymentStatus,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
+
+      try {
+        const expenses = getLocalExpenses();
+        const idx = expenses.findIndex(e => e.id === expenseId);
+        if (idx !== -1) {
+          expenses[idx].paymentStatus = paymentStatus;
+          expenses[idx].updatedAt = new Date().toISOString();
+          saveLocalExpenses(expenses);
+        }
+      } catch (lErr) {
+        console.warn('Local status sync error:', lErr.message);
+      }
+
       broadcastEvent('EXPENSES_UPDATED', { expenseId, paymentStatus });
       return res.json({ success: true, message: `Status updated to ${paymentStatus}` });
     } else {
