@@ -113,11 +113,11 @@ async function restoreAuthFromFirebase(db) {
 const CATEGORY_MAP = [
   {
     category: 'Metro',
-    keywords: ['metro', 'subway', 'monorail', 'underground', 'm1', 'm2', 'line1', 'line2', 'versova', 'ghatkopar', 'dahanukar']
+    keywords: ['metro', 'subway', 'monorail', 'underground', 'm1', 'm2', 'line1', 'line2']
   },
   {
     category: 'Local',
-    keywords: ['local', 'train', 'railway', 'station', 'suburban', 'ticket', 'pass', 'ticketless', 'borivali', 'churchgate', 'csmt', 'dadar', 'andheri', 'thane']
+    keywords: ['local', 'train', 'railway', 'suburban', 'ticket', 'pass', 'ticketless']
   },
   {
     category: 'Auto/Rapido',
@@ -129,7 +129,7 @@ const CATEGORY_MAP = [
   },
   {
     category: 'Porter',
-    keywords: ['porter', 'coolie', 'luggage', 'samman', ' सामान', 'कुली']
+    keywords: ['porter', 'coolie', 'luggage', 'samman', 'सामान', 'कुली']
   },
   {
     category: 'Courier',
@@ -145,7 +145,20 @@ const CATEGORY_MAP = [
   }
 ];
 
+const MONTH_NAMES_MAP = {
+  jan: '01', january: '01', feb: '02', february: '02',
+  mar: '03', march: '03', apr: '04', april: '04',
+  may: '05', jun: '06', june: '06', jul: '07', july: '07',
+  aug: '08', august: '08', sep: '09', sept: '09', september: '09',
+  oct: '10', october: '10', nov: '11', november: '11', dec: '12', december: '12'
+};
+
 function extractDateFromText(text) {
+  if (!text || typeof text !== 'string') {
+    const now = new Date();
+    return { dateStr: now.toISOString().slice(0, 10), matchStr: null };
+  }
+
   const now = new Date();
   const currentYear = now.getFullYear();
 
@@ -158,17 +171,43 @@ function extractDateFromText(text) {
     return { dateStr: `${y}-${m}-${d}`, matchStr: ymdMatch[0] };
   }
 
-  // 2. DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+  // 2. DD-Month-YYYY or DD Month YYYY or DD-Month-YY or DD Month YY or DD-Month or DD Month (e.g., 6-Aug-26, 6 Aug 2026, 9-Jul-26, 13 Jul, 18-Aug-26)
+  const dmNameMatch = text.match(/\b(0?[1-9]|[12]\d|3[01])[\s/-]+([a-zA-Z]{3,9})(?:[\s/-]+(20\d{2}|\d{2}))?\b/i);
+  if (dmNameMatch) {
+    const monthKey = dmNameMatch[2].toLowerCase();
+    if (MONTH_NAMES_MAP[monthKey]) {
+      const d = dmNameMatch[1].padStart(2, '0');
+      const m = MONTH_NAMES_MAP[monthKey];
+      let y = dmNameMatch[3] ? parseInt(dmNameMatch[3], 10) : currentYear;
+      if (y < 100) y = 2000 + y;
+      return { dateStr: `${y}-${m}-${d}`, matchStr: dmNameMatch[0] };
+    }
+  }
+
+  // 3. Month-DD-YYYY or Month DD YYYY or Month-DD-YY or Month DD YY or Month DD (e.g., Aug 6 2026, Aug 6, Aug-6-26)
+  const mdNameMatch = text.match(/\b([a-zA-Z]{3,9})[\s/-]+(0?[1-9]|[12]\d|3[01])(?:[\s/-]+(20\d{2}|\d{2}))?\b/i);
+  if (mdNameMatch) {
+    const monthKey = mdNameMatch[1].toLowerCase();
+    if (MONTH_NAMES_MAP[monthKey]) {
+      const d = mdNameMatch[2].padStart(2, '0');
+      const m = MONTH_NAMES_MAP[monthKey];
+      let y = mdNameMatch[3] ? parseInt(mdNameMatch[3], 10) : currentYear;
+      if (y < 100) y = 2000 + y;
+      return { dateStr: `${y}-${m}-${d}`, matchStr: mdNameMatch[0] };
+    }
+  }
+
+  // 4. DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY or DD/MM/YY or DD-MM-YY
   const dmyMatch = text.match(/\b(0?[1-9]|[12]\d|3[01])[-/.](0?[1-9]|1[0-2])[-/.](20\d{2}|\d{2})\b/);
   if (dmyMatch) {
     const d = dmyMatch[1].padStart(2, '0');
     const m = dmyMatch[2].padStart(2, '0');
-    let y = dmyMatch[3];
-    if (y.length === 2) y = '20' + y;
+    let y = parseInt(dmyMatch[3], 10);
+    if (y < 100) y = 2000 + y;
     return { dateStr: `${y}-${m}-${d}`, matchStr: dmyMatch[0] };
   }
 
-  // 3. DD/MM or DD-MM without year (assumes current year)
+  // 5. DD/MM or DD-MM without year (assumes current year)
   const dmMatch = text.match(/\b(0?[1-9]|[12]\d|3[01])[-/](0?[1-9]|1[0-2])\b/);
   if (dmMatch) {
     const d = dmMatch[1].padStart(2, '0');
@@ -176,28 +215,7 @@ function extractDateFromText(text) {
     return { dateStr: `${currentYear}-${m}-${d}`, matchStr: dmMatch[0] };
   }
 
-  // 4. DD Month (e.g. 20 Aug, 20 August, 15 Aug 2026)
-  const monthNames = {
-    jan: '01', january: '01', feb: '02', february: '02',
-    mar: '03', march: '03', apr: '04', april: '04',
-    may: '05', jun: '06', june: '06', jul: '07', july: '07',
-    aug: '08', august: '08', sep: '09', sept: '09', september: '09',
-    oct: '10', october: '10', nov: '11', november: '11', dec: '12', december: '12'
-  };
-
-  const monthRegex = /\b(0?[1-9]|[12]\d|3[01])\s*([a-zA-Z]{3,9})(?:\s*(20\d{2}))?\b/i;
-  const monthMatch = text.match(monthRegex);
-  if (monthMatch) {
-    const monthKey = monthMatch[2].toLowerCase();
-    if (monthNames[monthKey]) {
-      const d = monthMatch[1].padStart(2, '0');
-      const m = monthNames[monthKey];
-      const y = monthMatch[3] || currentYear;
-      return { dateStr: `${y}-${m}-${d}`, matchStr: monthMatch[0] };
-    }
-  }
-
-  // 5. Keyword: parso / day before yesterday
+  // 6. Keyword: parso / day before yesterday
   const parsoMatch = text.match(/\b(parso|parson|day before yesterday)\b/i);
   if (parsoMatch) {
     const parso = new Date(now);
@@ -208,7 +226,7 @@ function extractDateFromText(text) {
     return { dateStr: `${y}-${m}-${d}`, matchStr: parsoMatch[0] };
   }
 
-  // 6. Keyword: yesterday / kal
+  // 7. Keyword: yesterday / kal
   const kwMatch = text.match(/\b(yesterday|kal)\b/i);
   if (kwMatch) {
     const yesterday = new Date(now);
@@ -224,14 +242,14 @@ function extractDateFromText(text) {
   return { dateStr: todayStr, matchStr: null };
 }
 
-function parseExpenseMessage(text) {
-  if (!text || typeof text !== 'string') return null;
-  const clean = text.trim();
-  if (!clean) return null;
+function parseSingleExpenseLine(clean) {
+  if (!clean || typeof clean !== 'string') return null;
+  const lineStr = clean.replace(/^\/add\s*/i, '').trim();
+  if (!lineStr) return null;
 
-  const lower = clean.toLowerCase();
+  const lower = lineStr.toLowerCase();
 
-  // Smart Command Matching (Hinglish + English natural phrases)
+  // Smart Command Matching
   const helpKeywords = ['help', 'menu', 'start', 'hi', 'hello', 'hey', 'hii', 'hie', 'helo', 'namaste', 'wup', 'bhai', 'sun', 'kaise ho', 'kya haal', 'kya hal'];
   const summaryKeywords = ['summary', 'total', 'balance', 'stats', 'kitna hua', 'kitna kharcha', 'hisab', 'hisaab', 'total expense', 'kitna baki', 'aaj ka total', 'month summary', 'kitna kharch hua', 'kharcha'];
   const historyKeywords = ['history', 'recent', 'list', 'entries', 'dikhao', 'purana', 'kya kya daala', 'show entries', 'last expenses', 'recent entries'];
@@ -245,53 +263,123 @@ function parseExpenseMessage(text) {
   if (historyKeywords.some(k => lower.includes(k))) {
     if (!/\d+/.test(lower)) return { isCommand: true, command: 'history' };
   }
-  if (lower.startsWith('link ')) return { isCommand: true, command: 'link', arg: clean.substring(5).trim() };
+  if (lower.startsWith('link ')) return { isCommand: true, command: 'link', arg: lineStr.substring(5).trim() };
 
   // Extract custom date if specified
-  const { dateStr, matchStr } = extractDateFromText(clean);
+  const { dateStr, matchStr } = extractDateFromText(lineStr);
 
-  // Smart Amount Regex: Matches 150, rs 150, ₹150, 150rs, 150.50, 150/-, 150 ka, ka 150
-  const amountMatch = clean.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d{1,2})?)\s*(?:rs\.?|rupees|rupaye|rupiya|\/-)?/i);
+  // Remove date match string from text to avoid numeric date components being picked up as amounts
+  let textWithoutDate = lineStr;
+  if (matchStr) {
+    textWithoutDate = textWithoutDate.replace(matchStr, ' ');
+  }
 
-  // Determine category
-  let matchedCategory = 'Others';
-  for (const item of CATEGORY_MAP) {
-    for (const kw of item.keywords) {
+  // Extract mode keyword if specified explicitly (e.g. metro, local, auto, rapido, ola, uber, food, etc.)
+  const modeKeywordsMap = [
+    { mode: 'Metro', keywords: ['metro', 'subway', 'monorail'] },
+    { mode: 'Local', keywords: ['local', 'train', 'suburban'] },
+    { mode: 'Auto/Rapido', keywords: ['auto', 'rapido', 'rickshaw', 'autorickshaw'] },
+    { mode: 'Ola/Uber', keywords: ['ola', 'uber', 'cab', 'taxi', 'indrive', 'indriver', 'blusmart'] },
+    { mode: 'Porter', keywords: ['porter', 'coolie', 'luggage'] },
+    { mode: 'Courier', keywords: ['courier', 'parcel', 'speedpost'] },
+    { mode: 'Food', keywords: ['food', 'lunch', 'dinner', 'breakfast', 'snacks', 'chai', 'tea', 'coffee', 'hotel', 'khana', 'zomato', 'swiggy'] },
+    { mode: 'Others', keywords: ['other', 'others', 'misc', 'toll', 'parking', 'petrol', 'diesel', 'fuel'] }
+  ];
+
+  let detectedMode = null;
+  let matchedKeywordStr = null;
+  for (const mItem of modeKeywordsMap) {
+    for (const kw of mItem.keywords) {
       const regex = new RegExp(`\\b${kw}\\b`, 'i');
-      if (regex.test(clean)) {
-        matchedCategory = item.category;
+      if (regex.test(textWithoutDate)) {
+        detectedMode = mItem.mode;
+        matchedKeywordStr = kw;
         break;
       }
     }
-    if (matchedCategory !== 'Others') break;
+    if (detectedMode) break;
   }
 
-  if (!amountMatch) {
+  // Extract all numbers from textWithoutDate
+  const numMatches = textWithoutDate.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d{1,2})?)\s*(?:rs\.?|rupees|rupaye|rupiya|\/-)?/gi) || [];
+  const numbers = [];
+  numMatches.forEach(m => {
+    const val = parseFloat(m.replace(/[^0-9.]/g, ''));
+    if (!isNaN(val) && val > 0) numbers.push(val);
+  });
+
+  // Determine category
+  let matchedCategory = detectedMode || 'Others';
+  if (!detectedMode) {
+    for (const item of CATEGORY_MAP) {
+      for (const kw of item.keywords) {
+        const regex = new RegExp(`\\b${kw}\\b`, 'i');
+        if (regex.test(lineStr)) {
+          matchedCategory = item.category;
+          break;
+        }
+      }
+      if (matchedCategory !== 'Others') break;
+    }
+  }
+
+  if (numbers.length === 0) {
     // If text contains valid words but no amount yet, return as partial draft
-    if (clean.length >= 2 && !/^[^\w]+$/.test(clean)) {
+    if (lineStr.length >= 2 && !/^[^\w]+$/.test(lineStr)) {
       return {
         isCommand: false,
         isPartial: true,
         category: matchedCategory,
-        comment: clean,
+        comment: lineStr,
         dateStr,
-        rawText: clean
+        rawText: lineStr
       };
     }
     return null;
   }
 
-  const amount = parseFloat(amountMatch[1]);
-  if (isNaN(amount) || amount <= 0) return null;
+  let entries = [];
+  let total = 0;
 
-  // Extract comment/notes (remove amount, custom date, filler words, and category keyword from raw text)
-  let comment = clean;
-  comment = comment.replace(amountMatch[0], ' ');
+  if (numbers.length >= 3) {
+    // Format: Metro Local Auto (e.g. 20 15 386)
+    const metroAmt = numbers[0] || 0;
+    const localAmt = numbers[1] || 0;
+    const autoAmt = numbers[2] || 0;
+    const otherAmt = numbers.slice(3).reduce((a, b) => a + b, 0);
+
+    if (metroAmt > 0) entries.push({ type: 'Metro', amount: metroAmt });
+    if (localAmt > 0) entries.push({ type: 'Local', amount: localAmt });
+    if (autoAmt > 0) entries.push({ type: 'Auto/Rapido', amount: autoAmt });
+    if (otherAmt > 0) entries.push({ type: 'Others', amount: otherAmt });
+    
+    total = metroAmt + localAmt + autoAmt + otherAmt;
+    matchedCategory = autoAmt > metroAmt ? 'Auto/Rapido' : (metroAmt > 0 ? 'Metro' : 'Local');
+  } else if (numbers.length === 2) {
+    // Format: Metro Auto (e.g. 60 102)
+    const metroAmt = numbers[0] || 0;
+    const autoAmt = numbers[1] || 0;
+
+    if (metroAmt > 0) entries.push({ type: 'Metro', amount: metroAmt });
+    if (autoAmt > 0) entries.push({ type: 'Auto/Rapido', amount: autoAmt });
+
+    total = metroAmt + autoAmt;
+    matchedCategory = autoAmt > metroAmt ? 'Auto/Rapido' : 'Metro';
+  } else {
+    // Single number (e.g. 32 or 80 metro)
+    total = numbers[0];
+    entries.push({ type: matchedCategory, amount: total });
+  }
+
+  // Extract comment/notes (remove numbers, custom date, filler words, mode keywords from raw text)
+  let comment = lineStr;
   if (matchStr) {
     comment = comment.replace(matchStr, ' ');
   }
+  numMatches.forEach(m => {
+    comment = comment.replace(m, ' ');
+  });
 
-  // Remove filler conversational words (bhai, ka, ki, tha, gaye, liya, rupees, rs, etc.)
   const fillerWords = ['bhai', 'bro', 'kal', 'parso', 'today', 'yesterday', 'ka', 'ki', 'ke', 'tha', 'gaye', 'liya', 'diya', 'hua', 'rs', 'rupees', 'rupaye', 'rupiya', 'inr'];
   for (const item of CATEGORY_MAP) {
     for (const kw of item.keywords) {
@@ -310,11 +398,42 @@ function parseExpenseMessage(text) {
   return {
     isCommand: false,
     category: matchedCategory,
-    amount,
+    amount: total,
+    total,
+    entries,
     comment,
     dateStr,
-    rawText: clean
+    rawText: lineStr
   };
+}
+
+function parseExpenseMessage(text) {
+  if (!text || typeof text !== 'string') return null;
+  const clean = text.trim();
+  if (!clean) return null;
+
+  // Multi-line support: if text has newlines, parse each line
+  if (clean.includes('\n')) {
+    const lines = clean.split('\n').map(l => l.trim()).filter(Boolean);
+    const parsedItems = [];
+    for (const line of lines) {
+      const res = parseSingleExpenseLine(line);
+      if (res && !res.isCommand && res.amount > 0) {
+        parsedItems.push(res);
+      }
+    }
+    if (parsedItems.length > 0) {
+      return {
+        isMulti: true,
+        items: parsedItems,
+        total: parsedItems.reduce((s, item) => s + item.total, 0)
+      };
+    }
+  }
+
+  const singleRes = parseSingleExpenseLine(clean);
+  if (singleRes) singleRes.isMulti = false;
+  return singleRes;
 }
 
 const processedMsgIds = new Set();

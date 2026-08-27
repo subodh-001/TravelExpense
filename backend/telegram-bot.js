@@ -440,6 +440,130 @@ Send \`/link your_email@gmail.com\` here in chat to link instantly!`;
       return sendHistoryExpensesCtx(ctx, matchedUserId);
     });
 
+    // ── Command: /add <text>
+    bot.command('add', async (ctx) => {
+      const chatId = ctx.chat ? ctx.chat.id : (ctx.message ? ctx.message.chat.id : 0);
+      const text = ctx.message ? ctx.message.text : '';
+      const payload = text.replace(/^\/add\s*/i, '').trim();
+
+      const { matchedUserId, userEmail, userName, isLinked } = ensureUserProfile(chatId, ctx.from);
+      if (!isLinked) return ctx.reply('⚠️ Account not linked yet. Please verify Telegram Account in Web Profile Settings.').catch(() => {});
+
+      if (!payload) {
+        return safeReplyCtx(ctx, '📝 <b>Format:</b> <code>/add Location Amount Mode Date</code>\n\n<i>Example:</i> <code>/add Andheri 80 metro 6 Aug</code>\n<i>Example:</i> <code>/add Warehouse 32 6-Aug-26</code>');
+      }
+
+      const parsed = parseExpenseMessage(payload);
+      if (!parsed) {
+        return safeReplyCtx(ctx, '❌ Could not parse expense details. Try: <code>/add Andheri 80 metro 6 Aug</code>');
+      }
+
+      if (parsed.isMulti && parsed.items && parsed.items.length > 0) {
+        let summaryLines = [];
+        let grandTotal = 0;
+        for (let i = 0; i < parsed.items.length; i++) {
+          const item = parsed.items[i];
+          const expenseDate = item.dateStr || new Date().toISOString().slice(0, 10);
+          const expenseId = `exp_tg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}_${i}`;
+          const itemLocation = item.comment || item.category || 'Travel Entry';
+          const itemEntries = item.entries && item.entries.length > 0 ? item.entries : [{ type: item.category || 'Others', amount: item.amount }];
+          const itemTotal = item.total || item.amount;
+
+          const newExpense = {
+            id: expenseId,
+            userId: matchedUserId,
+            date: expenseDate,
+            location: itemLocation,
+            notes: itemLocation,
+            paymentStatus: 'pending',
+            entries: itemEntries,
+            total: itemTotal,
+            receipts: [],
+            paymentBillUrl: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            source: 'Telegram Bot'
+          };
+
+          await persistExpense(newExpense);
+          grandTotal += itemTotal;
+          const entryBreakdownStr = itemEntries.map(e => `${e.type}: ₹${e.amount}`).join(', ');
+          summaryLines.push(`${i + 1}. 📍 <b>${itemLocation}</b> — ₹${itemTotal.toLocaleString('en-IN')} (${entryBreakdownStr})\n   📅 <i>${expenseDate}</i>`);
+        }
+
+        const multiConfirmText =
+`✅ <b>${parsed.items.length} Bulk Expenses Saved!</b>
+
+${summaryLines.join('\n\n')}
+
+💰 <b>Total Batch:</b> ₹${grandTotal.toLocaleString('en-IN')}
+👤 <b>Account:</b> ${userName} (${userEmail || 'Telegram'})`;
+
+        return safeReplyCtx(ctx, multiConfirmText, MAIN_KEYBOARD);
+      }
+
+      const expenseDate = parsed.dateStr || new Date().toISOString().slice(0, 10);
+      const expenseId = `exp_tg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+      const finalLocation = parsed.comment || parsed.category || 'Travel Entry';
+      const finalEntries = parsed.entries && parsed.entries.length > 0 ? parsed.entries : [{ type: parsed.category, amount: parsed.amount }];
+      const finalTotal = parsed.total || parsed.amount;
+
+      const newExpense = {
+        id: expenseId,
+        userId: matchedUserId,
+        date: expenseDate,
+        location: finalLocation,
+        notes: finalLocation,
+        paymentStatus: 'pending',
+        entries: finalEntries,
+        total: finalTotal,
+        receipts: [],
+        paymentBillUrl: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        source: 'Telegram Bot'
+      };
+
+      await persistExpense(newExpense);
+
+      const confirmText =
+`✅ <b>Expense Saved!</b>
+
+📍 <b>Location:</b> ${finalLocation}
+💰 <b>Amount:</b> ₹${finalTotal.toLocaleString('en-IN')}
+🚗 <b>Mode:</b> ${parsed.category}
+📅 <b>Date:</b> ${expenseDate}
+
+Total: ₹${finalTotal}`;
+
+      return safeReplyCtx(ctx, confirmText, MAIN_KEYBOARD);
+    });
+
+    // ── Command: /addtemplate
+    bot.command('addtemplate', async (ctx) => {
+      const templateMsg =
+`📝 <b>Bulk & Single Expense Formats:</b>
+
+1️⃣ <b>Command Format:</b>
+<code>/add Location Amount Mode Date</code>
+• <code>/add Andheri 80 metro 6 Aug</code>
+• <code>/add Colaba 767 auto 9-Jul-26</code>
+• <code>/add BKC 292 metro 13 Jul</code>
+
+2️⃣ <b>Multi-Amount Breakdown:</b>
+<code>Belapur workloft 7-Aug-26 20 15 386</code>
+(Metro 20, Local 15, Auto 386 = Total ₹421)
+
+3️⃣ <b>Bulk Paste (Multi-line):</b>
+<code>Warehouse 6-Aug-26 32
+Belapur workloft 7-Aug-26 20 15 386
+Doolally Andheri / Varsova 8-Aug-26 60 102
+Chai 18-Aug-26 36
+Chai 19-Aug-26 36
+Belapur workloft 20-Aug-26 780</code>`;
+      return safeReplyCtx(ctx, templateMsg);
+    });
+
     // ── Command: /link <email>
     bot.command('link', async (ctx) => {
       const text = ctx.message ? ctx.message.text : '';
@@ -613,28 +737,70 @@ ${CATEGORY_EMOJIS[recentExp.location] || '📌'} <b>Category:</b> ${recentExp.lo
       }
 
       // ══════════════════════════════════════════════════
-      // CASE D: Full expense entry (has amount) — with or without photo
+      // CASE D: Full expense entry (or Multi-line Bulk entries)
       // ══════════════════════════════════════════════════
-      if (parsed && !parsed.isCommand && parsed.amount > 0) {
+      if (parsed && !parsed.isCommand && (parsed.isMulti || parsed.amount > 0)) {
+        if (parsed.isMulti && parsed.items && parsed.items.length > 0) {
+          let summaryLines = [];
+          let grandTotal = 0;
+          for (let i = 0; i < parsed.items.length; i++) {
+            const item = parsed.items[i];
+            const expenseDate = item.dateStr || new Date().toISOString().slice(0, 10);
+            const expenseId = `exp_tg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}_${i}`;
+            const itemLocation = item.comment || item.category || 'Travel Entry';
+            const itemEntries = item.entries && item.entries.length > 0 ? item.entries : [{ type: item.category || 'Others', amount: item.amount }];
+            const itemTotal = item.total || item.amount;
+
+            const newExpense = {
+              id: expenseId,
+              userId: matchedUserId,
+              date: expenseDate,
+              location: itemLocation,
+              notes: itemLocation,
+              paymentStatus: 'pending',
+              entries: itemEntries,
+              total: itemTotal,
+              receipts: receiptUrl ? [receiptUrl] : [],
+              paymentBillUrl: receiptUrl || null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              source: 'Telegram Bot'
+            };
+
+            await persistExpense(newExpense);
+            grandTotal += itemTotal;
+            const entryBreakdownStr = itemEntries.map(e => `${e.type}: ₹${e.amount}`).join(', ');
+            summaryLines.push(`${i + 1}. 📍 <b>${itemLocation}</b> — ₹${itemTotal.toLocaleString('en-IN')} (${entryBreakdownStr})\n   📅 <i>${expenseDate}</i>`);
+          }
+
+          const multiConfirmText =
+`✅ <b>${parsed.items.length} Travel Expenses Saved to Database!</b>
+
+${summaryLines.join('\n\n')}
+
+💰 <b>Total Batch:</b> ₹${grandTotal.toLocaleString('en-IN')}
+👤 <b>Account:</b> ${userName} (${userEmail || 'Telegram'})`;
+
+          return safeReplyCtx(ctx, multiConfirmText, MAIN_KEYBOARD);
+        }
+
         let finalCategory = parsed.category;
+        let finalLocation = parsed.comment || parsed.category;
         let finalNotes = parsed.comment || parsed.category;
         let finalReceipts = receiptUrl ? [receiptUrl] : [];
 
         // Merge from userContext ONLY if current message is amount-only (no location in this message)
-        // This ensures "Metro" → "280" merges correctly, but "Metro" → "Ola 280" creates a NEW Ola entry
         const currentMsgHasLocation = parsed.category && parsed.category !== 'Others';
         if (userContext && (now - userContext.timestamp < 600000)) {
-          // Only override category if: (1) context has a draftCategory AND (2) current msg has no specific location
           if (userContext.draftCategory && !currentMsgHasLocation) {
             finalCategory = userContext.draftCategory;
           }
-          // Only override notes if: context has draftNotes AND current msg has no location
           if (userContext.draftNotes && !currentMsgHasLocation) {
             finalNotes = parsed.comment && parsed.comment !== userContext.draftNotes
               ? `${userContext.draftNotes} — ${parsed.comment}`
               : userContext.draftNotes;
+            finalLocation = userContext.draftNotes;
           }
-          // Always pick up any pending receipt from prior photo message regardless
           if (userContext.pendingReceiptUrl && !finalReceipts.includes(userContext.pendingReceiptUrl)) {
             finalReceipts.push(userContext.pendingReceiptUrl);
           }
@@ -645,16 +811,18 @@ ${CATEGORY_EMOJIS[recentExp.location] || '📌'} <b>Category:</b> ${recentExp.lo
 
         const expenseDate = parsed.dateStr || new Date().toISOString().slice(0, 10);
         const expenseId = `exp_tg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+        const finalEntries = parsed.entries && parsed.entries.length > 0 ? parsed.entries : [{ type: finalCategory, amount: parsed.amount }];
+        const finalTotal = parsed.total || parsed.amount;
 
         const newExpense = {
           id: expenseId,
           userId: matchedUserId,
           date: expenseDate,
-          location: finalCategory,
+          location: finalLocation,
           notes: finalNotes,
           paymentStatus: 'pending',
-          entries: [{ type: finalCategory, amount: parsed.amount }],
-          total: parsed.amount,
+          entries: finalEntries,
+          total: finalTotal,
           receipts: finalReceipts,
           paymentBillUrl: finalReceipts[0] || null,
           createdAt: new Date().toISOString(),
@@ -679,8 +847,8 @@ ${CATEGORY_EMOJIS[recentExp.location] || '📌'} <b>Category:</b> ${recentExp.lo
 `✅ <b>Travel Expense Logged &amp; Saved!</b>
 
 📅 <b>Date:</b> ${expenseDate}
-${emoji} <b>Category:</b> ${finalCategory}
-💰 <b>Amount:</b> ₹${parsed.amount.toLocaleString('en-IN')}
+${emoji} <b>Location:</b> ${finalLocation}
+💰 <b>Amount:</b> ₹${finalTotal.toLocaleString('en-IN')}
 📝 <b>Notes:</b> ${finalNotes}${photoTag}
 👤 <b>Account:</b> ${userName} (${userEmail || 'Telegram'})`;
 
