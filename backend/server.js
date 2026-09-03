@@ -2053,7 +2053,7 @@ app.get('/api/admin/users', async (req, res) => {
           });
         }
 
-        const { data: spExpenses } = await supabase.from('expenses').select('*');
+        const { data: spExpenses } = await supabase.from('expenses').select('*').order('created_at', { ascending: false });
         if (spExpenses && Array.isArray(spExpenses)) {
           allExpenses = spExpenses.map(e => ({
             ...e,
@@ -2064,6 +2064,7 @@ app.get('/api/admin/users', async (req, res) => {
             createdAt: e.created_at,
             updatedAt: e.updated_at
           }));
+          allExpenses.sort((a, b) => new Date(b.createdAt || b.created_at || b.date || 0) - new Date(a.createdAt || a.created_at || a.date || 0));
         }
       } catch (spErr) {
         console.warn('Supabase admin users fetch warning:', spErr.message);
@@ -2722,6 +2723,7 @@ app.get('/api/admin/all-expenses', async (req, res) => {
             createdAt: e.created_at,
             updatedAt: e.updated_at
           }));
+          allExpenses.sort((a, b) => new Date(b.createdAt || b.created_at || b.date || 0) - new Date(a.createdAt || a.created_at || a.date || 0));
         }
       } catch (spErr) {
         console.warn('Supabase admin all-expenses fetch warning:', spErr.message);
@@ -3000,7 +3002,7 @@ app.get('/api/expenses', async (req, res) => {
     if (useSupabase && supabase) {
       try {
         const aliasArray = Array.from(validUserIds);
-        const { data: spExpenses } = await supabase.from('expenses').select('*').in('user_id', aliasArray);
+        const { data: spExpenses } = await supabase.from('expenses').select('*').in('user_id', aliasArray).order('created_at', { ascending: false });
         const expenses = (spExpenses || []).map(e => ({
           ...e,
           userId: e.user_id,
@@ -3010,7 +3012,7 @@ app.get('/api/expenses', async (req, res) => {
           createdAt: e.created_at,
           updatedAt: e.updated_at
         }));
-        expenses.sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
+        expenses.sort((a, b) => new Date(b.createdAt || b.created_at || b.date || 0) - new Date(a.createdAt || a.created_at || a.date || 0));
         return res.json({ success: true, expenses });
       } catch (spErr) {
         console.warn('Supabase fetch user expenses error:', spErr.message);

@@ -1473,10 +1473,11 @@ function renderUserEntriesList() {
   const monthSelect = document.getElementById('userMonthFilter');
   const selectedMonth = monthSelect ? monthSelect.value : '2026-08';
 
-  let filteredExpenses = userExpenses;
+  let filteredExpenses = [...userExpenses];
   if (selectedMonth && selectedMonth !== 'all') {
-    filteredExpenses = userExpenses.filter(exp => exp.date && exp.date.startsWith(selectedMonth));
+    filteredExpenses = filteredExpenses.filter(exp => exp.date && exp.date.startsWith(selectedMonth));
   }
+  filteredExpenses.sort((a, b) => new Date(b.createdAt || b.created_at || b.date || 0) - new Date(a.createdAt || a.created_at || a.date || 0));
 
   if (countBadge) countBadge.textContent = `${filteredExpenses.length} Entries`;
 
@@ -3501,11 +3502,11 @@ function renderAdminAllExpensesTable(expenses) {
 
   const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'all';
 
-  // Filter expenses by selectedMonth if needed
-  let filtered = expenses || [];
+  let filtered = [...(expenses || [])];
   if (selectedMonth && selectedMonth !== 'all') {
     filtered = filtered.filter(e => e.date && e.date.startsWith(selectedMonth));
   }
+  filtered.sort((a, b) => new Date(b.createdAt || b.created_at || b.date || 0) - new Date(a.createdAt || a.created_at || a.date || 0));
 
   if (badge) badge.textContent = `${filtered.length} Entries`;
 
