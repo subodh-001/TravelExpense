@@ -2845,7 +2845,22 @@ app.patch('/api/expenses/:expenseId/payment-status', authenticate, async (req, r
       return res.status(400).json({ error: 'Invalid paymentStatus' });
     }
 
-    if (useFirebase) {
+    if (useSupabase && supabase) {
+      try {
+        await supabase.from('expenses').update({ payment_status: paymentStatus, updated_at: new Date().toISOString() }).eq('id', expenseId);
+        const expenses = getLocalExpenses();
+        const idx = expenses.findIndex(e => e.id === expenseId);
+        if (idx !== -1) {
+          expenses[idx].paymentStatus = paymentStatus;
+          expenses[idx].updatedAt = new Date().toISOString();
+          saveLocalExpenses(expenses);
+        }
+        broadcastEvent('EXPENSES_UPDATED', { expenseId, paymentStatus });
+        return res.json({ success: true, message: `Status updated to ${paymentStatus}` });
+      } catch (spErr) {
+        console.warn('Supabase status update error:', spErr.message);
+      }
+    } else if (useFirebase) {
       await db.collection('expenses').doc(expenseId).update({
         paymentStatus,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -2982,7 +2997,24 @@ app.get('/api/expenses/date/:date', authenticate, async (req, res) => {
     const users = getLocalUsers();
     const validUserIds = getUserAliasIds(userId, users);
 
-    if (useFirebase) {
+    if (useSupabase && supabase) {
+      try {
+        const aliasArray = Array.from(validUserIds);
+        const { data: spExpenses } = await supabase.from('expenses').select('*').in('user_id', aliasArray).eq('date', date);
+        const expenses = (spExpenses || []).map(e => ({
+          ...e,
+          userId: e.user_id,
+          paymentStatus: e.payment_status,
+          paymentBillUrl: e.payment_bill_url,
+          settledAt: e.settled_at,
+          createdAt: e.created_at,
+          updatedAt: e.updated_at
+        }));
+        return res.json({ success: true, expenses });
+      } catch (spErr) {
+        console.warn('Supabase fetch date expenses error:', spErr.message);
+      }
+    } else if (useFirebase) {
       const expensesMap = new Map();
       for (const uid of validUserIds) {
         try {
