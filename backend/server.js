@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const dns = require('dns');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { db: sqliteDb, syncJSONToSQLite } = require('./database');
 
 if (dns.setDefaultResultOrder) {
@@ -243,6 +243,24 @@ try {
   console.warn('⚠️ Firebase init warning, falling back to Local Storage mode:', err.message);
 }
 
+// ==================== SUPABASE INIT / FALLBACK ====================
+const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
+let useSupabase = false;
+let supabase = null;
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+
+if (SUPABASE_URL && SUPABASE_KEY) {
+  try {
+    supabase = createSupabaseClient(SUPABASE_URL, SUPABASE_KEY);
+    useSupabase = true;
+    console.log('⚡ Connected to Supabase Database (' + SUPABASE_URL + ')');
+  } catch (err) {
+    console.warn('⚠️ Supabase init warning, falling back to Local Storage mode:', err.message);
+  }
+}
+
 // Server-Sent Events (SSE) Real-Time Sync Subscribers Store
 let sseClients = [];
 
@@ -315,6 +333,33 @@ const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
           });
           await batch.commit();
         } catch (fbErr) { /* silent backup */ }
+      });
+    }
+
+    // ⚡ Auto-sync Expenses to Supabase in background
+    if (useSupabase && supabase && Array.isArray(expenses)) {
+      setImmediate(async () => {
+        try {
+          const expenseRows = expenses.map(e => ({
+            id: e.id,
+            user_id: e.userId,
+            date: e.date || new Date().toISOString().split('T')[0],
+            location: e.location || '',
+            notes: e.notes || '',
+            total: Number(e.total || 0),
+            entries: Array.isArray(e.entries) ? e.entries : [],
+            receipts: Array.isArray(e.receipts) ? e.receipts : [],
+            payment_status: e.paymentStatus || 'pending',
+            payment_bill_url: e.paymentBillUrl || '',
+            settled_at: e.settledAt || null,
+            source: e.source || '',
+            created_at: e.createdAt || new Date().toISOString(),
+            updated_at: e.updatedAt || new Date().toISOString()
+          }));
+          if (expenseRows.length > 0) {
+            await supabase.from('expenses').upsert(expenseRows, { onConflict: 'id' });
+          }
+        } catch (spErr) { /* silent backup */ }
       });
     }
   } catch (err) {
@@ -395,6 +440,36 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
         } catch (fbErr) { /* silent — Firestore is secondary storage */ }
       });
     }
+
+    // ⚡ Auto-sync to Supabase in background
+    if (useSupabase && supabase && users && typeof users === 'object') {
+      setImmediate(async () => {
+        try {
+          const userRows = Object.entries(users).map(([uid, u]) => ({
+            id: u.id || uid,
+            name: u.name || 'User',
+            email: u.email || '',
+            role: u.role || 'user',
+            verified: u.verified !== false,
+            picture: u.picture || '',
+            password_hash: u.passwordHash || '',
+            last_active: u.lastActive || null,
+            whatsapp: u.whatsapp || '',
+            whatsapp_verified: Boolean(u.whatsappVerified),
+            phone: u.phone || '',
+            telegram_chat_id: u.telegramChatId || '',
+            telegram_username: u.telegramUsername || '',
+            telegram_verified: Boolean(u.telegramVerified),
+            payment_bill_url: u.paymentBillUrl || '',
+            updated_at: u.updatedAt || new Date().toISOString()
+          }));
+          if (userRows.length > 0) {
+            await supabase.from('users').upsert(userRows, { onConflict: 'id' });
+          }
+        } catch (spErr) { /* silent backup */ }
+      });
+    }
+
   } catch (err) {
     console.error('Error writing USERS_DB_FILE:', err);
   }
@@ -492,11 +567,124 @@ async function runAutoSyncWorker() {
   }
 }
 
+// ⚡ Automatic Cloud Sync: Pulls master DB state directly from Supabase on server startup
+const syncFromSupabaseCloud = async () => {
+  if (!useSupabase || !supabase) return;
+  try {
+    console.log('🔄 Pulling master database state from Supabase Cloud...');
+
+    // 1. Sync Users from Supabase into local cache
+    const { data: cloudUsersData, error: uErr } = await supabase.from('users').select('*');
+    if (!uErr && cloudUsersData && cloudUsersData.length > 0) {
+      const localUsers = getLocalUsers();
+      cloudUsersData.forEach(u => {
+        if (u.id) {
+          localUsers[u.id] = {
+            ...(localUsers[u.id] || {}),
+            id: u.id,
+            name: u.name || 'User',
+            email: u.email || '',
+            role: u.role || 'user',
+            verified: u.verified !== false,
+            picture: u.picture || '',
+            passwordHash: u.password_hash || (localUsers[u.id] ? localUsers[u.id].passwordHash : ''),
+            lastActive: u.last_active,
+            whatsapp: u.whatsapp || '',
+            whatsappVerified: Boolean(u.whatsapp_verified),
+            phone: u.phone || '',
+            telegramChatId: u.telegram_chat_id || '',
+            telegramUsername: u.telegram_username || '',
+            telegramVerified: Boolean(u.telegram_verified),
+            paymentBillUrl: u.payment_bill_url || '',
+            createdAt: u.created_at || new Date().toISOString(),
+            updatedAt: u.updated_at || new Date().toISOString()
+          };
+        }
+      });
+      saveLocalUsers(localUsers, false);
+      console.log(`⚡ Synced ${cloudUsersData.length} active users from Supabase Cloud`);
+    }
+
+    // 2. Sync Expenses from Supabase into local cache
+    const { data: cloudExpData, error: eErr } = await supabase.from('expenses').select('*');
+    if (!eErr && cloudExpData && cloudExpData.length > 0) {
+      const localExps = getLocalExpenses();
+      const expMap = new Map(localExps.map(e => [e.id, e]));
+      cloudExpData.forEach(e => {
+        if (e.id) {
+          expMap.set(e.id, {
+            id: e.id,
+            userId: e.user_id,
+            date: e.date,
+            location: e.location || '',
+            notes: e.notes || '',
+            total: Number(e.total || 0),
+            entries: Array.isArray(e.entries) ? e.entries : [],
+            receipts: Array.isArray(e.receipts) ? e.receipts : [],
+            paymentStatus: e.payment_status || 'pending',
+            paymentBillUrl: e.payment_bill_url || '',
+            settledAt: e.settled_at || null,
+            source: e.source || '',
+            createdAt: e.created_at || new Date().toISOString(),
+            updatedAt: e.updated_at || new Date().toISOString()
+          });
+        }
+      });
+      saveLocalExpenses(Array.from(expMap.values()), false);
+      console.log(`⚡ Synced ${expMap.size} active expenses from Supabase Cloud`);
+    }
+  } catch (err) {
+    console.warn('⚠️ Supabase Cloud sync startup note:', err.message);
+  }
+};
+
+// ⚡ Automatic 2-Way Background Sync Worker (Local DB <-> Supabase PostgreSQL)
+async function runSupabaseAutoSyncWorker() {
+  if (!useSupabase || !supabase) return;
+  try {
+    const localExps = getLocalExpenses();
+    const { data: cloudExps, error } = await supabase.from('expenses').select('id');
+    if (error) return;
+
+    const cloudIds = new Set((cloudExps || []).map(e => e.id));
+    const missingInCloud = localExps.filter(e => e && e.id && !cloudIds.has(e.id));
+
+    if (missingInCloud.length > 0) {
+      const rowsToPush = missingInCloud.map(e => ({
+        id: e.id,
+        user_id: e.userId,
+        date: e.date || new Date().toISOString().split('T')[0],
+        location: e.location || '',
+        notes: e.notes || '',
+        total: Number(e.total || 0),
+        entries: Array.isArray(e.entries) ? e.entries : [],
+        receipts: Array.isArray(e.receipts) ? e.receipts : [],
+        payment_status: e.paymentStatus || 'pending',
+        payment_bill_url: e.paymentBillUrl || '',
+        settled_at: e.settledAt || null,
+        source: e.source || '',
+        created_at: e.createdAt || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }));
+      await supabase.from('expenses').upsert(rowsToPush, { onConflict: 'id' });
+      console.log(`⚡ Supabase Auto-Sync Worker: Pushed ${rowsToPush.length} new entries to Supabase!`);
+    }
+  } catch (err) {
+    console.warn('⚠️ Supabase auto-sync worker note:', err.message);
+  }
+}
+
 // Trigger Cloud Sync & Background Auto-Sync Timer
 if (useFirebase && db) {
   syncFromFirebaseCloud();
   setTimeout(runAutoSyncWorker, 3000);
   setInterval(runAutoSyncWorker, 30000); // Continuous auto-sync every 30 seconds
+}
+
+if (useSupabase && supabase) {
+  syncFromSupabaseCloud();
+  setTimeout(runSupabaseAutoSyncWorker, 3000);
+  setInterval(runSupabaseAutoSyncWorker, 30000); // Continuous auto-sync every 30 seconds
 }
 
 const getLocalInvites = () => {
@@ -901,7 +1089,8 @@ app.get('/api/health', (req, res) => {
   const users = getLocalUsers();
   res.json({
     status:        'online',
-    mode:          useFirebase ? 'Firebase + Local Storage' : 'Local Storage',
+    mode:          useSupabase ? 'Supabase + Local Storage' : useFirebase ? 'Firebase + Local Storage' : 'Local Storage',
+    supabase:      useSupabase,
     firebase:      useFirebase,
     userCount:     Object.keys(users).length,
     activeClients: sseClients.length,
@@ -3563,7 +3752,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`====================================================`);
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📊 Mode: ${useFirebase ? 'Firebase Firestore + Storage' : 'Local File Storage'}`);
+  console.log(`📊 Mode: ${useSupabase ? 'Supabase PostgreSQL + Local Storage' : useFirebase ? 'Firebase Firestore + Storage' : 'Local File Storage'}`);
   console.log(`🌐 Web Client: http://localhost:${PORT}`);
   console.log(`====================================================`);
 
@@ -3600,7 +3789,8 @@ app.listen(PORT, () => {
     getLocalUsers,
     uploadToCloudinary,
     saveExpenseToDb,
-    db: useFirebase ? db : null  // Pass Firebase db for cloud auth persistence
+    db: useFirebase ? db : null,  // Pass Firebase db for cloud auth persistence
+    supabase: useSupabase ? supabase : null // Pass Supabase client for cloud auth persistence
   });
 
   // Launch Telegram Bot Engine

@@ -1,6 +1,6 @@
 # 🚀 Monthly Travel Expense Tracker
 
-Complete full-stack **Mobile App + Web Dashboard + Backend REST API** solution for tracking monthly travel expenses, preserving Excel matrix formatting, storing receipts per date/location, supporting multiple users, and integrating with Firebase Firestore & Storage (with zero-config local storage fallback).
+Complete full-stack **Mobile App + Web Dashboard + Backend REST API** solution for tracking monthly travel expenses, preserving Excel matrix formatting, storing receipts per date/location, supporting multiple users, and integrating with Supabase PostgreSQL & Storage (with zero-config local storage fallback).
 
 ---
 
@@ -9,18 +9,18 @@ Complete full-stack **Mobile App + Web Dashboard + Backend REST API** solution f
 ```
 MontlyTrevel Expencse/
 ├── backend/
-│   ├── server.js                # Express API with Firebase/Local fallback
+│   ├── server.js                # Express API with Supabase/Firebase/Local fallback
 │   ├── package.json             # Backend dependencies
-│   ├── .env.example             # Environment configuration template
-│   └── firebase-admin.json.example # Service account configuration sample
+│   └── .env.example             # Environment configuration template
+├── supabase-schema.sql          # Supabase PostgreSQL DDL database schema
+├── migrate-firebase-to-supabase.js # Zero-data-loss migration script
+├── supabase-query.js            # CLI Database Query tool
+├── sync-to-supabase.js          # Standalone cloud sync script
 ├── web/
 │   ├── index.html               # Responsive Glassmorphic Dashboard
 │   ├── style.css                # Custom CSS Design System & Micro-animations
 │   └── app.js                   # Client state management & REST API caller
-├── mobile/
-│   ├── lib/
-│   │   └── main.dart            # Flutter Mobile App Implementation
-│   └── pubspec.yaml             # Flutter dependencies
+├── mobile-expo/                 # Expo React Native App Implementation
 ├── docs/
 │   └── README.md                # Documentation & Architecture Guide
 └── package.json                 # Unified root npm scripts
@@ -39,6 +39,31 @@ npm start
 The server will start on `http://localhost:3000`:
 - **Web App Dashboard**: `http://localhost:3000`
 - **REST API Base**: `http://localhost:3000/api`
+
+---
+
+## ⚡ Supabase Setup & Migration Guide
+
+1. **Create Database Tables**:
+   Copy the contents of `supabase-schema.sql` and run it in your **Supabase Dashboard → SQL Editor**.
+
+2. **Set Credentials in `backend/.env`**:
+   ```env
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_KEY=your-supabase-service-role-or-anon-key
+   ```
+
+3. **Run Zero-Data-Loss Migration Script**:
+   ```bash
+   node migrate-firebase-to-supabase.js
+   ```
+
+4. **Query & Inspect Supabase Database**:
+   ```bash
+   node supabase-query.js TABLES
+   node supabase-query.js GET users
+   node supabase-query.js GET expenses
+   ```
 
 ---
 

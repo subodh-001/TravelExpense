@@ -8,6 +8,7 @@
     "dev": "node server.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.114.0",
     "@whiskeysockets/baileys": "^7.0.0-rc14",
     "better-sqlite3": "^12.11.1",
     "cors": "^2.8.5",

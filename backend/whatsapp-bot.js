@@ -47,6 +47,7 @@ let getUsersFn = null;
 let uploadCloudinaryFn = null;
 let saveExpenseToDbFn = null;
 let dbFn = null; // Firebase Firestore db reference for cloud auth persistence
+let supabaseFn = null; // Supabase client for cloud auth persistence
 
 const AUTH_DIR = path.join(__dirname, 'data', 'baileys_auth_info');
 const DASHBOARD_URL = process.env.BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000';
@@ -108,6 +109,61 @@ async function restoreAuthFromFirebase(db) {
     return false;
   }
 }
+
+// ========== Supabase Auth Persistence for Cloud Deployments ==========
+async function backupAuthToSupabase(supabaseClient) {
+  if (!supabaseClient) return;
+  try {
+    if (!fs.existsSync(AUTH_DIR)) return;
+    const allFiles = fs.readdirSync(AUTH_DIR).filter(f => f.endsWith('.json'));
+    const essentialFiles = allFiles.filter(f => {
+      if (f === 'creds.json') return true;
+      if (f.startsWith('session-') || f.startsWith('sender-key-') || f.startsWith('app-state-') || f.startsWith('tctoken-')) return true;
+      if (f.startsWith('pre-key-')) {
+        const num = parseInt(f.replace('pre-key-', '').replace('.json', ''), 10);
+        return !isNaN(num) && num <= 20;
+      }
+      return false;
+    });
+
+    const authData = {};
+    for (const file of essentialFiles) {
+      try { authData[file] = JSON.parse(fs.readFileSync(path.join(AUTH_DIR, file), 'utf8')); } catch (_) {}
+    }
+    if (!authData['creds.json']) return;
+
+    await supabaseClient.from('whatsapp_auth').upsert({
+      key: 'baileys_auth',
+      value: authData,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'key' });
+    console.log(`⚡ WhatsApp essential auth backed up to Supabase (${Object.keys(authData).length} files)`);
+  } catch (err) {
+    console.warn('⚠️ Auth backup to Supabase warning:', err.message);
+  }
+}
+
+async function restoreAuthFromSupabase(supabaseClient) {
+  if (!supabaseClient) return false;
+  try {
+    const { data, error } = await supabaseClient.from('whatsapp_auth').select('value').eq('key', 'baileys_auth').single();
+    if (error || !data || !data.value || !data.value['creds.json']) {
+      console.log('ℹ️ No WhatsApp auth backup found in Supabase.');
+      return false;
+    }
+    const authData = data.value;
+    if (!fs.existsSync(AUTH_DIR)) fs.mkdirSync(AUTH_DIR, { recursive: true });
+    for (const [file, content] of Object.entries(authData)) {
+      fs.writeFileSync(path.join(AUTH_DIR, file), JSON.stringify(content));
+    }
+    console.log(`⚡ WhatsApp auth restored from Supabase (${Object.keys(authData).length} files)`);
+    return true;
+  } catch (err) {
+    console.warn('⚠️ Auth restore from Supabase warning:', err.message);
+    return false;
+  }
+}
+
 
 // Smart Expanded Category mapping helper
 const CATEGORY_MAP = [
@@ -947,14 +1003,19 @@ async function startWhatsAppBot(callbacks = {}) {
   uploadCloudinaryFn = callbacks.uploadToCloudinary;
   saveExpenseToDbFn = callbacks.saveExpenseToDb;
   dbFn = callbacks.db || null;
+  supabaseFn = callbacks.supabase || null;
 
   try {
     if (!fs.existsSync(AUTH_DIR)) {
       fs.mkdirSync(AUTH_DIR, { recursive: true });
     }
 
-    // On cloud (Render), restore auth from Firebase before starting
-    await restoreAuthFromFirebase(dbFn);
+    // On cloud (Render), restore auth from Supabase / Firebase before starting
+    if (supabaseFn) {
+      await restoreAuthFromSupabase(supabaseFn);
+    } else if (dbFn) {
+      await restoreAuthFromFirebase(dbFn);
+    }
 
     const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
     const { version } = await fetchLatestBaileysVersion();
@@ -967,10 +1028,11 @@ async function startWhatsAppBot(callbacks = {}) {
       browser: ['FGTech Travel Engine', 'Chrome', '1.0.0']
     });
 
-    // Save credentials locally AND backup to Firebase for cloud persistence
+    // Save credentials locally AND backup to Supabase / Firebase for cloud persistence
     waSock.ev.on('creds.update', async () => {
       await saveCreds();
-      await backupAuthToFirebase(dbFn);
+      if (supabaseFn) await backupAuthToSupabase(supabaseFn);
+      if (dbFn) await backupAuthToFirebase(dbFn);
     });
 
     waSock.ev.on('connection.update', (update) => {
@@ -998,8 +1060,9 @@ async function startWhatsAppBot(callbacks = {}) {
         const rawJid = waSock.user?.id || waSock.user?.jid || '';
         connectedUserJid = rawJid.split('@')[0].split(':')[0];
         console.log('🤖 WhatsApp Travel Expense Bot CONNECTED & ONLINE! (Phone: +' + connectedUserJid + ')');
-        // Persist valid active session to Firebase
-        backupAuthToFirebase(dbFn);
+        // Persist valid active session to Supabase / Firebase
+        if (supabaseFn) backupAuthToSupabase(supabaseFn);
+        if (dbFn) backupAuthToFirebase(dbFn);
       }
     });
 
