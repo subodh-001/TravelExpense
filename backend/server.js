@@ -1700,12 +1700,16 @@ app.post('/api/user/profile', async (req, res) => {
 
     const cleanPhone = (phone || whatsapp || existingUser.phone || existingUser.whatsapp || '').replace(/[^0-9]/g, '');
 
+    // Preserve Cloudinary/custom picture over default SVG blob
+    const incomingPic = (picture && typeof picture === 'string' && (picture.startsWith('http') || picture.startsWith('data:image'))) ? picture : '';
+    const finalPicture = incomingPic || existingUser.picture || '';
+
     const userData = {
       ...existingUser,
       id,
       name: name || existingUser.name || 'Traveler',
       email: email || existingUser.email || 'user@example.com',
-      picture: (picture && typeof picture === 'string' && (picture.startsWith('http') || picture.startsWith('data:image'))) ? picture : (existingUser.picture || ''),
+      picture: finalPicture,
       role: role || existingUser.role || 'user',
       phone: cleanPhone || existingUser.phone || '',
       whatsapp: cleanPhone || existingUser.whatsapp || '',
@@ -1716,7 +1720,25 @@ app.post('/api/user/profile', async (req, res) => {
     users[id] = userData;
     saveLocalUsers(users);
 
-    if (useFirebase) {
+    // Sync to Supabase — source of truth
+    if (useSupabase && supabase) {
+      try {
+        const spUpdate = {
+          name: userData.name,
+          email: userData.email,
+          picture: userData.picture,
+          role: userData.role,
+          phone: userData.phone,
+          whatsapp: userData.whatsapp,
+          updated_at: userData.updatedAt
+        };
+        // Upsert so it works for both new and existing users
+        await supabase.from('users').upsert({ id, ...spUpdate }, { onConflict: 'id' });
+        console.log(`☁️ Supabase profile synced for ${id}`);
+      } catch (spErr) {
+        console.warn('Supabase profile sync note:', spErr.message);
+      }
+    } else if (useFirebase) {
       try {
         await db.collection('users').doc(id).set(userData, { merge: true });
       } catch (fbErr) {
@@ -1737,6 +1759,19 @@ app.post('/api/user/profile', async (req, res) => {
 app.get('/api/user/profile/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+
+    // 1. Try Supabase first
+    if (useSupabase && supabase) {
+      try {
+        const { data: spUser, error: spErr } = await supabase.from('users').select('*').eq('id', userId).single();
+        if (!spErr && spUser) {
+          delete spUser.password_hash;
+          return res.json({ success: true, user: spUser });
+        }
+      } catch (spFetchErr) {
+        console.warn('Supabase profile fetch note:', spFetchErr.message);
+      }
+    }
 
     if (useFirebase) {
       try {

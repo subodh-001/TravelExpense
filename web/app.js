@@ -678,7 +678,7 @@ function openEditProfileModal() {
     }
   }
 
-  profilePhotoPreview.src = user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`;
+  profilePhotoPreview.src = user.picture && (user.picture.startsWith('http') || user.picture.startsWith('data:image')) ? user.picture : DEFAULT_USER_AVATAR;
   profilePhotoStatus.textContent = 'PNG or JPG, max 5MB (Stores in Cloudinary)';
   state.pendingProfilePhotoUrl = null;
 
