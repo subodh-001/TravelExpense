@@ -1,155 +1,73 @@
 [
   {
-    "id": "exp_subodh_sep02_powai_50",
-    "userId": "google_subodhram3350_gmail_com",
-    "date": "2026-09-02",
-    "location": "Home to IBC powai",
-    "notes": "Home to IBC powai",
-    "total": 50,
-    "entries": [
-      {
-        "type": "Others",
-        "amount": 50
-      }
-    ],
-    "receipts": [],
-    "paymentStatus": "pending",
-    "paymentBillUrl": "",
-    "settledAt": null,
-    "source": "",
-    "createdAt": "2026-09-02T14:19:00+00:00",
-    "updatedAt": "2026-09-02T14:19:00+00:00"
-  },
-  {
-    "id": "exp_subodh_sep02_powai_98",
-    "userId": "google_subodhram3350_gmail_com",
-    "date": "2026-09-02",
-    "location": "Auto/Rapido",
-    "notes": "IBC Powai to Sagar tech plaza",
-    "total": 98,
-    "entries": [
-      {
-        "type": "Auto/Rapido",
-        "amount": 98
-      }
-    ],
-    "receipts": [],
-    "paymentStatus": "pending",
-    "paymentBillUrl": "",
-    "settledAt": null,
-    "source": "",
-    "createdAt": "2026-09-02T14:19:00+00:00",
-    "updatedAt": "2026-09-02T14:19:00+00:00"
-  },
-  {
-    "id": "exp_404e57fa",
-    "userId": "google_subodhram3350_gmail_com",
-    "date": "2026-08-11",
-    "location": "Ola/Uber",
-    "notes": "Ola/Uber",
-    "total": 80,
-    "entries": [],
-    "receipts": [],
-    "paymentStatus": "paid",
-    "paymentBillUrl": "",
-    "settledAt": "2026-08-22T12:00:00+00:00",
-    "source": "",
-    "createdAt": "2026-08-21T17:15:08.412+00:00",
-    "updatedAt": "2026-08-27T08:37:36.758+00:00"
-  },
-  {
-    "id": "exp_tg_mtb29u0h_hlqv",
-    "userId": "google_subodhram3350_gmail_com",
-    "date": "2026-08-27",
-    "location": "Auto/Rapido",
-    "notes": "Warehouse",
-    "total": 100,
-    "entries": [
-      {
-        "type": "Auto/Rapido",
-        "amount": 100
-      }
-    ],
-    "receipts": [
-      "https://res.cloudinary.com/vrxb6o67/image/upload/v1787807258/expense_receipts/telegram_receipts/file_1787807257227_nl80v.jpg"
-    ],
-    "paymentStatus": "pending",
-    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1787807258/expense_receipts/telegram_receipts/file_1787807257227_nl80v.jpg",
-    "settledAt": null,
-    "source": "Telegram Bot",
-    "createdAt": "2026-08-27T05:07:23.825+00:00",
-    "updatedAt": "2026-08-27T05:07:38.988+00:00"
-  },
-  {
-    "id": "exp_tg_mtb2bxii_3adh",
-    "userId": "google_subodhram3350_gmail_com",
-    "date": "2026-08-26",
-    "location": "Auto/Rapido",
-    "notes": "Tbse juhu on 26th august",
-    "total": 280,
-    "entries": [
-      {
-        "type": "Auto/Rapido",
-        "amount": 280
-      }
-    ],
-    "receipts": [],
-    "paymentStatus": "pending",
-    "paymentBillUrl": "",
-    "settledAt": null,
-    "source": "Telegram Bot",
-    "createdAt": "2026-08-27T05:09:01.674+00:00",
-    "updatedAt": "2026-08-27T16:12:58.661+00:00"
-  },
-  {
-    "id": "9eLotEVkUGqAfW08004b",
     "userId": "google_subodhram3350_gmail_com",
     "date": "2026-08-26",
     "location": "Auto/Rapido",
     "notes": "Warehouse",
-    "total": 102,
     "entries": [
       {
         "type": "Auto/Rapido",
         "amount": 102
       }
     ],
-    "receipts": [],
+    "total": 102,
     "paymentStatus": "pending",
-    "paymentBillUrl": "",
-    "settledAt": null,
-    "source": "",
-    "createdAt": "2026-08-27T16:14:15.312+00:00",
-    "updatedAt": "2026-08-27T16:14:15.312+00:00"
+    "receipts": [],
+    "createdAt": "2026-08-27T16:14:15.312Z",
+    "id": "9eLotEVkUGqAfW08004b",
+    "updatedAt": "2026-08-27T16:14:15.312Z"
   },
   {
-    "id": "exp_tg_mtbc8j8t_67n8_0",
+    "notes": "Tbse juhu on 26th august",
+    "source": "Telegram Bot",
     "userId": "google_subodhram3350_gmail_com",
+    "receipts": [],
+    "createdAt": "2026-08-27T05:09:01.674Z",
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 280
+      }
+    ],
+    "total": 280,
+    "location": "Auto/Rapido",
+    "id": "exp_tg_mtb2bxii_3adh",
+    "paymentStatus": "pending",
+    "settlementNotes": "",
+    "settledAt": null,
+    "paymentBillUrl": "",
+    "date": "2026-08-26",
+    "updatedAt": "2026-08-27T16:12:58.661Z"
+  },
+  {
     "date": "2026-08-06",
-    "location": "Warehosue",
     "notes": "Warehosue",
-    "total": 32,
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "receipts": [],
+    "createdAt": "2026-08-27T09:46:19.373Z",
     "entries": [
       {
         "type": "Others",
         "amount": 32
       }
     ],
-    "receipts": [],
+    "total": 32,
+    "location": "Warehosue",
+    "id": "exp_tg_mtbc8j8t_67n8_0",
     "paymentStatus": "pending",
-    "paymentBillUrl": "",
+    "updatedAt": "2026-08-27T09:46:19.373Z",
+    "settlementNotes": "",
     "settledAt": null,
-    "source": "Telegram Bot",
-    "createdAt": "2026-08-27T09:46:19.373+00:00",
-    "updatedAt": "2026-08-27T09:46:19.373+00:00"
+    "paymentBillUrl": ""
   },
   {
-    "id": "exp_tg_mtbc8jej_f338_1",
-    "userId": "google_subodhram3350_gmail_com",
     "date": "2026-08-07",
-    "location": "Belapur workloft",
     "notes": "Belapur workloft",
-    "total": 421,
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "receipts": [],
+    "createdAt": "2026-08-27T09:46:19.579Z",
     "entries": [
       {
         "type": "Metro",
@@ -164,21 +82,22 @@
         "amount": 386
       }
     ],
-    "receipts": [],
+    "total": 421,
+    "location": "Belapur workloft",
+    "id": "exp_tg_mtbc8jej_f338_1",
     "paymentStatus": "pending",
-    "paymentBillUrl": "",
+    "updatedAt": "2026-08-27T09:46:19.579Z",
+    "settlementNotes": "",
     "settledAt": null,
-    "source": "Telegram Bot",
-    "createdAt": "2026-08-27T09:46:19.579+00:00",
-    "updatedAt": "2026-08-27T09:46:19.579+00:00"
+    "paymentBillUrl": ""
   },
   {
-    "id": "exp_tg_mtbc8jkf_i005_2",
-    "userId": "google_subodhram3350_gmail_com",
     "date": "2026-08-08",
-    "location": "Doolally Andheri / Varsova",
     "notes": "Doolally Andheri / Varsova",
-    "total": 162,
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "receipts": [],
+    "createdAt": "2026-08-27T09:46:19.791Z",
     "entries": [
       {
         "type": "Metro",
@@ -189,75 +108,165 @@
         "amount": 102
       }
     ],
-    "receipts": [],
+    "total": 162,
+    "location": "Doolally Andheri / Varsova",
+    "id": "exp_tg_mtbc8jkf_i005_2",
     "paymentStatus": "pending",
-    "paymentBillUrl": "",
+    "updatedAt": "2026-08-27T09:46:19.791Z",
+    "settlementNotes": "",
     "settledAt": null,
-    "source": "Telegram Bot",
-    "createdAt": "2026-08-27T09:46:19.791+00:00",
-    "updatedAt": "2026-08-27T09:46:19.791+00:00"
+    "paymentBillUrl": ""
   },
   {
-    "id": "exp_tg_mtbc8jmx_srol_3",
-    "userId": "google_subodhram3350_gmail_com",
     "date": "2026-08-18",
-    "location": "Food",
     "notes": "Food",
-    "total": 36,
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "receipts": [],
+    "createdAt": "2026-08-27T09:46:19.881Z",
     "entries": [
       {
         "type": "Food",
         "amount": 36
       }
     ],
-    "receipts": [],
+    "total": 36,
+    "location": "Food",
+    "id": "exp_tg_mtbc8jmx_srol_3",
     "paymentStatus": "pending",
-    "paymentBillUrl": "",
+    "updatedAt": "2026-08-27T09:46:19.881Z",
+    "settlementNotes": "",
     "settledAt": null,
-    "source": "Telegram Bot",
-    "createdAt": "2026-08-27T09:46:19.881+00:00",
-    "updatedAt": "2026-08-27T09:46:19.881+00:00"
+    "paymentBillUrl": ""
   },
   {
-    "id": "exp_tg_mtbc8jpx_5uxx_4",
-    "userId": "google_subodhram3350_gmail_com",
     "date": "2026-08-19",
-    "location": "Food",
     "notes": "Food",
-    "total": 36,
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "receipts": [],
+    "createdAt": "2026-08-27T09:46:19.989Z",
     "entries": [
       {
         "type": "Food",
         "amount": 36
       }
     ],
-    "receipts": [],
+    "total": 36,
+    "location": "Food",
+    "id": "exp_tg_mtbc8jpx_5uxx_4",
     "paymentStatus": "pending",
-    "paymentBillUrl": "",
+    "updatedAt": "2026-08-27T09:46:19.989Z",
+    "settlementNotes": "",
     "settledAt": null,
-    "source": "Telegram Bot",
-    "createdAt": "2026-08-27T09:46:19.989+00:00",
-    "updatedAt": "2026-08-27T09:46:19.989+00:00"
+    "paymentBillUrl": ""
   },
   {
-    "id": "exp_tg_mtbc8jsa_ly62_5",
-    "userId": "google_subodhram3350_gmail_com",
     "date": "2026-08-20",
-    "location": "Belapur workloft",
     "notes": "Belapur workloft",
-    "total": 780,
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "receipts": [],
+    "createdAt": "2026-08-27T09:46:20.074Z",
     "entries": [
       {
         "type": "Others",
         "amount": 780
       }
     ],
-    "receipts": [],
+    "total": 780,
+    "location": "Belapur workloft",
+    "id": "exp_tg_mtbc8jsa_ly62_5",
     "paymentStatus": "pending",
-    "paymentBillUrl": "",
+    "updatedAt": "2026-08-27T09:46:20.074Z",
+    "settlementNotes": "",
     "settledAt": null,
+    "paymentBillUrl": ""
+  },
+  {
+    "date": "2026-08-31",
+    "notes": "Marol to worli",
     "source": "Telegram Bot",
-    "createdAt": "2026-08-27T09:46:20.074+00:00",
-    "updatedAt": "2026-08-27T09:46:20.074+00:00"
+    "userId": "google_subodhram3350_gmail_com",
+    "createdAt": "2026-08-31T05:38:28.881Z",
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 50
+      }
+    ],
+    "total": 50,
+    "location": "Marol to worli",
+    "id": "exp_tg_mtgt57rl_x0hg",
+    "paymentStatus": "pending",
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788154721/expense_receipts/telegram_receipts/file_1788154720497_s5oiz.jpg"
+    ],
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1788154721/expense_receipts/telegram_receipts/file_1788154720497_s5oiz.jpg",
+    "updatedAt": "2026-08-31T05:38:42.069Z"
+  },
+  {
+    "date": "2026-08-31",
+    "notes": "Worli to maril",
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "createdAt": "2026-08-31T14:10:50.147Z",
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 50
+      }
+    ],
+    "total": 50,
+    "location": "Worli to maril",
+    "id": "exp_tg_mthbg3vn_5cia",
+    "paymentStatus": "pending",
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788185465/expense_receipts/telegram_receipts/file_1788185463809_wz2j8.jpg"
+    ],
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1788185465/expense_receipts/telegram_receipts/file_1788185463809_wz2j8.jpg",
+    "updatedAt": "2026-08-31T14:11:05.580Z"
+  },
+  {
+    "date": "2026-09-02",
+    "notes": "Home to IBC powai",
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "receipts": [],
+    "createdAt": "2026-09-02T08:49:05.094Z",
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 50
+      }
+    ],
+    "total": 50,
+    "paymentBillUrl": null,
+    "location": "Home to IBC powai",
+    "id": "exp_tg_mtjuu1c6_oxxe",
+    "paymentStatus": "pending",
+    "updatedAt": "2026-09-02T08:49:05.094Z"
+  },
+  {
+    "date": "2026-09-02",
+    "notes": "IBC Powai to Sagar tech plaza",
+    "source": "Telegram Bot",
+    "userId": "google_subodhram3350_gmail_com",
+    "createdAt": "2026-09-02T08:49:27.435Z",
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 98
+      }
+    ],
+    "total": 98,
+    "paymentBillUrl": null,
+    "id": "exp_tg_mtjuuikr_t2jh",
+    "paymentStatus": "pending",
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788339080/expense_receipts/Subodh_Ram/September_2026/02_Sep_2026/receipt_1788339078600_vfwni.jpg"
+    ],
+    "location": "Auto/Rapido",
+    "updatedAt": "2026-09-02T08:51:21.196Z"
   }
 ]

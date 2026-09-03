@@ -1,422 +1,5 @@
 {
-  "deleted_users": {
-    "deleted_1787491164876_ks5093654_gmail_com": {
-      "originalId": "google_ks5093654_gmail_com",
-      "cleanId": "google_ks5093654_gmail_com",
-      "name": "Demo",
-      "email": "ks5093654@gmail.com",
-      "role": "user",
-      "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Demo",
-      "verified": true,
-      "joinedAt": "2026-08-22T11:15:00.000Z",
-      "deletedAt": "2026-08-23T13:19:24.877Z",
-      "deletedBy": "admin",
-      "totalExpenses": 2,
-      "lifetimeAmount": 110,
-      "expenseHistory": [
-        {
-          "date": "2026-08-22",
-          "createdAt": "2026-08-22T11:15:00.000Z",
-          "total": 55,
-          "notes": "Auto/Rapido",
-          "settledAt": "",
-          "paymentBillUrl": "",
-          "location": "Auto/Rapido",
-          "id": "exp_demo_55",
-          "userId": "google_ks5093654_gmail_com",
-          "paymentStatus": "pending"
-        },
-        {
-          "date": "2026-08-22",
-          "createdAt": "2026-08-22T11:15:00.000Z",
-          "total": 55,
-          "notes": "Auto/Rapido",
-          "settledAt": "",
-          "paymentBillUrl": "",
-          "location": "Auto/Rapido",
-          "id": "exp_demo_55",
-          "userId": "google_ks5093654_gmail_com",
-          "paymentStatus": "pending"
-        }
-      ],
-      "note": "Permanently deleted by admin. This record is for audit purposes only."
-    },
-    "deleted_1787661513290_delete_me_test_gmail_com": {
-      "originalId": "google_delete_me_test_gmail_com",
-      "cleanId": "google_delete_me_test_gmail_com",
-      "name": "Delete Test User",
-      "email": "delete_me_test@gmail.com",
-      "role": "user",
-      "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Delete%20Test%20User",
-      "verified": true,
-      "joinedAt": "2026-08-25T12:38:33.085Z",
-      "deletedAt": "2026-08-25T12:38:33.290Z",
-      "deletedBy": "admin",
-      "totalExpenses": 2,
-      "lifetimeAmount": 200,
-      "expenseHistory": [
-        {
-          "userId": "google_delete_me_test_gmail_com",
-          "date": "2026-08-25",
-          "location": "Local",
-          "notes": "Local",
-          "entries": [
-            {
-              "type": "Local",
-              "amount": 100
-            }
-          ],
-          "total": 100,
-          "paymentStatus": "pending",
-          "receipts": [],
-          "createdAt": {
-            "_seconds": 1787661517,
-            "_nanoseconds": 246000000
-          },
-          "updatedAt": {
-            "_seconds": 1787661517,
-            "_nanoseconds": 246000000
-          }
-        },
-        {
-          "userId": "google_delete_me_test_gmail_com",
-          "date": "2026-08-25",
-          "location": "Local",
-          "notes": "Local",
-          "entries": [
-            {
-              "type": "Local",
-              "amount": 100
-            }
-          ],
-          "total": 100,
-          "paymentStatus": "pending",
-          "receipts": [],
-          "createdAt": {
-            "_seconds": 1787661517,
-            "_nanoseconds": 246000000
-          },
-          "updatedAt": {
-            "_seconds": 1787661517,
-            "_nanoseconds": 246000000
-          }
-        }
-      ],
-      "note": "Permanently deleted by admin. This record is for audit purposes only."
-    },
-    "deleted_1787661731040_delete_me_test_gmail_com": {
-      "originalId": "google_delete_me_test_gmail_com",
-      "cleanId": "google_delete_me_test_gmail_com",
-      "name": "Delete Test User",
-      "email": "delete_me_test@gmail.com",
-      "role": "user",
-      "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Delete%20Test%20User",
-      "verified": true,
-      "joinedAt": "2026-08-25T12:42:10.820Z",
-      "deletedAt": "2026-08-25T12:42:11.041Z",
-      "deletedBy": "admin",
-      "totalExpenses": 2,
-      "lifetimeAmount": 200,
-      "expenseHistory": [
-        {
-          "userId": "google_delete_me_test_gmail_com",
-          "date": "2026-08-25",
-          "location": "Local",
-          "notes": "Local",
-          "entries": [
-            {
-              "type": "Local",
-              "amount": 100
-            }
-          ],
-          "total": 100,
-          "paymentStatus": "pending",
-          "receipts": [],
-          "createdAt": {
-            "_seconds": 1787661734,
-            "_nanoseconds": 992000000
-          },
-          "updatedAt": {
-            "_seconds": 1787661734,
-            "_nanoseconds": 992000000
-          }
-        },
-        {
-          "userId": "google_delete_me_test_gmail_com",
-          "date": "2026-08-25",
-          "location": "Local",
-          "notes": "Local",
-          "entries": [
-            {
-              "type": "Local",
-              "amount": 100
-            }
-          ],
-          "total": 100,
-          "paymentStatus": "pending",
-          "receipts": [],
-          "createdAt": {
-            "_seconds": 1787661734,
-            "_nanoseconds": 992000000
-          },
-          "updatedAt": {
-            "_seconds": 1787661734,
-            "_nanoseconds": 992000000
-          }
-        }
-      ],
-      "note": "Permanently deleted by admin. This record is for audit purposes only."
-    },
-    "deleted_1787662228130_audit_member_gmail_com": {
-      "originalId": "google_audit_member_gmail_com",
-      "cleanId": "google_audit_member_gmail_com",
-      "name": "Audit Test Member",
-      "email": "audit_member@gmail.com",
-      "role": "user",
-      "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Audit%20Test%20Member",
-      "verified": true,
-      "joinedAt": "2026-08-25T12:50:25.392Z",
-      "deletedAt": "2026-08-25T12:50:28.130Z",
-      "deletedBy": "admin",
-      "totalExpenses": 0,
-      "lifetimeAmount": 0,
-      "expenseHistory": [],
-      "note": "Permanently deleted by admin. This record is for audit purposes only."
-    },
-    "deleted_1787814969701_nothingsubodh_gmail_com": {
-      "originalId": "google_nothingsubodh_gmail_com",
-      "cleanId": "google_nothingsubodh_gmail_com",
-      "name": "Nothing Subodh",
-      "email": "nothingsubodh@gmail.com",
-      "role": "admin",
-      "picture": "",
-      "verified": true,
-      "joinedAt": "2026-08-25T16:35:59.705Z",
-      "deletedAt": "2026-08-27T07:16:09.701Z",
-      "deletedBy": "admin",
-      "totalExpenses": 2,
-      "lifetimeAmount": 2000,
-      "expenseHistory": [
-        {
-          "date": "2026-08-25",
-          "receipts": [
-            "https://res.cloudinary.com/vrxb6o67/image/upload/v1787677902/expense_receipts/nothing/August_2026/25_Aug_2026/receipt_1787677896325_a0s39.png"
-          ],
-          "createdAt": "2026-08-25T17:11:43.063Z",
-          "entries": [
-            {
-              "type": "Auto/Rapido",
-              "amount": 1000
-            }
-          ],
-          "total": 1000,
-          "notes": "aded",
-          "location": "Auto/Rapido",
-          "id": "exp_5fcd4783",
-          "userId": "google_nothingsubodh_gmail_com",
-          "paymentStatus": "pending",
-          "updatedAt": "2026-08-25T17:11:43.063Z"
-        },
-        {
-          "date": "2026-08-25",
-          "receipts": [
-            "https://res.cloudinary.com/vrxb6o67/image/upload/v1787677902/expense_receipts/nothing/August_2026/25_Aug_2026/receipt_1787677896325_a0s39.png"
-          ],
-          "createdAt": "2026-08-25T17:11:43.063Z",
-          "entries": [
-            {
-              "type": "Auto/Rapido",
-              "amount": 1000
-            }
-          ],
-          "total": 1000,
-          "notes": "aded",
-          "location": "Auto/Rapido",
-          "id": "exp_5fcd4783",
-          "userId": "google_nothingsubodh_gmail_com",
-          "paymentStatus": "pending",
-          "updatedAt": "2026-08-25T17:11:43.063Z"
-        }
-      ],
-      "note": "Permanently deleted by admin. This record is for audit purposes only."
-    },
-    "deleted_1787817539181_nothingsubodh_gmail_com": {
-      "originalId": "google_nothingsubodh_gmail_com",
-      "cleanId": "google_nothingsubodh_gmail_com",
-      "name": "Subodh Ram",
-      "email": "nothingsubodh@gmail.com",
-      "role": "user",
-      "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=Subodh%20Ram",
-      "verified": true,
-      "joinedAt": "2026-08-27T07:56:16.690Z",
-      "deletedAt": "2026-08-27T07:58:59.181Z",
-      "deletedBy": "admin",
-      "totalExpenses": 2,
-      "lifetimeAmount": 200,
-      "expenseHistory": [
-        {
-          "userId": "google_nothingsubodh_gmail_com",
-          "location": "Metro",
-          "notes": "varsova",
-          "paymentStatus": "pending",
-          "receipts": [
-            "https://res.cloudinary.com/vrxb6o67/image/upload/v1787815320/expense_receipts/Subodh_Ram/August_2026/27_Aug_2026/receipt_1787815313919_rbqip.jpg"
-          ],
-          "createdAt": "2026-08-27T07:22:01.158Z",
-          "id": "7FnS05tO70gbifZArnED",
-          "date": "2026-08-13",
-          "entries": [
-            {
-              "type": "Metro",
-              "amount": 100
-            }
-          ],
-          "total": 100,
-          "updatedAt": {
-            "_seconds": 1787815345,
-            "_nanoseconds": 52000000
-          }
-        },
-        {
-          "userId": "google_nothingsubodh_gmail_com",
-          "location": "Metro",
-          "notes": "varsova",
-          "paymentStatus": "pending",
-          "receipts": [
-            "https://res.cloudinary.com/vrxb6o67/image/upload/v1787815320/expense_receipts/Subodh_Ram/August_2026/27_Aug_2026/receipt_1787815313919_rbqip.jpg"
-          ],
-          "createdAt": "2026-08-27T07:22:01.158Z",
-          "id": "7FnS05tO70gbifZArnED",
-          "date": "2026-08-13",
-          "entries": [
-            {
-              "type": "Metro",
-              "amount": 100
-            }
-          ],
-          "total": 100,
-          "updatedAt": {
-            "_seconds": 1787815345,
-            "_nanoseconds": 52000000
-          }
-        }
-      ],
-      "note": "Permanently deleted by admin. This record is for audit purposes only."
-    },
-    "deleted_1787830833570_nothingsubodh_gmail_com": {
-      "originalId": "google_nothingsubodh_gmail_com",
-      "cleanId": "google_nothingsubodh_gmail_com",
-      "name": "subodh.ram",
-      "email": "nothingsubodh@gmail.com",
-      "role": "admin",
-      "picture": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc1IiByPSI0MiIgZmlsbD0iIzljYTNiZiIvPjxwYXRoIGQ9Ik0gMjAgMTg1IEMgMjAgMTMwIDUwIDEyMCAxMDAgMTIwIEMgMTUwIDEyMCAxODAgMTMwIDE4MCAxODUgWiIgZmlsbD0iIzljYTNiZiIvPjwvc3ZnPg==",
-      "verified": true,
-      "joinedAt": "2026-08-27T08:29:23.672Z",
-      "deletedAt": "2026-08-27T11:40:33.571Z",
-      "deletedBy": "admin",
-      "totalExpenses": 4,
-      "lifetimeAmount": 3600,
-      "expenseHistory": [
-        {
-          "userId": "google_nothingsubodh_gmail_com",
-          "date": "2026-07-22",
-          "location": "Porter",
-          "notes": "Porter",
-          "entries": [
-            {
-              "type": "Porter",
-              "amount": 800
-            }
-          ],
-          "total": 800,
-          "paymentStatus": "pending",
-          "receipts": [
-            "https://res.cloudinary.com/vrxb6o67/image/upload/v1787817694/expense_receipts/subodh_ram/August_2026/27_Aug_2026/receipt_1787817691795_907sl.jpg"
-          ],
-          "createdAt": "2026-08-27T08:01:35.166Z",
-          "id": "KxvYxCZlBGkbWV6gh5Uv",
-          "updatedAt": "2026-08-27T08:01:35.166Z"
-        },
-        {
-          "date": "2026-08-25",
-          "receipts": [
-            "https://res.cloudinary.com/vrxb6o67/image/upload/v1787677902/expense_receipts/nothing/August_2026/25_Aug_2026/receipt_1787677896325_a0s39.png"
-          ],
-          "createdAt": "2026-08-25T17:11:43.063Z",
-          "entries": [
-            {
-              "type": "Auto/Rapido",
-              "amount": 1000
-            }
-          ],
-          "total": 1000,
-          "notes": "aded",
-          "location": "Auto/Rapido",
-          "id": "exp_5fcd4783",
-          "userId": "google_nothingsubodh_gmail_com",
-          "paymentStatus": "pending",
-          "updatedAt": "2026-08-25T17:11:43.063Z"
-        },
-        {
-          "userId": "google_nothingsubodh_gmail_com",
-          "date": "2026-07-22",
-          "location": "Porter",
-          "notes": "Porter",
-          "entries": [
-            {
-              "type": "Porter",
-              "amount": 800
-            }
-          ],
-          "total": 800,
-          "paymentStatus": "pending",
-          "receipts": [
-            "https://res.cloudinary.com/vrxb6o67/image/upload/v1787817694/expense_receipts/subodh_ram/August_2026/27_Aug_2026/receipt_1787817691795_907sl.jpg"
-          ],
-          "createdAt": "2026-08-27T08:01:35.166Z",
-          "id": "KxvYxCZlBGkbWV6gh5Uv",
-          "updatedAt": "2026-08-27T08:01:35.166Z"
-        },
-        {
-          "date": "2026-08-25",
-          "receipts": [
-            "https://res.cloudinary.com/vrxb6o67/image/upload/v1787677902/expense_receipts/nothing/August_2026/25_Aug_2026/receipt_1787677896325_a0s39.png"
-          ],
-          "createdAt": "2026-08-25T17:11:43.063Z",
-          "entries": [
-            {
-              "type": "Auto/Rapido",
-              "amount": 1000
-            }
-          ],
-          "total": 1000,
-          "notes": "aded",
-          "location": "Auto/Rapido",
-          "id": "exp_5fcd4783",
-          "userId": "google_nothingsubodh_gmail_com",
-          "paymentStatus": "pending",
-          "updatedAt": "2026-08-25T17:11:43.063Z"
-        }
-      ],
-      "note": "Permanently deleted by admin. This record is for audit purposes only."
-    },
-    "deleted_1788352739620_rathodsagar4857_gmail_com": {
-      "originalId": "google_rathodsagar4857_gmail_com",
-      "cleanId": "google_rathodsagar4857_gmail_com",
-      "name": "Sagar Rathod",
-      "email": "rathodsagar4857@gmail.com",
-      "role": "user",
-      "picture": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc1IiByPSI0MiIgZmlsbD0iIzljYTNiZiIvPjxwYXRoIGQ9Ik0gMjAgMTg1IEMgMjAgMTMwIDUwIDEyMCAxMDAgMTIwIEMgMTUwIDEyMCAxODAgMTMwIDE4MCAxODUgWiIgZmlsbD0iIzljYTNiZiIvPjwvc3ZnPg==",
-      "verified": true,
-      "joinedAt": "2026-09-02T12:37:49.093Z",
-      "deletedAt": "2026-09-02T12:38:59.620Z",
-      "deletedBy": "admin",
-      "totalExpenses": 0,
-      "lifetimeAmount": 0,
-      "expenseHistory": [],
-      "note": "Permanently deleted by admin. This record is for audit purposes only."
-    }
-  },
+  "deleted_users": {},
   "expenses": {
     "9eLotEVkUGqAfW08004b": {
       "userId": "google_subodhram3350_gmail_com",
@@ -601,6 +184,92 @@
       "settlementNotes": "",
       "settledAt": null,
       "paymentBillUrl": ""
+    },
+    "exp_tg_mtgt57rl_x0hg": {
+      "date": "2026-08-31",
+      "notes": "Marol to worli",
+      "source": "Telegram Bot",
+      "userId": "google_subodhram3350_gmail_com",
+      "createdAt": "2026-08-31T05:38:28.881Z",
+      "entries": [
+        {
+          "type": "Metro",
+          "amount": 50
+        }
+      ],
+      "total": 50,
+      "location": "Marol to worli",
+      "id": "exp_tg_mtgt57rl_x0hg",
+      "paymentStatus": "pending",
+      "receipts": [
+        "https://res.cloudinary.com/vrxb6o67/image/upload/v1788154721/expense_receipts/telegram_receipts/file_1788154720497_s5oiz.jpg"
+      ],
+      "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1788154721/expense_receipts/telegram_receipts/file_1788154720497_s5oiz.jpg",
+      "updatedAt": "2026-08-31T05:38:42.069Z"
+    },
+    "exp_tg_mthbg3vn_5cia": {
+      "date": "2026-08-31",
+      "notes": "Worli to maril",
+      "source": "Telegram Bot",
+      "userId": "google_subodhram3350_gmail_com",
+      "createdAt": "2026-08-31T14:10:50.147Z",
+      "entries": [
+        {
+          "type": "Metro",
+          "amount": 50
+        }
+      ],
+      "total": 50,
+      "location": "Worli to maril",
+      "id": "exp_tg_mthbg3vn_5cia",
+      "paymentStatus": "pending",
+      "receipts": [
+        "https://res.cloudinary.com/vrxb6o67/image/upload/v1788185465/expense_receipts/telegram_receipts/file_1788185463809_wz2j8.jpg"
+      ],
+      "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1788185465/expense_receipts/telegram_receipts/file_1788185463809_wz2j8.jpg",
+      "updatedAt": "2026-08-31T14:11:05.580Z"
+    },
+    "exp_tg_mtjuu1c6_oxxe": {
+      "date": "2026-09-02",
+      "notes": "Home to IBC powai",
+      "source": "Telegram Bot",
+      "userId": "google_subodhram3350_gmail_com",
+      "receipts": [],
+      "createdAt": "2026-09-02T08:49:05.094Z",
+      "entries": [
+        {
+          "type": "Auto/Rapido",
+          "amount": 50
+        }
+      ],
+      "total": 50,
+      "paymentBillUrl": null,
+      "location": "Home to IBC powai",
+      "id": "exp_tg_mtjuu1c6_oxxe",
+      "paymentStatus": "pending",
+      "updatedAt": "2026-09-02T08:49:05.094Z"
+    },
+    "exp_tg_mtjuuikr_t2jh": {
+      "date": "2026-09-02",
+      "notes": "IBC Powai to Sagar tech plaza",
+      "source": "Telegram Bot",
+      "userId": "google_subodhram3350_gmail_com",
+      "createdAt": "2026-09-02T08:49:27.435Z",
+      "entries": [
+        {
+          "type": "Auto/Rapido",
+          "amount": 98
+        }
+      ],
+      "total": 98,
+      "paymentBillUrl": null,
+      "id": "exp_tg_mtjuuikr_t2jh",
+      "paymentStatus": "pending",
+      "receipts": [
+        "https://res.cloudinary.com/vrxb6o67/image/upload/v1788339080/expense_receipts/Subodh_Ram/September_2026/02_Sep_2026/receipt_1788339078600_vfwni.jpg"
+      ],
+      "location": "Auto/Rapido",
+      "updatedAt": "2026-09-02T08:51:21.196Z"
     }
   }
 }
