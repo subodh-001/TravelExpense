@@ -670,11 +670,13 @@ Send <code>/link your_email@gmail.com</code> here to link instantly!`;
           userContextStore.delete(chatIdStr);
           userContextStore.delete(`telegram_${chatIdStr}`);
 
+          const catName = (recentExp.entries && recentExp.entries[0] && recentExp.entries[0].type) || 'Auto/Rapido';
+          const emoji = CATEGORY_EMOJIS[catName] || '📌';
           const confirmMsg =
 `📎 <b>Receipt Photo Attached!</b>
 
 📅 <b>Date:</b> ${recentExp.date}
-${CATEGORY_EMOJIS[recentExp.location] || '📌'} <b>Category:</b> ${recentExp.location}
+${emoji} <b>Category:</b> ${catName} (📍 ${recentExp.location})
 💰 <b>Amount:</b> ₹${(recentExp.total || 0).toLocaleString('en-IN')}
 📝 <b>Notes:</b> ${recentExp.notes || recentExp.location}
 ✅ <b>Photo linked to entry in Database!</b>`;

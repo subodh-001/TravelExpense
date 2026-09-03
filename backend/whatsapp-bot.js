@@ -628,11 +628,13 @@ async function handleWhatsAppMessage(msg) {
 
           userContextStore.delete(userId);
 
+          const catName = (targetExp.entries && targetExp.entries[0] && targetExp.entries[0].type) || 'Auto/Rapido';
+          const categoryEmoji = CATEGORY_MAP.find(c => c.category === catName)?.category === 'Metro' ? '🚇' : (catName === 'Local' ? '🚆' : (catName === 'Auto/Rapido' ? '🛺' : '📌'));
           const attachText = 
 `📎 *Receipt Photo Attached to Recent Entry!*
 
 📅 *Date:* ${targetExp.date}
-📌 *Category:* ${targetExp.location}
+${categoryEmoji} *Category:* ${catName} (📍 ${targetExp.location})
 💰 *Amount:* ₹${targetExp.total.toLocaleString('en-IN')}
 📝 *Notes:* ${targetExp.notes}`;
 
