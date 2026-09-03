@@ -2030,11 +2030,31 @@ app.get('/api/admin/accept-invite', (req, res) => {
 app.get('/api/admin/users', async (req, res) => {
   try {
     const { month } = req.query; // e.g., '2026-08' or 'all'
-    const usersObj = getLocalUsers();
+    let usersObj = getLocalUsers();
     let allExpenses = getLocalExpenses();
 
     if (useSupabase && supabase) {
       try {
+        const { data: spUsers } = await supabase.from('users').select('*');
+        if (spUsers && Array.isArray(spUsers) && spUsers.length > 0) {
+          const spObj = {};
+          spUsers.forEach(u => {
+            spObj[u.id] = {
+              ...u,
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              role: u.role || 'user',
+              picture: u.picture,
+              phone: u.phone || '',
+              whatsapp: u.whatsapp || '',
+              createdAt: u.created_at,
+              updatedAt: u.updated_at
+            };
+          });
+          usersObj = spObj;
+        }
+
         const { data: spExpenses } = await supabase.from('expenses').select('*');
         if (spExpenses && Array.isArray(spExpenses)) {
           allExpenses = spExpenses.map(e => ({
@@ -2048,7 +2068,7 @@ app.get('/api/admin/users', async (req, res) => {
           }));
         }
       } catch (spErr) {
-        console.warn('Supabase admin users expenses fetch warning:', spErr.message);
+        console.warn('Supabase admin users fetch warning:', spErr.message);
       }
     } else if (useFirebase && db) {
       try {

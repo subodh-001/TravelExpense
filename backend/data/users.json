@@ -18,25 +18,6 @@
     "telegramVerified": true,
     "createdAt": "2026-09-03T16:01:13.344+00:00"
   },
-  "google_nothingsubodh_gmail_com": {
-    "id": "google_nothingsubodh_gmail_com",
-    "name": "subodh.ram",
-    "email": "nothingsubodh@gmail.com",
-    "role": "admin",
-    "verified": true,
-    "picture": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjEwMCIgZmlsbD0iI2YwZjRmOCIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc4IiByPSIzOCIgZmlsbD0iIzljYTNhZiIvPjxwYXRoIGQ9Ik0gMjAgMjAwIFEgMjAgMTM4IDEwMCAxMzggUSAxODAgMTM4IDE4MCAyMDAgWiIgZmlsbD0iIzljYTNhZiIvPjwvc3ZnPg==",
-    "updatedAt": "2026-08-27T08:29:23.672+00:00",
-    "whatsapp": "",
-    "whatsappVerified": false,
-    "telegramChatId": "",
-    "telegramUsername": "",
-    "phone": "",
-    "paymentBillUrl": "",
-    "createdAt": "2026-08-27T07:59:41.925+00:00",
-    "passwordHash": "efdb648ca67f87e8d8a81da8d645984c8868539b8f6a194dbd6464214b5d7cfb",
-    "lastActive": null,
-    "telegramVerified": false
-  },
   "google_jain_shailedra_gmail_com": {
     "id": "google_jain_shailedra_gmail_com",
     "name": "Shailedra",
