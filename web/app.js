@@ -109,6 +109,7 @@ const DEFAULT_GOOGLE_USER = {
 };
 
 const CURRENT_YEAR_MONTH = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
+const PROJECT_START_MONTH = '2026-08'; // August 2026 project launch minimum limit
 
 // App State
 let state = {
@@ -1048,11 +1049,13 @@ function populateMonthSelector() {
   if (!monthFilter) return;
 
   const monthsSet = new Set();
-  monthsSet.add(CURRENT_YEAR_MONTH);
+  if (CURRENT_YEAR_MONTH >= PROJECT_START_MONTH) monthsSet.add(CURRENT_YEAR_MONTH);
+  monthsSet.add(PROJECT_START_MONTH);
 
   (state.expenses || []).forEach(e => {
     if (e.date && e.date.length >= 7) {
-      monthsSet.add(e.date.slice(0, 7));
+      const ym = e.date.slice(0, 7);
+      if (ym >= PROJECT_START_MONTH) monthsSet.add(ym);
     }
   });
 
@@ -1079,11 +1082,13 @@ function populateUserMonthSelector() {
 
   const userExpenses = state.expenses || [];
   const monthsSet = new Set();
-  monthsSet.add(CURRENT_YEAR_MONTH);
+  if (CURRENT_YEAR_MONTH >= PROJECT_START_MONTH) monthsSet.add(CURRENT_YEAR_MONTH);
+  monthsSet.add(PROJECT_START_MONTH);
 
   userExpenses.forEach(e => {
     if (e.date && e.date.length >= 7) {
-      monthsSet.add(e.date.slice(0, 7));
+      const ym = e.date.slice(0, 7);
+      if (ym >= PROJECT_START_MONTH) monthsSet.add(ym);
     }
   });
 
@@ -3318,13 +3323,15 @@ function populateAdminMonthFilter() {
   const currentVal = monthSelect.value; // preserve user's current selection if already set
   const selected = (currentVal && currentVal !== 'all') ? currentVal : currentYM;
 
-  // Generate last 18 months dynamically
+  // Generate months starting from project launch (August 2026 = '2026-08') up to current/future month
   const months = [];
-  for (let i = 0; i < 18; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+  let d = new Date(now.getFullYear(), now.getMonth(), 1);
+  while (true) {
     const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (ym < PROJECT_START_MONTH) break;
     const label = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
     months.push({ ym, label });
+    d.setMonth(d.getMonth() - 1);
   }
 
   let html = `<option value="all">📅 All Months</option>`;
@@ -4445,11 +4452,13 @@ function populateInspectUserMonthSelector() {
 
   const monthsSet = new Set();
   const selectedMonthFromAdmin = document.getElementById('adminMonthFilter')?.value || CURRENT_YEAR_MONTH;
-  monthsSet.add(CURRENT_YEAR_MONTH);
+  if (CURRENT_YEAR_MONTH >= PROJECT_START_MONTH) monthsSet.add(CURRENT_YEAR_MONTH);
+  monthsSet.add(PROJECT_START_MONTH);
 
   (currentInspectUserExpenses || []).forEach(e => {
     if (e.date && e.date.length >= 7) {
-      monthsSet.add(e.date.slice(0, 7));
+      const ym = e.date.slice(0, 7);
+      if (ym >= PROJECT_START_MONTH) monthsSet.add(ym);
     }
   });
 
@@ -4854,11 +4863,13 @@ function populateAccountMonthSelector() {
   if (!select) return;
 
   const monthsSet = new Set();
-  monthsSet.add(CURRENT_YEAR_MONTH);
+  if (CURRENT_YEAR_MONTH >= PROJECT_START_MONTH) monthsSet.add(CURRENT_YEAR_MONTH);
+  monthsSet.add(PROJECT_START_MONTH);
 
   (state.expenses || []).forEach(e => {
     if (e.date && e.date.length >= 7) {
-      monthsSet.add(e.date.slice(0, 7));
+      const ym = e.date.slice(0, 7);
+      if (ym >= PROJECT_START_MONTH) monthsSet.add(ym);
     }
   });
 
