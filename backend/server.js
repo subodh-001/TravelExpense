@@ -340,32 +340,6 @@ const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
       });
     }
 
-    // ⚡ Auto-sync Expenses to Supabase in background
-    if (useSupabase && supabase && Array.isArray(expenses)) {
-      setImmediate(async () => {
-        try {
-          const expenseRows = expenses.map(e => ({
-            id: e.id,
-            user_id: e.userId,
-            date: e.date || new Date().toISOString().split('T')[0],
-            location: e.location || '',
-            notes: e.notes || '',
-            total: Number(e.total || 0),
-            entries: Array.isArray(e.entries) ? e.entries : [],
-            receipts: Array.isArray(e.receipts) ? e.receipts : [],
-            payment_status: e.paymentStatus || 'pending',
-            payment_bill_url: e.paymentBillUrl || '',
-            settled_at: e.settledAt || null,
-            source: e.source || '',
-            created_at: e.createdAt || new Date().toISOString(),
-            updated_at: e.updatedAt || new Date().toISOString()
-          }));
-          if (expenseRows.length > 0) {
-            await supabase.from('expenses').upsert(expenseRows, { onConflict: 'id' });
-          }
-        } catch (spErr) { /* silent backup */ }
-      });
-    }
   } catch (err) {
     console.error('Error writing LOCAL_DB_FILE:', err);
   }
@@ -408,7 +382,6 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
       return;
     }
     // Guard: Never wipe all users in one write — master admin must always exist
-    const masterAdminId = 'google_subodhram3350_gmail_com';
     if (Object.keys(users).length === 0) {
       console.warn('⚠️ DATA PROTECTION: saveLocalUsers called with empty object — skipping to preserve data');
       return;
@@ -444,36 +417,6 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
         } catch (fbErr) { /* silent — Firestore is secondary storage */ }
       });
     }
-
-    // ⚡ Auto-sync to Supabase in background
-    if (useSupabase && supabase && users && typeof users === 'object') {
-      setImmediate(async () => {
-        try {
-          const userRows = Object.entries(users).map(([uid, u]) => ({
-            id: u.id || uid,
-            name: u.name || 'User',
-            email: u.email || '',
-            role: u.role || 'user',
-            verified: u.verified !== false,
-            picture: u.picture || '',
-            password_hash: u.passwordHash || '',
-            last_active: u.lastActive || null,
-            whatsapp: u.whatsapp || '',
-            whatsapp_verified: Boolean(u.whatsappVerified),
-            phone: u.phone || '',
-            telegram_chat_id: u.telegramChatId || '',
-            telegram_username: u.telegramUsername || '',
-            telegram_verified: Boolean(u.telegramVerified),
-            payment_bill_url: u.paymentBillUrl || '',
-            updated_at: u.updatedAt || new Date().toISOString()
-          }));
-          if (userRows.length > 0) {
-            await supabase.from('users').upsert(userRows, { onConflict: 'id' });
-          }
-        } catch (spErr) { /* silent backup */ }
-      });
-    }
-
   } catch (err) {
     console.error('Error writing USERS_DB_FILE:', err);
   }
