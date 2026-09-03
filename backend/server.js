@@ -2710,7 +2710,30 @@ app.post('/api/expenses', authenticate, async (req, res) => {
       updatedAt: nowIso
     };
 
-    if (useFirebase) {
+    if (useSupabase && supabase) {
+      const expenseId = `exp_${uuidv4().substring(0, 8)}`;
+      const newExpense = { id: expenseId, ...expenseData };
+      const { error: spErr } = await supabase.from('expenses').insert([{
+        id: expenseId,
+        user_id: userId,
+        date,
+        location,
+        notes: notes || location,
+        total,
+        entries: cleanEntries,
+        receipts: receipts || [],
+        payment_status: paymentStatus || 'pending',
+        source: 'Web App',
+        created_at: nowIso,
+        updated_at: nowIso
+      }]);
+      if (spErr) throw new Error(spErr.message);
+      const expenses = getLocalExpenses();
+      expenses.unshift(newExpense);
+      saveLocalExpenses(expenses);
+      broadcastEvent('EXPENSES_UPDATED', { expenseId, userId });
+      return res.status(201).json({ success: true, expenseId, data: newExpense });
+    } else if (useFirebase) {
       const docRef = await db.collection('expenses').add({
         ...expenseData,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -2720,25 +2743,15 @@ app.post('/api/expenses', authenticate, async (req, res) => {
       const expenses = getLocalExpenses();
       expenses.unshift(newExpense);
       saveLocalExpenses(expenses);
-
       broadcastEvent('EXPENSES_UPDATED', { expenseId: docRef.id, userId });
-      return res.status(201).json({
-        success: true,
-        expenseId: docRef.id,
-        data: newExpense
-      });
+      return res.status(201).json({ success: true, expenseId: docRef.id, data: newExpense });
     } else {
       const expenseId = `exp_${uuidv4().substring(0, 8)}`;
       const newExpense = { id: expenseId, ...expenseData };
       const expenses = getLocalExpenses();
       expenses.unshift(newExpense);
       saveLocalExpenses(expenses);
-
-      return res.status(201).json({
-        success: true,
-        expenseId: expenseId,
-        data: newExpense
-      });
+      return res.status(201).json({ success: true, expenseId, data: newExpense });
     }
   } catch (error) {
     console.error('Error creating expense:', error);
@@ -2760,63 +2773,49 @@ app.put('/api/expenses/:expenseId', authenticate, async (req, res) => {
 
     const total = cleanEntries.reduce((sum, e) => sum + e.amount, 0);
 
-    if (useFirebase) {
-      const updateData = {
-        date,
-        location,
+    if (useSupabase && supabase) {
+      const spUpdate = {
+        date: date,
+        location: location,
+        notes: notes !== undefined ? notes : location,
         entries: cleanEntries,
         total,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updated_at: new Date().toISOString()
       };
+      if (paymentStatus) spUpdate.payment_status = paymentStatus;
+      if (receipts !== undefined) spUpdate.receipts = receipts;
+      const { error: spErr } = await supabase.from('expenses').update(spUpdate).eq('id', expenseId);
+      if (spErr) throw new Error(spErr.message);
+      // Sync local cache too
+      const expenses = getLocalExpenses();
+      const idx = expenses.findIndex(e => e.id === expenseId);
+      if (idx !== -1) {
+        expenses[idx] = { ...expenses[idx], date, location, notes: notes !== undefined ? notes : location, entries: cleanEntries, total, paymentStatus: paymentStatus || expenses[idx].paymentStatus || 'pending', receipts: receipts !== undefined ? receipts : expenses[idx].receipts, updatedAt: new Date().toISOString() };
+        saveLocalExpenses(expenses);
+      }
+      broadcastEvent('EXPENSES_UPDATED', { expenseId, userId });
+      return res.json({ success: true, message: 'Expense updated successfully' });
+    } else if (useFirebase) {
+      const updateData = { date, location, entries: cleanEntries, total, updatedAt: admin.firestore.FieldValue.serverTimestamp() };
       if (paymentStatus) updateData.paymentStatus = paymentStatus;
       if (receipts !== undefined) updateData.receipts = receipts;
       if (notes !== undefined) updateData.notes = notes;
-
       await db.collection('expenses').doc(expenseId).update(updateData);
-
-      // ALSO update local JSON cache so local storage stays 100% in sync
       try {
         const expenses = getLocalExpenses();
         const idx = expenses.findIndex(e => e.id === expenseId);
         if (idx !== -1) {
-          expenses[idx] = {
-            ...expenses[idx],
-            date: date || expenses[idx].date,
-            location: location || expenses[idx].location,
-            notes: notes !== undefined ? notes : (expenses[idx].notes || location),
-            receipts: receipts !== undefined ? receipts : (expenses[idx].receipts || []),
-            entries: cleanEntries,
-            total,
-            paymentStatus: paymentStatus || expenses[idx].paymentStatus || 'pending',
-            updatedAt: new Date().toISOString()
-          };
+          expenses[idx] = { ...expenses[idx], date: date || expenses[idx].date, location: location || expenses[idx].location, notes: notes !== undefined ? notes : (expenses[idx].notes || location), receipts: receipts !== undefined ? receipts : (expenses[idx].receipts || []), entries: cleanEntries, total, paymentStatus: paymentStatus || expenses[idx].paymentStatus || 'pending', updatedAt: new Date().toISOString() };
           saveLocalExpenses(expenses);
         }
-      } catch (lErr) {
-        console.warn('Local expenses sync error on edit:', lErr.message);
-      }
-
+      } catch (lErr) { console.warn('Local expenses sync error on edit:', lErr.message); }
       broadcastEvent('EXPENSES_UPDATED', { expenseId, userId });
       return res.json({ success: true, message: 'Expense updated successfully' });
     } else {
       const expenses = getLocalExpenses();
       const idx = expenses.findIndex(e => e.id === expenseId);
-
-      if (idx === -1) {
-        return res.status(404).json({ error: 'Expense entry not found' });
-      }
-
-      expenses[idx] = {
-        ...expenses[idx],
-        date: date || expenses[idx].date,
-        location: location || expenses[idx].location,
-        notes: notes !== undefined ? notes : (expenses[idx].notes || location),
-        receipts: receipts !== undefined ? receipts : (expenses[idx].receipts || []),
-        entries: cleanEntries,
-        total,
-        paymentStatus: paymentStatus || expenses[idx].paymentStatus || 'pending',
-        updatedAt: new Date().toISOString()
-      };
+      if (idx === -1) { return res.status(404).json({ error: 'Expense entry not found' }); }
+      expenses[idx] = { ...expenses[idx], date: date || expenses[idx].date, location: location || expenses[idx].location, notes: notes !== undefined ? notes : (expenses[idx].notes || location), receipts: receipts !== undefined ? receipts : (expenses[idx].receipts || []), entries: cleanEntries, total, paymentStatus: paymentStatus || expenses[idx].paymentStatus || 'pending', updatedAt: new Date().toISOString() };
 
       saveLocalExpenses(expenses);
       return res.json({ success: true, message: 'Expense updated successfully', data: expenses[idx] });
@@ -3063,17 +3062,21 @@ app.post('/api/expenses/:expenseId/receipts',
           uploadedAt: new Date().toISOString()
         };
 
-        if (useFirebase) {
-          await db.collection('expenses').doc(expenseId).update({
-            receipts: admin.firestore.FieldValue.arrayUnion(receiptData),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-          });
+        if (useSupabase && supabase) {
+          // Fetch current receipts, append, update
+          const { data: existing } = await supabase.from('expenses').select('receipts').eq('id', expenseId).single();
+          const currentReceipts = Array.isArray(existing && existing.receipts) ? existing.receipts : [];
+          currentReceipts.push(receiptData);
+          await supabase.from('expenses').update({ receipts: currentReceipts, updated_at: new Date().toISOString() }).eq('id', expenseId);
+          const expenses = getLocalExpenses();
+          const expIndex = expenses.findIndex(e => e.id === expenseId);
+          if (expIndex !== -1) { if (!expenses[expIndex].receipts) expenses[expIndex].receipts = []; expenses[expIndex].receipts.push(receiptData); expenses[expIndex].updatedAt = new Date().toISOString(); saveLocalExpenses(expenses); }
+        } else if (useFirebase) {
+          await db.collection('expenses').doc(expenseId).update({ receipts: admin.firestore.FieldValue.arrayUnion(receiptData), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
         } else {
           const expenses = getLocalExpenses();
           const expIndex = expenses.findIndex(e => e.id === expenseId);
-          if (expIndex === -1) {
-            return res.status(404).json({ error: 'Expense not found' });
-          }
+          if (expIndex === -1) { return res.status(404).json({ error: 'Expense not found' }); }
           if (!expenses[expIndex].receipts) expenses[expIndex].receipts = [];
           expenses[expIndex].receipts.push(receiptData);
           expenses[expIndex].updatedAt = new Date().toISOString();
@@ -3154,18 +3157,21 @@ app.post('/api/expenses/:expenseId/receipts',
           uploadedAt: new Date().toISOString()
         };
 
-        const expenses = getLocalExpenses();
-        const expIndex = expenses.findIndex(e => e.id === expenseId);
-
-        if (expIndex === -1) {
-          return res.status(404).json({ error: 'Expense not found' });
+        if (useSupabase && supabase) {
+          const { data: existing } = await supabase.from('expenses').select('receipts').eq('id', expenseId).single();
+          const currentReceipts = Array.isArray(existing && existing.receipts) ? existing.receipts : [];
+          currentReceipts.push(receiptData);
+          await supabase.from('expenses').update({ receipts: currentReceipts, updated_at: new Date().toISOString() }).eq('id', expenseId);
         }
 
-        if (!expenses[expIndex].receipts) expenses[expIndex].receipts = [];
-        expenses[expIndex].receipts.push(receiptData);
-        expenses[expIndex].updatedAt = new Date().toISOString();
-
-        saveLocalExpenses(expenses);
+        const expenses = getLocalExpenses();
+        const expIndex = expenses.findIndex(e => e.id === expenseId);
+        if (expIndex !== -1) {
+          if (!expenses[expIndex].receipts) expenses[expIndex].receipts = [];
+          expenses[expIndex].receipts.push(receiptData);
+          expenses[expIndex].updatedAt = new Date().toISOString();
+          saveLocalExpenses(expenses);
+        }
 
         return res.json({
           success: true,
@@ -3187,28 +3193,33 @@ app.delete('/api/expenses/:expenseId/receipts/index/:index', authenticate, async
     const idx = parseInt(index, 10);
     const userId = req.userId;
 
-    if (useFirebase) {
+    if (useSupabase && supabase) {
+      const { data: existing } = await supabase.from('expenses').select('receipts').eq('id', expenseId).single();
+      if (!existing) return res.status(404).json({ error: 'Expense not found' });
+      const receipts = Array.isArray(existing.receipts) ? existing.receipts : [];
+      if (isNaN(idx) || idx < 0 || idx >= receipts.length) return res.status(400).json({ error: 'Invalid receipt index' });
+      const [deleted] = receipts.splice(idx, 1);
+      await supabase.from('expenses').update({ receipts, updated_at: new Date().toISOString() }).eq('id', expenseId);
+      const expenses = getLocalExpenses();
+      const expIndex = expenses.findIndex(e => e.id === expenseId);
+      if (expIndex !== -1) { expenses[expIndex].receipts = receipts; expenses[expIndex].updatedAt = new Date().toISOString(); saveLocalExpenses(expenses); }
+      return res.json({ success: true, message: 'Receipt deleted!', deleted });
+    } else if (useFirebase) {
       const docRef = db.collection('expenses').doc(expenseId);
       const doc = await docRef.get();
       if (!doc.exists) return res.status(404).json({ error: 'Expense not found' });
       const data = doc.data();
       const receipts = data.receipts || [];
       if (isNaN(idx) || idx < 0 || idx >= receipts.length) return res.status(400).json({ error: 'Invalid receipt index' });
-
       const deleted = receipts.splice(idx, 1)[0];
-      await docRef.update({
-        receipts,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+      await docRef.update({ receipts, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
       return res.json({ success: true, message: 'Receipt deleted!', deleted });
     } else {
       const expenses = getLocalExpenses();
       const expIndex = expenses.findIndex(e => e.id === expenseId);
       if (expIndex === -1) return res.status(404).json({ error: 'Expense not found' });
-
       const receipts = expenses[expIndex].receipts || [];
       if (isNaN(idx) || idx < 0 || idx >= receipts.length) return res.status(400).json({ error: 'Invalid receipt index' });
-
       const [deleted] = receipts.splice(idx, 1);
       expenses[expIndex].receipts = receipts;
       expenses[expIndex].updatedAt = new Date().toISOString();
