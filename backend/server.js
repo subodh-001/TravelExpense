@@ -2555,6 +2555,24 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
         }
       }
 
+      // Delete from Supabase PostgreSQL if connected
+      if (useSupabase && supabase) {
+        try {
+          if (userId) await supabase.from('users').delete().eq('id', userId);
+          if (userCleanId) await supabase.from('users').delete().eq('id', userCleanId);
+          if (matchedTarget?.email) await supabase.from('users').delete().eq('email', matchedTarget.email);
+
+          if (userId) await supabase.from('expenses').delete().eq('user_id', userId);
+          if (userCleanId) await supabase.from('expenses').delete().eq('user_id', userCleanId);
+
+          const archiveId = `deleted_${Date.now()}_${(matchedTarget?.email || userId).replace(/[^a-zA-Z0-9]/g, '_')}`;
+          await supabase.from('deleted_users').upsert({ id: archiveId, deleted_at: new Date().toISOString() });
+          console.log(`⚡ Member ${userId} deleted from Supabase PostgreSQL`);
+        } catch (spErr) {
+          console.warn('⚠️ Supabase user deletion note:', spErr.message);
+        }
+      }
+
       // Delete from local SQLite database
       try {
         if (sqliteDb) {
@@ -3248,7 +3266,18 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
       }
     }
 
-    // 3. Delete from SQLite if mirror exists
+    // 3. Delete from Supabase PostgreSQL if connected
+    if (useSupabase && supabase) {
+      try {
+        await supabase.from('expenses').delete().eq('id', expenseId);
+        console.log(`⚡ Expense ${expenseId} deleted from Supabase PostgreSQL`);
+        deletedAny = true;
+      } catch (spErr) {
+        console.warn('⚠️ Supabase expense delete note:', spErr.message);
+      }
+    }
+
+    // 4. Delete from SQLite if mirror exists
     if (typeof dbSql !== 'undefined' && dbSql) {
       try {
         dbSql.prepare('DELETE FROM expenses WHERE id = ?').run(expenseId);
