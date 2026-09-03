@@ -1395,9 +1395,10 @@ app.post('/api/auth/google', (req, res) => {
     const users = getLocalUsers();
     const existing = users[userId] || findUserByEmail(cleanEmail) || {};
 
-    // Preserve custom uploaded picture (Cloudinary, custom URL, or base64) over basic Google OAuth picture
-    const hasCustomPic = existing.picture && typeof existing.picture === 'string' && (existing.picture.includes('cloudinary.com') || existing.picture.startsWith('data:image') || existing.picture.includes('profile_'));
-    const finalPic = hasCustomPic ? existing.picture : (existing.picture || userPic || '');
+    // Preserve custom uploaded picture (Cloudinary, custom URL) over Google OAuth picture, fallback to default avatar
+    const hasCustomPic = existing.picture && typeof existing.picture === 'string' && (existing.picture.includes('cloudinary.com') || existing.picture.includes('profile_')) && !existing.picture.includes('googleusercontent.com');
+    const googlePicIsReal = userPic && typeof userPic === 'string' && userPic.startsWith('http') && !userPic.includes('dicebear');
+    const finalPic = hasCustomPic ? existing.picture : (googlePicIsReal ? userPic : (existing.picture && existing.picture.startsWith('http') ? existing.picture : DEFAULT_USER_AVATAR));
 
     const userData = {
       ...existing,
@@ -1612,7 +1613,7 @@ app.post('/api/auth/verify-otp', (req, res) => {
       id: userId,
       name: existing.name || capitalizedName,
       email: cleanEmail,
-      picture: existing.picture || '',
+      picture: existing.picture && (existing.picture.startsWith('http') || existing.picture.startsWith('data:image')) ? existing.picture : DEFAULT_USER_AVATAR,
       verified: true,
       updatedAt: new Date().toISOString()
     };
@@ -3427,7 +3428,7 @@ app.post('/api/admin/invite-member', async (req, res) => {
         id: userId,
         name: capitalizedName,
         email: cleanEmail,
-        picture: '',
+        picture: DEFAULT_USER_AVATAR,
         verified: true,
         role: roleToSet,
         createdAt: new Date().toISOString(),
