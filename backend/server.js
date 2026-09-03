@@ -609,33 +609,27 @@ const syncFromSupabaseCloud = async () => {
       console.log(`⚡ Synced ${cloudUsersData.length} active users from Supabase Cloud`);
     }
 
-    // 2. Sync Expenses from Supabase into local cache
+    // 2. Sync Expenses from Supabase into local cache (Supabase is Master DB)
     const { data: cloudExpData, error: eErr } = await supabase.from('expenses').select('*');
-    if (!eErr && cloudExpData && cloudExpData.length > 0) {
-      const localExps = getLocalExpenses();
-      const expMap = new Map(localExps.map(e => [e.id, e]));
-      cloudExpData.forEach(e => {
-        if (e.id) {
-          expMap.set(e.id, {
-            id: e.id,
-            userId: e.user_id,
-            date: e.date,
-            location: e.location || '',
-            notes: e.notes || '',
-            total: Number(e.total || 0),
-            entries: Array.isArray(e.entries) ? e.entries : [],
-            receipts: Array.isArray(e.receipts) ? e.receipts : [],
-            paymentStatus: e.payment_status || 'pending',
-            paymentBillUrl: e.payment_bill_url || '',
-            settledAt: e.settled_at || null,
-            source: e.source || '',
-            createdAt: e.created_at || new Date().toISOString(),
-            updatedAt: e.updated_at || new Date().toISOString()
-          });
-        }
-      });
-      saveLocalExpenses(Array.from(expMap.values()), false);
-      console.log(`⚡ Synced ${expMap.size} active expenses from Supabase Cloud`);
+    if (!eErr && Array.isArray(cloudExpData)) {
+      const formatted = cloudExpData.map(e => ({
+        id: e.id,
+        userId: e.user_id,
+        date: e.date,
+        location: e.location || '',
+        notes: e.notes || '',
+        total: Number(e.total || 0),
+        entries: Array.isArray(e.entries) ? e.entries : [],
+        receipts: Array.isArray(e.receipts) ? e.receipts : [],
+        paymentStatus: e.payment_status || 'pending',
+        paymentBillUrl: e.payment_bill_url || '',
+        settledAt: e.settled_at || null,
+        source: e.source || '',
+        createdAt: e.created_at || new Date().toISOString(),
+        updatedAt: e.updated_at || new Date().toISOString()
+      }));
+      saveLocalExpenses(formatted, false);
+      console.log(`⚡ Synced ${formatted.length} active expenses from Supabase Cloud (Master DB)`);
     }
   } catch (err) {
     console.warn('⚠️ Supabase Cloud sync startup note:', err.message);
@@ -646,37 +640,32 @@ const syncFromSupabaseCloud = async () => {
 async function runSupabaseAutoSyncWorker() {
   if (!useSupabase || !supabase) return;
   try {
-    const localExps = getLocalExpenses();
-    const { data: cloudExps, error } = await supabase.from('expenses').select('id');
-    if (error) return;
-
-    const cloudIds = new Set((cloudExps || []).map(e => e.id));
-    const missingInCloud = localExps.filter(e => e && e.id && !cloudIds.has(e.id));
-
-    if (missingInCloud.length > 0) {
-      const rowsToPush = missingInCloud.map(e => ({
+    // Sync down from Supabase Cloud master to keep local cache exact match
+    const { data: cloudExpData, error } = await supabase.from('expenses').select('*');
+    if (!error && Array.isArray(cloudExpData)) {
+      const formatted = cloudExpData.map(e => ({
         id: e.id,
-        user_id: e.userId,
-        date: e.date || new Date().toISOString().split('T')[0],
+        userId: e.user_id,
+        date: e.date,
         location: e.location || '',
         notes: e.notes || '',
         total: Number(e.total || 0),
         entries: Array.isArray(e.entries) ? e.entries : [],
         receipts: Array.isArray(e.receipts) ? e.receipts : [],
-        payment_status: e.paymentStatus || 'pending',
-        payment_bill_url: e.paymentBillUrl || '',
-        settled_at: e.settledAt || null,
+        paymentStatus: e.payment_status || 'pending',
+        paymentBillUrl: e.payment_bill_url || '',
+        settledAt: e.settled_at || null,
         source: e.source || '',
-        created_at: e.createdAt || new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        createdAt: e.created_at || new Date().toISOString(),
+        updatedAt: e.updated_at || new Date().toISOString()
       }));
-      await supabase.from('expenses').upsert(rowsToPush, { onConflict: 'id' });
-      console.log(`⚡ Supabase Auto-Sync Worker: Pushed ${rowsToPush.length} new entries to Supabase!`);
+      saveLocalExpenses(formatted, false);
     }
   } catch (err) {
     console.warn('⚠️ Supabase auto-sync worker note:', err.message);
   }
 }
+
 
 // Trigger Cloud Sync & Background Auto-Sync Timer
 if (useFirebase && db) {
@@ -3300,9 +3289,7 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
         return res.status(403).json({ error: 'Unauthorized: Cannot delete expense of another user' });
       }
       expenses.splice(expIndex, 1);
-      const tempPath = `${LOCAL_DB_FILE}.tmp`;
-      fs.writeFileSync(tempPath, JSON.stringify(expenses, null, 2));
-      fs.renameSync(tempPath, LOCAL_DB_FILE);
+      saveLocalExpenses(expenses);
       deletedAny = true;
     }
 
