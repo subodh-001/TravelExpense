@@ -478,7 +478,7 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
 
 // 🔥 Automatic Cloud Sync: Pulls master DB state directly from Firebase Firestore on server startup
 const syncFromFirebaseCloud = async () => {
-  if (!useFirebase || !db) return;
+  if (useSupabase || !useFirebase || !db) return;
   try {
     console.log('🔄 Pulling master database state from Firebase Cloud Firestore...');
 
