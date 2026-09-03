@@ -255,6 +255,7 @@ if (SUPABASE_URL && SUPABASE_KEY) {
   try {
     supabase = createSupabaseClient(SUPABASE_URL, SUPABASE_KEY);
     useSupabase = true;
+    useFirebase = false; // Disable slow/timing-out Firebase Firestore database retries
     console.log('⚡ Connected to Supabase Database (' + SUPABASE_URL + ')');
   } catch (err) {
     console.warn('⚠️ Supabase init warning, falling back to Local Storage mode:', err.message);
