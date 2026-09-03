@@ -1156,7 +1156,7 @@ function createMailTransporter(port = 465, customUser = null, customPass = null)
 // Pre-create pooled primary transporter for instant email sending
 let primaryTransporter = createMailTransporter(465);
 
-const DEFAULT_USER_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><circle cx="64" cy="64" r="64" fill="%23cbd5e1"/><circle cx="64" cy="48" r="26" fill="%23ffffff"/><path d="M64 82c-28 0-48 14-48 30v16h96V112c0-16-20-30-48-30z" fill="%23ffffff"/></svg>`;
+const DEFAULT_USER_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48Y2lyY2xlIGN4PSI2NCIgY3k9IjY0IiByPSI2NCIgZmlsbD0iI2NiZDVlMSIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjQ4IiByPSIyNiIgZmlsbD0iI2ZmZmZmZiIvPjxwYXRoIGQ9Ik02NCA4MmMtMjggMC00OCAxNC00OCAzMHYxNmg5NlYxMTJjMC0xNi0yMC0zMC04OC0zMHoiIGZpbGw9IiNmZmZmZmYiLz48L3N2Zz4=`;
 
 const DEFAULT_GMAIL_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxE4NPu_khaxKDdEkrleAcCbYH4WszPYV8QoIyJLjPXL2VXZBoIrICMTt2j4mvQuP86/exec';
 
