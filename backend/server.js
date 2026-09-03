@@ -3941,7 +3941,8 @@ app.listen(PORT, () => {
     getLocalUsers,
     saveLocalUsers,
     uploadToCloudinary,
-    saveExpenseToDb
+    saveExpenseToDb,
+    supabase: useSupabase ? supabase : null
   });
 });
 
