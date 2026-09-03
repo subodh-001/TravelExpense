@@ -3307,10 +3307,40 @@ window.addEventListener('popstate', (e) => {
 });
 
 // ==================== SUPER ADMIN PORTAL LOGIC ====================
+
+function populateAdminMonthFilter() {
+  const monthSelect = document.getElementById('adminMonthFilter');
+  if (!monthSelect) return;
+
+  const now = new Date();
+  const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentVal = monthSelect.value; // preserve user's current selection if already set
+  const selected = (currentVal && currentVal !== 'all') ? currentVal : currentYM;
+
+  // Generate last 18 months dynamically
+  const months = [];
+  for (let i = 0; i < 18; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    months.push({ ym, label });
+  }
+
+  let html = `<option value="all">📅 All Months</option>`;
+  months.forEach(({ ym, label }) => {
+    const isCurrent = ym === currentYM;
+    html += `<option value="${ym}" ${ym === selected ? 'selected' : ''}>📅 ${label}${isCurrent ? ' (Current)' : ''}</option>`;
+  });
+  monthSelect.innerHTML = html;
+}
+
 async function loadSuperAdminData() {
   try {
+    // Always populate dropdown dynamically first so current month is shown
+    populateAdminMonthFilter();
+
     const monthSelect = document.getElementById('adminMonthFilter');
-    const selectedMonth = monthSelect ? monthSelect.value : 'all';
+    const selectedMonth = monthSelect ? monthSelect.value : CURRENT_YEAR_MONTH;
 
     const res = await fetch(`${API_BASE_URL}/admin/users?month=${selectedMonth}`);
     if (!res.ok) throw new Error('Failed to fetch admin users');
