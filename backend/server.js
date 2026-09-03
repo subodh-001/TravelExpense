@@ -3407,14 +3407,6 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
       }
     }
 
-    broadcastEvent('EXPENSES_UPDATED', { expenseId, action: 'delete' });
-    return res.json({ success: true, message: 'Travel expense deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting expense:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
     // 4. Delete from SQLite if mirror exists
     if (typeof dbSql !== 'undefined' && dbSql) {
       try {
@@ -3422,15 +3414,16 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
       } catch (_) {}
     }
 
-    // 4. Delete local uploads folder if exists
+    // 5. Delete local uploads folder if exists
     const userFolder = path.join(UPLOADS_DIR, userId, expenseId);
     if (fs.existsSync(userFolder)) {
       fs.rmSync(userFolder, { recursive: true, force: true });
     }
 
-    broadcastEvent('EXPENSES_UPDATED');
-    return res.json({ success: true, message: 'Expense deleted successfully!' });
+    broadcastEvent('EXPENSES_UPDATED', { expenseId, action: 'delete' });
+    return res.json({ success: true, message: 'Travel expense deleted successfully' });
   } catch (error) {
+    console.error('Error deleting expense:', error);
     res.status(500).json({ error: error.message });
   }
 });
