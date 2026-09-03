@@ -2005,7 +2005,24 @@ app.get('/api/admin/users', async (req, res) => {
     const usersObj = getLocalUsers();
     let allExpenses = getLocalExpenses();
 
-    if (useFirebase && db) {
+    if (useSupabase && supabase) {
+      try {
+        const { data: spExpenses } = await supabase.from('expenses').select('*');
+        if (spExpenses && Array.isArray(spExpenses)) {
+          allExpenses = spExpenses.map(e => ({
+            ...e,
+            userId: e.user_id,
+            paymentStatus: e.payment_status,
+            paymentBillUrl: e.payment_bill_url,
+            settledAt: e.settled_at,
+            createdAt: e.created_at,
+            updatedAt: e.updated_at
+          }));
+        }
+      } catch (spErr) {
+        console.warn('Supabase admin users expenses fetch warning:', spErr.message);
+      }
+    } else if (useFirebase && db) {
       try {
         const snapshot = await db.collection('expenses').get();
         const fbExpenses = [];
@@ -2887,7 +2904,25 @@ app.get('/api/expenses', async (req, res) => {
     const users = getLocalUsers();
     const validUserIds = getUserAliasIds(userId, users);
 
-    if (useFirebase) {
+    if (useSupabase && supabase) {
+      try {
+        const aliasArray = Array.from(validUserIds);
+        const { data: spExpenses } = await supabase.from('expenses').select('*').in('user_id', aliasArray);
+        const expenses = (spExpenses || []).map(e => ({
+          ...e,
+          userId: e.user_id,
+          paymentStatus: e.payment_status,
+          paymentBillUrl: e.payment_bill_url,
+          settledAt: e.settled_at,
+          createdAt: e.created_at,
+          updatedAt: e.updated_at
+        }));
+        expenses.sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
+        return res.json({ success: true, expenses });
+      } catch (spErr) {
+        console.warn('Supabase fetch user expenses error:', spErr.message);
+      }
+    } else if (useFirebase) {
       const expensesMap = new Map();
       for (const uid of validUserIds) {
         try {
