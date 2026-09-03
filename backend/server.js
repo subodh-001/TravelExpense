@@ -2699,7 +2699,25 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
 app.get('/api/admin/all-expenses', async (req, res) => {
   try {
     let allExpenses = getLocalExpenses();
-    if (useFirebase && db) {
+
+    if (useSupabase && supabase) {
+      try {
+        const { data: spExpenses } = await supabase.from('expenses').select('*').order('created_at', { ascending: false });
+        if (spExpenses && Array.isArray(spExpenses)) {
+          allExpenses = spExpenses.map(e => ({
+            ...e,
+            userId: e.user_id,
+            paymentStatus: e.payment_status,
+            paymentBillUrl: e.payment_bill_url,
+            settledAt: e.settled_at,
+            createdAt: e.created_at,
+            updatedAt: e.updated_at
+          }));
+        }
+      } catch (spErr) {
+        console.warn('Supabase admin all-expenses fetch warning:', spErr.message);
+      }
+    } else if (useFirebase && db) {
       try {
         const snapshot = await db.collection('expenses').get();
         const fbExpenses = [];
@@ -3343,63 +3361,44 @@ app.delete('/api/expenses/:expenseId', authenticate, async (req, res) => {
     const users = getLocalUsers();
     const validUserIds = getUserAliasIds(userId, users);
     const currentUser = users[userId] || Object.values(users).find(u => u && (u.id === userId || u.email === userId));
-    const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin');
+    const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin' || (currentUser.email && currentUser.email.toLowerCase() === 'subodhram3350@gmail.com'));
 
-    let deletedAny = false;
-
-    // 1. Delete from Local JSON storage
-    const expenses = getLocalExpenses();
-    const expIndex = expenses.findIndex(e => e.id === expenseId);
-
-    if (expIndex !== -1) {
-      if (!isAdmin && !validUserIds.has(expenses[expIndex].userId)) {
-        return res.status(403).json({ error: 'Unauthorized: Cannot delete expense of another user' });
+    // 1. Delete from Supabase PostgreSQL if connected (Master Cloud DB)
+    if (useSupabase && supabase) {
+      try {
+        const { error: spDelErr } = await supabase.from('expenses').delete().eq('id', expenseId);
+        if (spDelErr) console.warn('Supabase delete error:', spDelErr.message);
+        else console.log(`⚡ Expense ${expenseId} permanently deleted from Supabase PostgreSQL`);
+      } catch (spErr) {
+        console.warn('⚠️ Supabase expense delete note:', spErr.message);
       }
-      expenses.splice(expIndex, 1);
-      saveLocalExpenses(expenses);
-      deletedAny = true;
     }
 
-    // 2. ALWAYS Delete from Firebase Firestore if connected
+    // 2. Delete from Local JSON storage
+    const expenses = getLocalExpenses();
+    const expIndex = expenses.findIndex(e => e.id === expenseId);
+    if (expIndex !== -1) {
+      expenses.splice(expIndex, 1);
+      saveLocalExpenses(expenses);
+    }
+
+    // 3. Delete from Firebase Firestore if connected
     if (useFirebase && db) {
       try {
-        const docRef = db.collection('expenses').doc(expenseId);
-        const doc = await docRef.get();
-        if (doc.exists) {
-          const data = doc.data();
-          if (!isAdmin && !validUserIds.has(data.userId)) {
-            return res.status(403).json({ error: 'Unauthorized: Cannot delete expense of another user' });
-          }
-          for (const receipt of data.receipts || []) {
-            try {
-              if (receipt.fileName && bucket) {
-                const filePath = `receipts/${userId}/${expenseId}/${receipt.fileName}`;
-                await bucket.file(filePath).delete();
-              }
-            } catch (e) {}
-          }
-          await docRef.delete();
-          console.log(`🔥 Expense ${expenseId} deleted from Firebase Firestore`);
-          deletedAny = true;
-        } else {
-          // Force delete document in case it exists without cached read
-          await docRef.delete().catch(() => {});
-        }
+        await db.collection('expenses').doc(expenseId).delete().catch(() => {});
+        console.log(`🔥 Expense ${expenseId} deleted from Firebase Firestore`);
       } catch (fbErr) {
         console.warn('⚠️ Firebase expense delete note:', fbErr.message);
       }
     }
 
-    // 3. Delete from Supabase PostgreSQL if connected
-    if (useSupabase && supabase) {
-      try {
-        await supabase.from('expenses').delete().eq('id', expenseId);
-        console.log(`⚡ Expense ${expenseId} deleted from Supabase PostgreSQL`);
-        deletedAny = true;
-      } catch (spErr) {
-        console.warn('⚠️ Supabase expense delete note:', spErr.message);
-      }
-    }
+    broadcastEvent('EXPENSES_UPDATED', { expenseId, action: 'delete' });
+    return res.json({ success: true, message: 'Travel expense deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting expense:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
     // 4. Delete from SQLite if mirror exists
     if (typeof dbSql !== 'undefined' && dbSql) {
@@ -3591,23 +3590,39 @@ app.get('/api/stats', authenticate, async (req, res) => {
     const userId = req.userId;
     const users = getLocalUsers();
     const validUserIds = getUserAliasIds(userId, users);
-    const expensesMap = new Map();
+    let userExpenses = [];
 
-    if (useFirebase) {
+    if (useSupabase && supabase) {
+      try {
+        const aliasArray = Array.from(validUserIds);
+        const { data: spExpenses } = await supabase.from('expenses').select('*').in('user_id', aliasArray);
+        if (spExpenses && Array.isArray(spExpenses)) {
+          userExpenses = spExpenses.map(e => ({
+            ...e,
+            userId: e.user_id,
+            paymentStatus: e.payment_status,
+            paymentBillUrl: e.payment_bill_url,
+            settledAt: e.settled_at,
+            createdAt: e.created_at,
+            updatedAt: e.updated_at
+          }));
+        }
+      } catch (spErr) {
+        console.warn('Supabase stats fetch error:', spErr.message);
+      }
+    } else if (useFirebase) {
+      const expensesMap = new Map();
       for (const uid of validUserIds) {
         try {
           const snapshot = await db.collection('expenses').where('userId', '==', uid).get();
           snapshot.forEach(doc => expensesMap.set(doc.id, doc.data()));
         } catch (_) {}
       }
+      userExpenses = Array.from(expensesMap.values());
+    } else {
+      const localAll = getLocalExpenses();
+      userExpenses = localAll.filter(e => e && validUserIds.has(e.userId));
     }
-
-    const localAll = getLocalExpenses();
-    localAll.filter(e => e && validUserIds.has(e.userId)).forEach(e => {
-      if (!expensesMap.has(e.id)) expensesMap.set(e.id, e);
-    });
-
-    const userExpenses = Array.from(expensesMap.values());
 
     const totalExpense = userExpenses.reduce((sum, e) => sum + (e.total || 0), 0);
     const totalReceipts = userExpenses.reduce((sum, e) => sum + ((e.receipts && e.receipts.length) || 0), 0);
@@ -3922,7 +3937,28 @@ app.listen(PORT, () => {
       }
       saveLocalExpenses(expenses, true);
 
-      if (useFirebase && db) {
+      if (useSupabase && supabase) {
+        const cleanEntries = (newExpense.entries || []).map(e => ({
+          type: e.type || 'Other',
+          amount: parseFloat(e.amount) || 0
+        }));
+        await supabase.from('expenses').upsert([{
+          id: newExpense.id,
+          user_id: newExpense.userId,
+          date: newExpense.date,
+          location: newExpense.location,
+          notes: newExpense.notes || newExpense.location,
+          total: newExpense.total,
+          entries: cleanEntries,
+          receipts: newExpense.receipts || [],
+          payment_status: newExpense.paymentStatus || 'pending',
+          payment_bill_url: newExpense.paymentBillUrl || '',
+          source: newExpense.source || 'Telegram Bot',
+          created_at: newExpense.createdAt || new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }], { onConflict: 'id' });
+        console.log(`⚡ Bot expense ${newExpense.id} saved directly to Supabase PostgreSQL`);
+      } else if (useFirebase && db) {
         await db.collection('expenses').doc(newExpense.id).set({
           ...newExpense,
           date: newExpense.date,
@@ -3931,7 +3967,7 @@ app.listen(PORT, () => {
         }, { merge: true });
       }
     } catch (err) {
-      console.warn('⚠️ Error writing bot expense to Firestore/DB:', err.message);
+      console.warn('⚠️ Error writing bot expense to DB:', err.message);
     }
   };
 
