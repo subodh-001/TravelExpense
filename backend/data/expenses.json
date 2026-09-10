@@ -1,5 +1,27 @@
 [
   {
+    "id": "exp_tg_mtltqvt4_ch4e",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-03",
+    "location": "Goregaon",
+    "notes": "Goregaon",
+    "paymentStatus": "pending",
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 200
+      }
+    ],
+    "total": 200,
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788458065/expense_receipts/telegram_receipts/file_1788458058243_p94ei.jpg"
+    ],
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1788458065/expense_receipts/telegram_receipts/file_1788458058243_p94ei.jpg",
+    "createdAt": "2026-09-03T17:54:10.696Z",
+    "updatedAt": "2026-09-03T17:54:20.522Z",
+    "source": "Telegram Bot"
+  },
+  {
     "userId": "google_subodhram3350_gmail_com",
     "date": "2026-08-26",
     "location": "Auto/Rapido",

@@ -340,6 +340,35 @@ const saveLocalExpenses = (expenses, triggerBroadcast = true) => {
       });
     }
 
+    // ⚡ Auto-sync Expenses to Supabase Cloud PostgreSQL in background
+    if (useSupabase && supabase && Array.isArray(expenses)) {
+      setImmediate(async () => {
+        try {
+          const rows = expenses.filter(e => e && e.id).map(e => ({
+            id: e.id,
+            user_id: e.userId || '',
+            date: e.date || new Date().toISOString().slice(0, 10),
+            location: e.location || '',
+            notes: e.notes || '',
+            total: Number(e.total || 0),
+            entries: Array.isArray(e.entries) ? e.entries : [],
+            receipts: Array.isArray(e.receipts) ? e.receipts : [],
+            payment_status: e.paymentStatus || 'pending',
+            payment_bill_url: e.paymentBillUrl || '',
+            settled_at: e.settledAt || null,
+            source: e.source || '',
+            created_at: e.createdAt || new Date().toISOString(),
+            updated_at: e.updatedAt || new Date().toISOString()
+          }));
+          if (rows.length > 0) {
+            await supabase.from('expenses').upsert(rows, { onConflict: 'id' });
+          }
+        } catch (spErr) {
+          console.warn('Supabase expenses auto-sync note:', spErr.message);
+        }
+      });
+    }
+
   } catch (err) {
     console.error('Error writing LOCAL_DB_FILE:', err);
   }
@@ -415,6 +444,38 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
           });
           await batch.commit();
         } catch (fbErr) { /* silent — Firestore is secondary storage */ }
+      });
+    }
+
+    // ⚡ Auto-sync Users to Supabase Cloud PostgreSQL in background
+    if (useSupabase && supabase && users && typeof users === 'object') {
+      setImmediate(async () => {
+        try {
+          const rows = Object.entries(users).map(([uid, u]) => {
+            if (!uid || !u) return null;
+            return {
+              id: u.id || uid,
+              name: u.name || 'User',
+              email: u.email || '',
+              role: u.role || 'user',
+              verified: u.verified !== false,
+              picture: u.picture || '',
+              payment_bill_url: u.paymentBillUrl || '',
+              phone: u.phone || u.whatsapp || '',
+              whatsapp: u.whatsapp || u.phone || '',
+              whatsapp_verified: Boolean(u.whatsappVerified),
+              telegram_chat_id: u.telegramChatId || '',
+              telegram_username: u.telegramUsername || '',
+              telegram_verified: Boolean(u.telegramVerified),
+              updated_at: u.updatedAt || new Date().toISOString()
+            };
+          }).filter(Boolean);
+          if (rows.length > 0) {
+            await supabase.from('users').upsert(rows, { onConflict: 'id' });
+          }
+        } catch (spErr) {
+          console.warn('Supabase users auto-sync note:', spErr.message);
+        }
       });
     }
   } catch (err) {
@@ -2195,15 +2256,28 @@ app.post('/api/admin/update-settlement-bill', upload.single('paymentProof'), asy
     const { userId, month, action } = req.body;
     if (!userId) return res.status(400).json({ error: 'User ID is required' });
 
+    const users = getLocalUsers();
+    let targetUser = users[userId];
+    if (!targetUser) {
+      targetUser = Object.values(users).find(u => u && (
+        u.id === userId ||
+        (u.email && u.email.toLowerCase() === (userId || '').toLowerCase().trim())
+      ));
+    }
+
+    const validUserIds = getUserAliasIds(targetUser ? targetUser.id : userId, users);
+    if (userId) validUserIds.add(userId);
+    if (targetUser && targetUser.id) validUserIds.add(targetUser.id);
+    if (targetUser && targetUser.email) validUserIds.add(targetUser.email);
+
     let allExpenses = getLocalExpenses();
     let paymentBillUrl = '';
 
     if (action === 'update' && req.file) {
       try {
-        const userFolder = getCloudinaryUserFolderName(userId, 'payment_bills');
+        const userFolder = getCloudinaryUserFolderName(targetUser || userId, 'payment_bills');
         paymentBillUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, userFolder);
       } catch (cloudErr) {
-        // Fallback to local disk if Cloudinary fails
         const ext = path.extname(req.file.originalname) || '.png';
         const fileName = `bill_${Date.now()}_${uuidv4().substring(0, 8)}${ext}`;
         const filePath = path.join(UPLOADS_DIR, fileName);
@@ -2218,13 +2292,22 @@ app.post('/api/admin/update-settlement-bill', upload.single('paymentProof'), asy
     let modifiedCount = 0;
 
     allExpenses = allExpenses.map(e => {
-      const isTargetUser = (e.userId === userId);
+      if (!e) return e;
+      const eUid = (e.userId || '').toLowerCase().trim();
+      const isTargetUser = (
+        validUserIds.has(e.userId) ||
+        validUserIds.has(eUid) ||
+        eUid === (userId || '').toLowerCase().trim() ||
+        (targetUser && eUid === (targetUser.id || '').toLowerCase().trim()) ||
+        (targetUser && targetUser.email && eUid === targetUser.email.toLowerCase().trim())
+      );
       const isTargetMonth = (!month || month === 'all' || (e.date && e.date.startsWith(month)));
 
       if (isTargetUser && isTargetMonth) {
         modifiedCount++;
+        let updatedExp = { ...e };
         if (action === 'delete') {
-          return {
+          updatedExp = {
             ...e,
             paymentStatus: 'pending',
             paymentBillUrl: '',
@@ -2232,17 +2315,38 @@ app.post('/api/admin/update-settlement-bill', upload.single('paymentProof'), asy
             settlementNotes: ''
           };
         } else if (action === 'update' && paymentBillUrl) {
-          return {
+          updatedExp = {
             ...e,
             paymentBillUrl: paymentBillUrl
           };
         }
+
+        if (useFirebase && db && e.id) {
+          db.collection('expenses').doc(e.id).update({
+            paymentStatus: updatedExp.paymentStatus,
+            paymentBillUrl: updatedExp.paymentBillUrl,
+            settledAt: updatedExp.settledAt,
+            settlementNotes: updatedExp.settlementNotes,
+            updatedAt: new Date().toISOString()
+          }).catch(fbErr => console.warn('Firebase bill update note:', fbErr.message));
+        }
+
+        if (useSupabase && supabase && e.id) {
+          supabase.from('expenses').update({
+            payment_status: updatedExp.paymentStatus,
+            payment_bill_url: updatedExp.paymentBillUrl,
+            settled_at: updatedExp.settledAt,
+            updated_at: new Date().toISOString()
+          }).eq('id', e.id).then(({ error }) => {
+            if (error) console.warn('Supabase bill update note:', error.message);
+          });
+        }
+
+        return updatedExp;
       }
       return e;
     });
 
-    const users = getLocalUsers();
-    const targetUser = users[userId];
     if (targetUser) {
       if (action === 'delete') {
         targetUser.paymentBillUrl = '';
@@ -2250,12 +2354,21 @@ app.post('/api/admin/update-settlement-bill', upload.single('paymentProof'), asy
         targetUser.paymentBillUrl = paymentBillUrl;
       }
       targetUser.updatedAt = new Date().toISOString();
+      users[targetUser.id || userId] = targetUser;
       saveLocalUsers(users);
+
+      if (useSupabase && supabase && (targetUser.id || userId)) {
+        supabase.from('users').update({
+          payment_bill_url: targetUser.paymentBillUrl,
+          updated_at: new Date().toISOString()
+        }).eq('id', targetUser.id || userId).then(({ error }) => {
+          if (error) console.warn('Supabase targetUser bill update note:', error.message);
+        });
+      }
     }
 
     saveLocalExpenses(allExpenses);
 
-    // Send email notification to user on bill update
     if (action === 'update' && targetUser && targetUser.email && paymentBillUrl) {
       await sendEmailNotification({
         to: targetUser.email,
@@ -2298,9 +2411,23 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
     }
 
     const users = getLocalUsers();
-    const targetUser = users[userId];
+    let targetUser = users[userId];
+    if (!targetUser) {
+      targetUser = Object.values(users).find(u => u && (
+        u.id === userId ||
+        (u.email && u.email.toLowerCase() === (userId || '').toLowerCase().trim())
+      ));
+    }
     if (!targetUser) {
       return res.status(404).json({ error: 'Member not found' });
+    }
+
+    const validUserIds = getUserAliasIds(targetUser.id || userId, users);
+    if (userId) validUserIds.add(userId);
+    if (targetUser.id) validUserIds.add(targetUser.id);
+    if (targetUser.email) validUserIds.add(targetUser.email);
+    if (targetUser.email) {
+      validUserIds.add(`google_${targetUser.email.replace(/[^a-zA-Z0-9]/g, '_')}`);
     }
 
     let paymentBillUrl = '';
@@ -2309,7 +2436,6 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
         const userFolder = getCloudinaryUserFolderName(targetUser || userId, 'payment_bills');
         paymentBillUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype, userFolder);
       } catch (cloudErr) {
-        // Fallback to local disk if Cloudinary fails
         const ext = path.extname(req.file.originalname) || '.png';
         const fileName = `bill_${Date.now()}_${uuidv4().substring(0, 8)}${ext}`;
         const filePath = path.join(UPLOADS_DIR, fileName);
@@ -2321,27 +2447,26 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
       }
     }
 
-    const userCleanId = targetUser.email ? `google_${targetUser.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
-
     let allExpenses = getLocalExpenses();
     let settledCount = 0;
     let settledTotal = 0;
 
     allExpenses = allExpenses.map(e => {
+      if (!e) return e;
       const eUid = (e.userId || '').toLowerCase().trim();
       const isTargetUser = (
+        validUserIds.has(e.userId) ||
+        validUserIds.has(eUid) ||
         eUid === (userId || '').toLowerCase().trim() ||
         eUid === (targetUser.id || '').toLowerCase().trim() ||
-        eUid === (targetUser.email || '').toLowerCase().trim() ||
-        (userCleanId && eUid === userCleanId.toLowerCase())
+        (targetUser.email && eUid === targetUser.email.toLowerCase().trim())
       );
       const isTargetMonth = (!month || month === 'all' || (e.date && e.date.startsWith(month)));
 
       if (isTargetUser && isTargetMonth) {
-        if (e.paymentStatus !== 'paid') {
-          settledCount++;
-          settledTotal += (e.total || 0);
-        }
+        settledCount++;
+        settledTotal += (e.total || 0);
+
         const updatedExp = {
           ...e,
           paymentStatus: 'paid',
@@ -2350,13 +2475,25 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
           settlementNotes: notes || e.settlementNotes || 'Paid by Super Admin'
         };
 
-        if (useFirebase && e.id) {
+        if (useFirebase && db && e.id) {
           db.collection('expenses').doc(e.id).update({
             paymentStatus: 'paid',
             settledAt: admin.firestore.FieldValue.serverTimestamp(),
             paymentBillUrl: updatedExp.paymentBillUrl,
-            settlementNotes: updatedExp.settlementNotes
+            settlementNotes: updatedExp.settlementNotes,
+            updatedAt: new Date().toISOString()
           }).catch(fbErr => console.warn('Firebase settlement update note:', fbErr.message));
+        }
+
+        if (useSupabase && supabase && e.id) {
+          supabase.from('expenses').update({
+            payment_status: 'paid',
+            settled_at: new Date().toISOString(),
+            payment_bill_url: updatedExp.paymentBillUrl,
+            updated_at: new Date().toISOString()
+          }).eq('id', e.id).then(({ error }) => {
+            if (error) console.warn('Supabase settlement update note:', error.message);
+          });
         }
 
         return updatedExp;
@@ -2367,7 +2504,24 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
     if (paymentBillUrl) {
       targetUser.paymentBillUrl = paymentBillUrl;
       targetUser.updatedAt = new Date().toISOString();
+      users[targetUser.id || userId] = targetUser;
       saveLocalUsers(users);
+
+      if (useFirebase && db && (targetUser.id || userId)) {
+        db.collection('users').doc(targetUser.id || userId).update({
+          paymentBillUrl: paymentBillUrl,
+          updatedAt: new Date().toISOString()
+        }).catch(fbErr => console.warn('Firebase user bill note:', fbErr.message));
+      }
+
+      if (useSupabase && supabase && (targetUser.id || userId)) {
+        supabase.from('users').update({
+          payment_bill_url: paymentBillUrl,
+          updated_at: new Date().toISOString()
+        }).eq('id', targetUser.id || userId).then(({ error }) => {
+          if (error) console.warn('Supabase user bill note:', error.message);
+        });
+      }
     }
 
     saveLocalExpenses(allExpenses);
@@ -2607,34 +2761,75 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
 
     // Reset payment status back to pending
     let allExpenses = getLocalExpenses();
-    const userCleanId = (targetUser && targetUser.email) ? `google_${targetUser.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+    const matchedUser = targetUser || Object.values(users).find(u => u && (u.id === userId || (u.email && u.email.toLowerCase() === (userId || '').toLowerCase().trim())));
+    const validUserIds = getUserAliasIds(matchedUser ? matchedUser.id : userId, users);
+    if (userId) validUserIds.add(userId);
+    if (matchedUser && matchedUser.id) validUserIds.add(matchedUser.id);
+    if (matchedUser && matchedUser.email) validUserIds.add(matchedUser.email);
 
     allExpenses = allExpenses.map(e => {
+      if (!e) return e;
       const eUid = (e.userId || '').toLowerCase().trim();
       const isTargetUser = (
+        validUserIds.has(e.userId) ||
+        validUserIds.has(eUid) ||
         eUid === (userId || '').toLowerCase().trim() ||
-        (targetUser && eUid === (targetUser.id || '').toLowerCase().trim()) ||
-        (targetUser && eUid === (targetUser.email || '').toLowerCase().trim()) ||
-        (userCleanId && eUid === userCleanId.toLowerCase())
+        (matchedUser && eUid === (matchedUser.id || '').toLowerCase().trim()) ||
+        (matchedUser && matchedUser.email && eUid === matchedUser.email.toLowerCase().trim())
       );
       const isTargetMonth = (!month || month === 'all' || (e.date && e.date.startsWith(month)));
 
       if (isTargetUser && isTargetMonth) {
-        return {
+        const updatedExp = {
           ...e,
           paymentStatus: 'pending',
           settledAt: null,
-          paymentBillUrl: null
+          paymentBillUrl: '',
+          settlementNotes: ''
         };
+
+        if (useFirebase && db && e.id) {
+          db.collection('expenses').doc(e.id).update({
+            paymentStatus: 'pending',
+            settledAt: null,
+            paymentBillUrl: '',
+            settlementNotes: '',
+            updatedAt: new Date().toISOString()
+          }).catch(fbErr => console.warn('Firebase reset note:', fbErr.message));
+        }
+
+        if (useSupabase && supabase && e.id) {
+          supabase.from('expenses').update({
+            payment_status: 'pending',
+            settled_at: null,
+            payment_bill_url: '',
+            updated_at: new Date().toISOString()
+          }).eq('id', e.id).then(({ error }) => {
+            if (error) console.warn('Supabase reset note:', error.message);
+          });
+        }
+
+        return updatedExp;
       }
       return e;
     });
+
     saveLocalExpenses(allExpenses);
 
-    if (targetUser) {
-      targetUser.paymentBillUrl = '';
-      targetUser.updatedAt = new Date().toISOString();
+    if (matchedUser) {
+      matchedUser.paymentBillUrl = '';
+      matchedUser.updatedAt = new Date().toISOString();
+      users[matchedUser.id || userId] = matchedUser;
       saveLocalUsers(users);
+
+      if (useSupabase && supabase && (matchedUser.id || userId)) {
+        supabase.from('users').update({
+          payment_bill_url: '',
+          updated_at: new Date().toISOString()
+        }).eq('id', matchedUser.id || userId).then(({ error }) => {
+          if (error) console.warn('Supabase user reset note:', error.message);
+        });
+      }
     }
 
     res.json({ success: true, message: 'Settlement reset back to Pending' });
