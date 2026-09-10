@@ -3580,8 +3580,14 @@ async function openEditMemberModal(userId) {
     const data = await res.json();
     const userExpenses = data.expenses || [];
 
-    const paidExpenseWithBill = userExpenses.find(e => (e.paymentStatus === 'paid' || e.payment_status === 'paid') && e.paymentBillUrl && (!e.receipts || !e.receipts.includes(e.paymentBillUrl)));
-    const billUrl = (user.paymentBillUrl && (!user.receipts || !user.receipts.includes(user.paymentBillUrl))) ? user.paymentBillUrl : (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
+    const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'all';
+    const monthExps = userExpenses.filter(e => {
+      if (!e) return false;
+      if (selectedMonth === 'all') return true;
+      return e.date && e.date.startsWith(selectedMonth);
+    });
+    const paidExpenseWithBill = monthExps.find(e => (e.paymentStatus === 'paid' || e.payment_status === 'paid') && e.paymentBillUrl && (!e.receipts || !e.receipts.includes(e.paymentBillUrl)));
+    const billUrl = paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : (selectedMonth === 'all' && user.paymentBillUrl && (!user.receipts || !user.receipts.includes(user.paymentBillUrl)) ? user.paymentBillUrl : '');
     currentActiveBillUrl = billUrl;
 
     if (billUrl) {
@@ -3959,8 +3965,13 @@ async function openSettleModal(userId) {
     const res = await fetch(`${API_BASE_URL}/expenses?userId=${encodeURIComponent(userId)}`);
     const data = await res.json();
     const userExpenses = data.expenses || [];
-    const paidExpenseWithBill = userExpenses.find(e => (e.paymentStatus === 'paid' || e.payment_status === 'paid') && e.paymentBillUrl && (!e.receipts || !e.receipts.includes(e.paymentBillUrl)));
-    const billUrl = (user.paymentBillUrl && (!user.receipts || !user.receipts.includes(user.paymentBillUrl))) ? user.paymentBillUrl : (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
+    const monthExps = userExpenses.filter(e => {
+      if (!e) return false;
+      if (!selectedMonth || selectedMonth === 'all') return true;
+      return e.date && e.date.startsWith(selectedMonth);
+    });
+    const paidExpenseWithBill = monthExps.find(e => (e.paymentStatus === 'paid' || e.payment_status === 'paid') && e.paymentBillUrl && (!e.receipts || !e.receipts.includes(e.paymentBillUrl)));
+    const billUrl = paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : ((!selectedMonth || selectedMonth === 'all') && user.paymentBillUrl && (!user.receipts || !user.receipts.includes(user.paymentBillUrl)) ? user.paymentBillUrl : '');
 
     if (billUrl) {
       if (proofContainer) {
@@ -4273,8 +4284,14 @@ function updateInspectUserBillProofCard() {
   if (!container || !currentInspectUserId) return;
 
   const user = (adminUsersCache && adminUsersCache.find(u => u.id === currentInspectUserId)) || {};
-  let paidExpenseWithBill = (currentInspectUserExpenses || []).find(e => (e.paymentStatus === 'paid' || e.payment_status === 'paid') && e.paymentBillUrl && (!e.receipts || !e.receipts.includes(e.paymentBillUrl)));
-  let billUrl = (user.paymentBillUrl && (!user.receipts || !user.receipts.includes(user.paymentBillUrl))) ? user.paymentBillUrl : (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
+  const selectedMonth = document.getElementById('inspectMonthFilter')?.value || document.getElementById('adminMonthFilter')?.value || 'all';
+  const monthExps = (currentInspectUserExpenses || []).filter(e => {
+    if (!e) return false;
+    if (selectedMonth === 'all') return true;
+    return e.date && e.date.startsWith(selectedMonth);
+  });
+  let paidExpenseWithBill = monthExps.find(e => (e.paymentStatus === 'paid' || e.payment_status === 'paid') && e.paymentBillUrl && (!e.receipts || !e.receipts.includes(e.paymentBillUrl)));
+  let billUrl = paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : (selectedMonth === 'all' && user.paymentBillUrl && (!user.receipts || !user.receipts.includes(user.paymentBillUrl)) ? user.paymentBillUrl : '');
 
   if (billUrl) {
     container.innerHTML = `
