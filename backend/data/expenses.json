@@ -16,7 +16,7 @@
     "receipts": [
       "https://res.cloudinary.com/vrxb6o67/image/upload/v1788458065/expense_receipts/telegram_receipts/file_1788458058243_p94ei.jpg"
     ],
-    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1788458065/expense_receipts/telegram_receipts/file_1788458058243_p94ei.jpg",
+    "paymentBillUrl": "",
     "createdAt": "2026-09-03T17:54:10.696Z",
     "updatedAt": "2026-09-03T17:54:20.522Z",
     "source": "Telegram Bot"
@@ -224,7 +224,7 @@
     "receipts": [
       "https://res.cloudinary.com/vrxb6o67/image/upload/v1788154721/expense_receipts/telegram_receipts/file_1788154720497_s5oiz.jpg"
     ],
-    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1788154721/expense_receipts/telegram_receipts/file_1788154720497_s5oiz.jpg",
+    "paymentBillUrl": "",
     "updatedAt": "2026-08-31T05:38:42.069Z"
   },
   {
@@ -246,7 +246,7 @@
     "receipts": [
       "https://res.cloudinary.com/vrxb6o67/image/upload/v1788185465/expense_receipts/telegram_receipts/file_1788185463809_wz2j8.jpg"
     ],
-    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1788185465/expense_receipts/telegram_receipts/file_1788185463809_wz2j8.jpg",
+    "paymentBillUrl": "",
     "updatedAt": "2026-08-31T14:11:05.580Z"
   },
   {

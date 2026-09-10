@@ -2137,8 +2137,8 @@ app.get('/api/admin/users', async (req, res) => {
       const receiptCount = userExpenses.reduce((sum, e) => sum + ((e.receipts && e.receipts.length) || 0), 0);
       const role = user.role || ((user.email && (user.email.toLowerCase().includes('admin') || user.email.toLowerCase().includes('superadmin') || user.email.toLowerCase() === 'subodhram3350@gmail.com')) ? 'super_admin' : 'user');
 
-      const paidExpWithBill = userExpenses.find(e => e.paymentBillUrl);
-      const paymentBillUrl = paidExpWithBill ? paidExpWithBill.paymentBillUrl : '';
+      const paidExpWithBill = userExpenses.find(e => (e.paymentStatus === 'paid' || e.payment_status === 'paid') && e.paymentBillUrl && (!e.receipts || !e.receipts.includes(e.paymentBillUrl)));
+      const paymentBillUrl = (user.paymentBillUrl && (!user.receipts || !user.receipts.includes(user.paymentBillUrl))) ? user.paymentBillUrl : (paidExpWithBill ? paidExpWithBill.paymentBillUrl : '');
 
       return {
         id: user.id,

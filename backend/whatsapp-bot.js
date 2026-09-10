@@ -1261,7 +1261,8 @@ async function handleUltraMsgMessage(data, callbacks = {}) {
       notes: parsed.notes || textOnly,
       total: parsed.amount,
       paymentStatus: 'pending',
-      paymentBillUrl: data.media || null,
+      receipts: data.media ? [data.media] : [],
+      paymentBillUrl: '',
       settledAt: null,
       createdAt: new Date().toISOString(),
       source: 'WhatsApp UltraMsg'

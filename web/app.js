@@ -3580,8 +3580,8 @@ async function openEditMemberModal(userId) {
     const data = await res.json();
     const userExpenses = data.expenses || [];
 
-    const paidExpenseWithBill = userExpenses.find(e => e.paymentBillUrl);
-    const billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
+    const paidExpenseWithBill = userExpenses.find(e => (e.paymentStatus === 'paid' || e.payment_status === 'paid') && e.paymentBillUrl && (!e.receipts || !e.receipts.includes(e.paymentBillUrl)));
+    const billUrl = (user.paymentBillUrl && (!user.receipts || !user.receipts.includes(user.paymentBillUrl))) ? user.paymentBillUrl : (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
     currentActiveBillUrl = billUrl;
 
     if (billUrl) {
@@ -3959,9 +3959,8 @@ async function openSettleModal(userId) {
     const res = await fetch(`${API_BASE_URL}/expenses?userId=${encodeURIComponent(userId)}`);
     const data = await res.json();
     const userExpenses = data.expenses || [];
-    const paidExpenseWithBill = userExpenses.find(e => e.paymentBillUrl);
-
-    const billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
+    const paidExpenseWithBill = userExpenses.find(e => (e.paymentStatus === 'paid' || e.payment_status === 'paid') && e.paymentBillUrl && (!e.receipts || !e.receipts.includes(e.paymentBillUrl)));
+    const billUrl = (user.paymentBillUrl && (!user.receipts || !user.receipts.includes(user.paymentBillUrl))) ? user.paymentBillUrl : (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
 
     if (billUrl) {
       if (proofContainer) {
@@ -4274,8 +4273,8 @@ function updateInspectUserBillProofCard() {
   if (!container || !currentInspectUserId) return;
 
   const user = (adminUsersCache && adminUsersCache.find(u => u.id === currentInspectUserId)) || {};
-  let paidExpenseWithBill = (currentInspectUserExpenses || []).find(e => e.paymentBillUrl);
-  let billUrl = user.paymentBillUrl || (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
+  let paidExpenseWithBill = (currentInspectUserExpenses || []).find(e => (e.paymentStatus === 'paid' || e.payment_status === 'paid') && e.paymentBillUrl && (!e.receipts || !e.receipts.includes(e.paymentBillUrl)));
+  let billUrl = (user.paymentBillUrl && (!user.receipts || !user.receipts.includes(user.paymentBillUrl))) ? user.paymentBillUrl : (paidExpenseWithBill ? paidExpenseWithBill.paymentBillUrl : '');
 
   if (billUrl) {
     container.innerHTML = `

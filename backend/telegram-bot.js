@@ -662,7 +662,6 @@ Send <code>/link your_email@gmail.com</code> here to link instantly!`;
           // Attach to the last recent expense
           if (!recentExp.receipts) recentExp.receipts = [];
           if (!recentExp.receipts.includes(receiptUrl)) recentExp.receipts.push(receiptUrl);
-          recentExp.paymentBillUrl = receiptUrl;
           recentExp.updatedAt = new Date().toISOString();
 
           await persistExpense(recentExp);
@@ -763,7 +762,7 @@ ${emoji} <b>Category:</b> ${catName} (📍 ${recentExp.location})
               entries: itemEntries,
               total: itemTotal,
               receipts: receiptUrl ? [receiptUrl] : [],
-              paymentBillUrl: receiptUrl || null,
+              paymentBillUrl: '',
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               source: 'Telegram Bot'
@@ -826,7 +825,7 @@ ${summaryLines.join('\n\n')}
           entries: finalEntries,
           total: finalTotal,
           receipts: finalReceipts,
-          paymentBillUrl: finalReceipts[0] || null,
+          paymentBillUrl: '',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           source: 'Telegram Bot'
