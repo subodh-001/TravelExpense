@@ -1342,6 +1342,8 @@ app.post('/api/auth/register', (req, res) => {
     const users = getLocalUsers();
     const picture = (existingUser && existingUser.picture) || users[userId]?.picture || '';
 
+    const isNewUser = !existingUser || !existingUser.id;
+
     users[userId] = {
       ...(existingUser || {}),
       id: userId,
@@ -1350,6 +1352,8 @@ app.post('/api/auth/register', (req, res) => {
       passwordHash,
       picture,
       verified: true,
+      // New users start as pending; existing users keep their approval status
+      approved: isNewUser ? false : (existingUser.approved !== undefined ? existingUser.approved : true),
       updatedAt: new Date().toISOString()
     };
     saveLocalUsers(users);
@@ -1357,7 +1361,7 @@ app.post('/api/auth/register', (req, res) => {
     const safeUser = { ...users[userId] };
     delete safeUser.passwordHash;
 
-    console.log(`👤 Registered new user account: ${cleanEmail}`);
+    console.log(`👤 Registered new user account: ${cleanEmail} (approved: ${users[userId].approved})`);
     res.json({ success: true, user: safeUser });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1477,6 +1481,12 @@ app.post('/api/auth/login', (req, res) => {
 
     const safeUser = { ...user };
     delete safeUser.passwordHash;
+
+    // Check approval status before allowing login
+    if (safeUser.approved === false) {
+      console.log(`⏳ Password Login blocked (approval pending) for: ${cleanEmail}`);
+      return res.json({ success: true, user: safeUser, approvalPending: true });
+    }
 
     console.log(`🔑 Password Login successful for: ${cleanEmail}`);
     res.json({ success: true, user: safeUser });

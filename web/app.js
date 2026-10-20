@@ -524,7 +524,8 @@ function saveGoogleUser(user) {
     name: user.name || user.email.split('@')[0],
     email: user.email,
     picture: pictureToUse,
-    role: user.role || 'user'
+    role: user.role || 'user',
+    approved: user.approved  // preserve approval status — undefined = legacy (approved), false = pending
   };
 
   if (!state.currentGoogleUser || state.currentGoogleUser.id !== safeUser.id) {
@@ -2991,8 +2992,13 @@ async function handleFullPageSignIn(e) {
       return;
     }
 
-    showToast(`👋 Welcome back, ${data.user.name}!`);
     saveGoogleUser(data.user);
+    if (data.approvalPending) {
+      // User exists but needs admin approval — saveGoogleUser already routes to pending-approval
+      showToast('⏳ Your account is awaiting admin approval.');
+    } else {
+      showToast(`👋 Welcome back, ${data.user.name}!`);
+    }
   } catch (err) {
     alert('Connection error: ' + err.message);
     if (submitBtn) submitBtn.textContent = 'Sign in';
@@ -3220,7 +3226,11 @@ async function verifySignUpOtp() {
       return;
     }
 
-    showToast(`🎉 Account created! Welcome, ${regData.user.name}!`);
+    if (regData.user.approved === false) {
+      showToast(`✅ Account created! Waiting for admin approval.`);
+    } else {
+      showToast(`🎉 Account created! Welcome, ${regData.user.name}!`);
+    }
     saveGoogleUser(regData.user);
   } catch (err) {
     if (errEl) { errEl.textContent = 'Server error: ' + err.message; errEl.style.display = 'block'; }
