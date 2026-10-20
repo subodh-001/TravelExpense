@@ -1404,6 +1404,8 @@ app.post('/api/auth/google', (req, res) => {
     const googlePicIsReal = userPic && typeof userPic === 'string' && userPic.startsWith('http') && !userPic.includes('dicebear');
     const finalPic = hasCustomPic ? existing.picture : (googlePicIsReal ? userPic : (existing.picture && existing.picture.startsWith('http') ? existing.picture : DEFAULT_USER_AVATAR));
 
+    const isNewUser = !existing.id; // brand new user
+
     const userData = {
       ...existing,
       id: userId,
@@ -1411,6 +1413,8 @@ app.post('/api/auth/google', (req, res) => {
       email: cleanEmail,
       picture: finalPic,
       verified: true,
+      // New users (first time Google login) start as pending; existing users keep their approval
+      approved: isNewUser ? false : (existing.approved !== undefined ? existing.approved : true),
       role: existing.role || 'user',
       updatedAt: new Date().toISOString()
     };
@@ -1611,6 +1615,7 @@ app.post('/api/auth/verify-otp', (req, res) => {
 
     const users = getLocalUsers();
     const existing = users[userId] || {};
+    const isNewUser = !existing.id; // brand new user, never seen before
 
     users[userId] = {
       ...existing,
@@ -1619,6 +1624,8 @@ app.post('/api/auth/verify-otp', (req, res) => {
       email: cleanEmail,
       picture: existing.picture && (existing.picture.startsWith('http') || existing.picture.startsWith('data:image')) ? existing.picture : DEFAULT_USER_AVATAR,
       verified: true,
+      // New users start as pending approval; existing users keep their approved status
+      approved: isNewUser ? false : (existing.approved !== undefined ? existing.approved : true),
       updatedAt: new Date().toISOString()
     };
     saveLocalUsers(users);
@@ -2146,8 +2153,9 @@ app.get('/api/admin/users', async (req, res) => {
         email: user.email,
         picture: user.picture,
         verified: !!user.verified,
+        approved: user.approved !== undefined ? !!user.approved : true, // undefined = legacy user = approved
         role,
-        totalAmount: pendingAmount, // Active outstanding balance: becomes 0 when settled/paid!
+        totalAmount: pendingAmount,
         pendingAmount,
         paidAmount,
         lifetimeAmount,
@@ -2173,6 +2181,51 @@ app.get('/api/admin/users', async (req, res) => {
   }
 });
 
+// ─── Admin: Approve Pending User ─────────────────────────────────────────────
+app.post('/api/admin/approve-user', async (req, res) => {
+  try {
+    const { userId, action } = req.body; // action: 'approve' | 'reject'
+    if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+    const users = getLocalUsers();
+    const user = users[userId] || Object.values(users).find(u => u && (u.id === userId || u.email === userId));
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (action === 'reject') {
+      const cleanId = user.id;
+      const cleanEmail = user.email;
+      delete users[cleanId];
+      saveLocalUsers(users);
+      addDeletedUser(cleanEmail);
+      addDeletedUser(cleanId);
+      console.log(`🚫 Admin rejected & removed user: ${cleanEmail} (${cleanId})`);
+      return res.json({ success: true, action: 'rejected', userId });
+    }
+
+    // approve
+    user.approved = true;
+    user.updatedAt = new Date().toISOString();
+    users[user.id] = user;
+    saveLocalUsers(users);
+
+    // Sync to Firebase/Supabase
+    if (useFirebase && db) {
+      try {
+        await db.collection('users').doc(user.id).update({ approved: true, updatedAt: new Date().toISOString() });
+      } catch (e) { console.warn('Firebase approve-user sync note:', e.message); }
+    }
+    if (useSupabase && supabase) {
+      try {
+        await supabase.from('users').update({ approved: true, updated_at: new Date().toISOString() }).eq('id', user.id);
+      } catch (e) { console.warn('Supabase approve-user sync note:', e.message); }
+    }
+
+    console.log(`✅ Admin approved user: ${user.email} (${user.id})`);
+    res.json({ success: true, action: 'approved', userId: user.id, name: user.name, email: user.email });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.post('/api/admin/add-member', async (req, res) => {
   try {

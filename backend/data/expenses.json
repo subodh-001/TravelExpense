@@ -1,95 +1,655 @@
 [
   {
-    "id": "exp_tg_mtltqvt4_ch4e",
-    "userId": "google_subodhram3350_gmail_com",
-    "date": "2026-09-03",
-    "location": "Goregaon",
-    "notes": "Goregaon",
+    "id": "exp_22b4d2d5",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-10-13",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri to Ghatkopar return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
     "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-13T19:06:23.913+00:00",
+    "updatedAt": "2026-10-13T19:06:23.913+00:00"
+  },
+  {
+    "id": "exp_e164f64e",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-07",
+    "location": "Metro",
+    "notes": "Rashi Peripherals limited",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-12T17:25:54.775+00:00",
+    "updatedAt": "2026-10-12T17:25:54.775+00:00"
+  },
+  {
+    "id": "exp_29c9bf55",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-01",
+    "location": "Local",
+    "notes": "Csmt to malad station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.813+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T05:57:31.675+00:00",
+    "updatedAt": "2026-10-05T05:57:31.675+00:00"
+  },
+  {
+    "id": "exp_be2c88d2",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-03",
+    "location": "Local",
+    "notes": "Thane to grand road station",
+    "total": 15,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 15
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T04:16:27.572+00:00",
+    "updatedAt": "2026-10-05T04:16:27.572+00:00"
+  },
+  {
+    "id": "exp_f628d3d0",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-03",
+    "location": "Metro",
+    "notes": "Sakinaka to ghatkopar",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T04:01:50.356+00:00",
+    "updatedAt": "2026-10-05T04:01:50.356+00:00"
+  },
+  {
+    "id": "exp_cfee7518",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-24",
+    "location": "Metro",
+    "notes": "Sakinaka to Ghatkopar return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.277+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T13:20:06.296+00:00",
+    "updatedAt": "2026-09-25T13:20:06.296+00:00"
+  },
+  {
+    "id": "exp_6e4af967",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-28",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
     "entries": [
       {
         "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.818+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:05:58.31+00:00",
+    "updatedAt": "2026-10-07T08:05:58.31+00:00"
+  },
+  {
+    "id": "exp_1fbcbce5",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-22",
+    "location": "Local",
+    "notes": "Andheri station to malad station",
+    "total": 5,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 5
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.827+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:07:56.476+00:00",
+    "updatedAt": "2026-10-07T04:07:56.476+00:00"
+  },
+  {
+    "id": "exp_fa547e88",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-08",
+    "location": "Local",
+    "notes": "Csmt to malad station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.827+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T05:53:26.691+00:00",
+    "updatedAt": "2026-10-06T05:53:26.691+00:00"
+  },
+  {
+    "id": "exp_bd62bc49",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-07",
+    "location": "Metro",
+    "notes": "Saki naka to Western express Highway",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-12T17:27:04.507+00:00",
+    "updatedAt": "2026-10-12T17:27:14.972+00:00"
+  },
+  {
+    "id": "exp_d8141520",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-30",
+    "location": "Local",
+    "notes": "Vashi station to Ghatkopar",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.289+00:00",
+    "source": "",
+    "createdAt": "2026-10-01T18:30:50.829+00:00",
+    "updatedAt": "2026-10-01T18:30:50.829+00:00"
+  },
+  {
+    "id": "exp_tg_mtgt57rl_x0hg",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-01",
+    "location": "Metro",
+    "notes": "Marol to worli",
+    "total": 50,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 50
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788154721/expense_receipts/telegram_receipts/file_1788154720497_s5oiz.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.853+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-08-31T05:38:28.881+00:00",
+    "updatedAt": "2026-09-10T17:00:49.559+00:00"
+  },
+  {
+    "id": "exp_a68370e8",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-03",
+    "location": "Auto/Rapido",
+    "notes": "Thane station to  site home lodha  return",
+    "total": 150,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 150
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T04:07:28.55+00:00",
+    "updatedAt": "2026-10-05T04:07:28.55+00:00"
+  },
+  {
+    "id": "exp_5c564bb7",
+    "userId": "google_sonidheeraj961_gmail_com",
+    "date": "2026-09-05",
+    "location": "Porter",
+    "notes": "Sagar tech plaza to Sinoons malad porter",
+    "total": 200,
+    "entries": [
+      {
+        "type": "Porter",
         "amount": 200
       }
     ],
-    "total": 200,
-    "receipts": [
-      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788458065/expense_receipts/telegram_receipts/file_1788458058243_p94ei.jpg"
-    ],
-    "paymentBillUrl": "",
-    "createdAt": "2026-09-03T17:54:10.696Z",
-    "updatedAt": "2026-09-03T17:54:20.522Z",
-    "source": "Telegram Bot"
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304186/expense_receipts/SoniDheeraj961/October_2026/Payment_Bills/file_1792304184173_rgq8m.pdf",
+    "settledAt": "2026-10-18T06:16:27.084+00:00",
+    "source": "",
+    "createdAt": "2026-09-17T13:03:49.345+00:00",
+    "updatedAt": "2026-09-17T13:03:49.345+00:00"
   },
   {
-    "userId": "google_subodhram3350_gmail_com",
-    "date": "2026-08-26",
-    "location": "Auto/Rapido",
-    "notes": "Warehouse",
+    "id": "exp_69bf0eef",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-12",
+    "location": "Metro",
+    "notes": "Kurar to sakinaka",
+    "total": 40,
     "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.82+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T06:26:29.865+00:00",
+    "updatedAt": "2026-10-06T06:29:10.794+00:00"
+  },
+  {
+    "id": "exp_tg_muck9zq5_lx2e_0",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-22",
+    "location": "Saki naka to Andheri",
+    "notes": "Saki naka to Andheri",
+    "total": 18,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 18
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790074757/expense_receipts/telegram_receipts/file_1790074755981_9t5mf.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.437+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-22T10:58:52.829+00:00",
+    "updatedAt": "2026-09-22T10:59:17.522+00:00"
+  },
+  {
+    "id": "exp_86f8a110",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-22",
+    "location": "Auto/Rapido",
+    "notes": "Cooper to Andheri station",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.818+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:07:30.577+00:00",
+    "updatedAt": "2026-10-07T04:07:30.577+00:00"
+  },
+  {
+    "id": "exp_f3129b75",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-15",
+    "location": "Local",
+    "notes": "Bandra to malad station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.824+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:14:26.586+00:00",
+    "updatedAt": "2026-10-06T07:14:26.586+00:00"
+  },
+  {
+    "id": "exp_7967974e",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-07",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri to DN nagar to Oshiwara",
+    "total": 70,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 70
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.287+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:36:36.764+00:00",
+    "updatedAt": "2026-09-25T17:36:53.334+00:00"
+  },
+  {
+    "id": "exp_c70bd60a",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-06",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-06T16:22:03.466+00:00",
+    "updatedAt": "2026-10-06T16:22:03.466+00:00"
+  },
+  {
+    "id": "exp_3518e9cc",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-23",
+    "location": "Local",
+    "notes": "Andheri to Malad station",
+    "total": 5,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 5
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.824+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:16:38.954+00:00",
+    "updatedAt": "2026-10-07T04:16:38.954+00:00"
+  },
+  {
+    "id": "exp_tg_mtbc8jkf_i005_2",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-08",
+    "location": "Doolally Andheri / Varsova",
+    "notes": "Doolally Andheri / Varsova",
+    "total": 162,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 60
+      },
       {
         "type": "Auto/Rapido",
         "amount": 102
       }
     ],
-    "total": 102,
-    "paymentStatus": "pending",
     "receipts": [],
-    "createdAt": "2026-08-27T16:14:15.312Z",
-    "id": "9eLotEVkUGqAfW08004b",
-    "updatedAt": "2026-08-27T16:14:15.312Z"
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1789060873/expense_receipts/Subodh_Ram/September_2026/Payment_Bills/file_1789060871941_z9pn9.jpg",
+    "settledAt": "2026-09-10T17:21:13.594+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-08-27T09:46:19.791+00:00",
+    "updatedAt": "2026-08-27T09:46:19.791+00:00"
   },
   {
-    "notes": "Tbse juhu on 26th august",
-    "source": "Telegram Bot",
-    "userId": "google_subodhram3350_gmail_com",
+    "id": "exp_e0781405",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-10-07",
+    "location": "Metro",
+    "notes": "Metro sakinaka to marol return",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
     "receipts": [],
-    "createdAt": "2026-08-27T05:09:01.674Z",
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-11T15:51:17.24+00:00",
+    "updatedAt": "2026-10-11T15:51:17.24+00:00"
+  },
+  {
+    "id": "exp_f4b4ace4",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-17",
+    "location": "Metro",
+    "notes": "Andheri to sakinaka",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.819+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:29:48.077+00:00",
+    "updatedAt": "2026-10-06T07:29:48.077+00:00"
+  },
+  {
+    "id": "exp_fb11fb84",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-10-17",
+    "location": "Metro",
+    "notes": "Saki naka to Andheri",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1792413772/expense_receipts/Subodh_Ram/October_2026/19_Oct_2026/receipt_1792413768503_g6y1o.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-19T12:42:53.685+00:00",
+    "updatedAt": "2026-10-19T12:42:53.685+00:00"
+  },
+  {
+    "id": "exp_d7d5a97a",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-06",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri with Amber",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791269315/expense_receipts/Sagar_Rathod/October_2026/06_Oct_2026/receipt_1791269312803_41teu.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-06T06:48:35.96+00:00",
+    "updatedAt": "2026-10-06T06:48:35.96+00:00"
+  },
+  {
+    "id": "exp_569584de",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-06",
+    "location": "Local",
+    "notes": "Mira road to Santacruz",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-07T05:23:23.96+00:00",
+    "updatedAt": "2026-10-07T05:23:23.96+00:00"
+  },
+  {
+    "id": "exp_10382349",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-17",
+    "location": "Auto/Rapido",
+    "notes": "Worli to lower Parel",
+    "total": 20,
     "entries": [
       {
         "type": "Auto/Rapido",
-        "amount": 280
+        "amount": 20
       }
     ],
-    "total": 280,
-    "location": "Auto/Rapido",
-    "id": "exp_tg_mtb2bxii_3adh",
-    "paymentStatus": "pending",
-    "settlementNotes": "",
-    "settledAt": null,
-    "paymentBillUrl": "",
-    "date": "2026-08-26",
-    "updatedAt": "2026-08-27T16:12:58.661Z"
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1789654800/expense_receipts/Shubhamshejwal2580/September_2026/17_Sep_2026/receipt_1789654797483_7ofu1.png"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.281+00:00",
+    "source": "",
+    "createdAt": "2026-09-17T14:17:31.911+00:00",
+    "updatedAt": "2026-09-17T14:20:01.836+00:00"
   },
   {
-    "date": "2026-08-06",
-    "notes": "Warehosue",
-    "source": "Telegram Bot",
-    "userId": "google_subodhram3350_gmail_com",
-    "receipts": [],
-    "createdAt": "2026-08-27T09:46:19.373Z",
+    "id": "exp_05fce8c4",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-30",
+    "location": "Metro",
+    "notes": "Hutatma chowk to marol metro station",
+    "total": 70,
     "entries": [
       {
-        "type": "Others",
-        "amount": 32
+        "type": "Metro",
+        "amount": 70
       }
     ],
-    "total": 32,
-    "location": "Warehosue",
-    "id": "exp_tg_mtbc8j8t_67n8_0",
-    "paymentStatus": "pending",
-    "updatedAt": "2026-08-27T09:46:19.373Z",
-    "settlementNotes": "",
-    "settledAt": null,
-    "paymentBillUrl": ""
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.829+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:21:08.21+00:00",
+    "updatedAt": "2026-10-07T08:21:08.21+00:00"
   },
   {
-    "date": "2026-08-07",
-    "notes": "Belapur workloft",
-    "source": "Telegram Bot",
-    "userId": "google_subodhram3350_gmail_com",
+    "id": "exp_775c6676",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-10",
+    "location": "Metro",
+    "notes": "Saki naka to Western express Rp tech office",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
     "receipts": [],
-    "createdAt": "2026-08-27T09:46:19.579Z",
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-12T16:38:31.935+00:00",
+    "updatedAt": "2026-10-12T16:38:31.935+00:00"
+  },
+  {
+    "id": "exp_tg_mtbc8jej_f338_1",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-07",
+    "location": "Belapur workloft",
+    "notes": "Belapur workloft",
+    "total": 421,
     "entries": [
       {
         "type": "Metro",
@@ -104,191 +664,5304 @@
         "amount": 386
       }
     ],
-    "total": 421,
-    "location": "Belapur workloft",
-    "id": "exp_tg_mtbc8jej_f338_1",
-    "paymentStatus": "pending",
-    "updatedAt": "2026-08-27T09:46:19.579Z",
-    "settlementNotes": "",
-    "settledAt": null,
-    "paymentBillUrl": ""
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1789060873/expense_receipts/Subodh_Ram/September_2026/Payment_Bills/file_1789060871941_z9pn9.jpg",
+    "settledAt": "2026-09-10T17:21:13.594+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-08-27T09:46:19.579+00:00",
+    "updatedAt": "2026-08-27T09:46:19.579+00:00"
   },
   {
-    "date": "2026-08-08",
-    "notes": "Doolally Andheri / Varsova",
-    "source": "Telegram Bot",
-    "userId": "google_subodhram3350_gmail_com",
+    "id": "exp_2898d807",
+    "userId": "google_sonidheeraj961_gmail_com",
+    "date": "2026-09-02",
+    "location": "Porter",
+    "notes": "Ansa to Sagar tech plaza",
+    "total": 80,
+    "entries": [
+      {
+        "type": "Porter",
+        "amount": 80
+      }
+    ],
     "receipts": [],
-    "createdAt": "2026-08-27T09:46:19.791Z",
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304186/expense_receipts/SoniDheeraj961/October_2026/Payment_Bills/file_1792304184173_rgq8m.pdf",
+    "settledAt": "2026-10-18T06:16:27.083+00:00",
+    "source": "",
+    "createdAt": "2026-09-12T12:48:15.326+00:00",
+    "updatedAt": "2026-09-12T12:48:15.326+00:00"
+  },
+  {
+    "id": "exp_0308b587",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-19",
+    "location": "Auto/Rapido",
+    "notes": "Bandra to vijay sales return",
+    "total": 50,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 50
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.284+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T14:41:05.615+00:00",
+    "updatedAt": "2026-09-25T14:41:05.615+00:00"
+  },
+  {
+    "id": "exp_51e84166",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-07",
+    "location": "Metro",
+    "notes": "Western express Highway to Andheri",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-12T16:42:41.343+00:00",
+    "updatedAt": "2026-10-12T16:42:41.343+00:00"
+  },
+  {
+    "id": "exp_ae871e0a",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-23",
+    "location": "Auto/Rapido",
+    "notes": "Bike petrol Activa office to lonavala return",
+    "total": 920,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 920
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.278+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T14:02:58.955+00:00",
+    "updatedAt": "2026-09-25T14:34:28.993+00:00"
+  },
+  {
+    "id": "exp_cb1d1ae7",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-24",
+    "location": "Porter",
+    "notes": "Fort House to Data force",
+    "total": 1254,
+    "entries": [
+      {
+        "type": "Porter",
+        "amount": 1254
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790356026/expense_receipts/Shubhamshejwal2580/September_2026/25_Sep_2026/receipt_1790356022789_24hcq.png"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.285+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T13:19:26.971+00:00",
+    "updatedAt": "2026-09-25T17:07:06.858+00:00"
+  },
+  {
+    "id": "exp_tg_mu7wtfg0_qds2",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-18",
+    "location": "marol to ode worli",
+    "notes": "marol to ode worli",
+    "total": 50,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 50
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1789793474/expense_receipts/telegram_receipts/file_1789793472856_v630o.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.851+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-19T04:51:04.179+00:00",
+    "updatedAt": "2026-09-19T04:51:15.094+00:00"
+  },
+  {
+    "id": "exp_61b68d96",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-18",
+    "location": "Local",
+    "notes": "Andheri to khar road",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.435+00:00",
+    "source": "",
+    "createdAt": "2026-09-22T11:22:22.739+00:00",
+    "updatedAt": "2026-09-22T11:22:22.739+00:00"
+  },
+  {
+    "id": "exp_80f289c7",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-15",
+    "location": "Auto/Rapido",
+    "notes": "Bandra to vijay sales sharing auto return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.817+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:13:54.715+00:00",
+    "updatedAt": "2026-10-06T07:13:54.715+00:00"
+  },
+  {
+    "id": "exp_ee3ef2af",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-06",
+    "location": "Others",
+    "notes": "Pop screw",
+    "total": 200,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 200
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791269402/expense_receipts/Sagar_Rathod/October_2026/06_Oct_2026/receipt_1791269400037_4do1n.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-06T06:50:03.574+00:00",
+    "updatedAt": "2026-10-06T06:50:03.574+00:00"
+  },
+  {
+    "id": "exp_1415adf3",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-06",
+    "location": "Local",
+    "notes": "Mira road station to malad station and Amber Santacruz",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791303699/expense_receipts/Sagar_Rathod/October_2026/06_Oct_2026/receipt_1791303696625_sfq6t.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-06T16:21:12.002+00:00",
+    "updatedAt": "2026-10-06T16:21:40.217+00:00"
+  },
+  {
+    "id": "exp_73d837c2",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-10",
+    "location": "Auto/Rapido",
+    "notes": "Office to vijay sales return",
+    "total": 110,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 110
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.281+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:27:23.877+00:00",
+    "updatedAt": "2026-09-25T17:30:59.358+00:00"
+  },
+  {
+    "id": "exp_4a4cdc56",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-10-17",
+    "location": "Local",
+    "notes": "Andheri to Bandra Return",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1792413822/expense_receipts/Subodh_Ram/October_2026/19_Oct_2026/receipt_1792413818280_28rj4.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-19T12:43:43.361+00:00",
+    "updatedAt": "2026-10-19T12:44:26.104+00:00"
+  },
+  {
+    "id": "exp_186ad377",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-22",
+    "location": "Auto/Rapido",
+    "notes": "Office to hetvi thakkar house Cooper with material",
+    "total": 154,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 154
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.827+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:05:07.725+00:00",
+    "updatedAt": "2026-10-07T04:05:07.725+00:00"
+  },
+  {
+    "id": "exp_947b35ba",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-10-17",
+    "location": "Auto/Rapido",
+    "notes": "Bandra to TBSE return sharing",
+    "total": 60,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 60
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-19T12:45:00.51+00:00",
+    "updatedAt": "2026-10-19T12:45:00.51+00:00"
+  },
+  {
+    "id": "exp_tg_mumwtnx3_vf6d",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-29",
+    "location": "andheri to saki naka office",
+    "notes": "andheri to saki naka office",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.849+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-29T16:47:47.799+00:00",
+    "updatedAt": "2026-09-29T16:47:47.799+00:00"
+  },
+  {
+    "id": "exp_8e659ab6",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-10-15",
+    "location": "Local",
+    "notes": "Ghatkopar to belapur",
+    "total": 15,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 15
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1792130229/expense_receipts/Subodh_Ram/October_2026/16_Oct_2026/receipt_1792130227621_nghit.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-16T05:57:09.877+00:00",
+    "updatedAt": "2026-10-16T05:57:09.877+00:00"
+  },
+  {
+    "id": "exp_eb2b17fd",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-22",
+    "location": "Food",
+    "notes": "Office Chai",
+    "total": 48,
+    "entries": [
+      {
+        "type": "Food",
+        "amount": 48
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.278+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:16:31.195+00:00",
+    "updatedAt": "2026-09-25T17:16:31.195+00:00"
+  },
+  {
+    "id": "exp_tg_mu5mh45i_lq6p_1",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-04",
+    "location": "Food",
+    "notes": "Nasta",
+    "total": 100,
+    "entries": [
+      {
+        "type": "Food",
+        "amount": 100
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.286+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-17T14:26:01.158+00:00",
+    "updatedAt": "2026-09-17T14:27:23.975+00:00"
+  },
+  {
+    "id": "exp_1eafabf2",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-10",
+    "location": "Metro",
+    "notes": "Rashi Peripherals limited  to  Andheri",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-12T16:35:07.781+00:00",
+    "updatedAt": "2026-10-12T16:35:07.781+00:00"
+  },
+  {
+    "id": "exp_a11ad596",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-28",
+    "location": "Local",
+    "notes": "Andheri to bandra station",
+    "total": 5,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 5
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.828+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:04:40.844+00:00",
+    "updatedAt": "2026-10-07T08:04:40.844+00:00"
+  },
+  {
+    "id": "exp_tg_mtmhy3pp_tsyr",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-04",
+    "location": "Home to Rtech goregaon",
+    "notes": "Home to Rtech goregaon",
+    "total": 166,
+    "entries": [
+      {
+        "type": "Ola/Uber",
+        "amount": 166
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788498706/expense_receipts/telegram_receipts/file_1788498705364_wj979.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.853+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-04T05:11:38.317+00:00",
+    "updatedAt": "2026-09-04T05:11:46.869+00:00"
+  },
+  {
+    "id": "exp_4c7777b6",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-16",
+    "location": "Metro",
+    "notes": "Sakinaka to marol",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.819+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:15:33.581+00:00",
+    "updatedAt": "2026-10-06T07:15:33.581+00:00"
+  },
+  {
+    "id": "exp_ffeb0419",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-07",
+    "location": "Local",
+    "notes": "Grend road to Andheri",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-07T12:05:47.991+00:00",
+    "updatedAt": "2026-10-07T12:05:47.991+00:00"
+  },
+  {
+    "id": "exp_tg_mucksdsr_fuw8_0",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-15",
+    "location": "Auto/Rapido",
+    "notes": "Rashi Peripherals limited",
+    "total": 100,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 100
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.435+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-22T11:13:10.875+00:00",
+    "updatedAt": "2026-09-22T11:15:13.028+00:00"
+  },
+  {
+    "id": "exp_fbcfae0e",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-10-12",
+    "location": "Local",
+    "notes": "Ghatkopar to CSMT return",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-13T19:08:37.355+00:00",
+    "updatedAt": "2026-10-13T19:08:37.355+00:00"
+  },
+  {
+    "id": "exp_tg_mu5mh40t_f7bs_0",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-04",
+    "location": "Auto/Rapido",
+    "notes": "Bike sakinaka to location return",
+    "total": 700,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 700
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.277+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-17T14:26:00.989+00:00",
+    "updatedAt": "2026-09-17T14:26:56.149+00:00"
+  },
+  {
+    "id": "exp_5288c017",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-11",
+    "location": "Metro",
+    "notes": "Sakinaka to gundvali",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.828+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T06:13:28.805+00:00",
+    "updatedAt": "2026-10-06T06:13:28.805+00:00"
+  },
+  {
+    "id": "exp_tg_mus81y3f_lop2",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-10-03",
+    "location": "Food",
+    "notes": "Food",
+    "total": 24,
+    "entries": [
+      {
+        "type": "Food",
+        "amount": 24
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791021670/expense_receipts/telegram_receipts/file_1791021668145_ofvjz.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "Telegram Bot",
+    "createdAt": "2026-10-03T10:01:00.891+00:00",
+    "updatedAt": "2026-10-03T10:01:10.599+00:00"
+  },
+  {
+    "id": "exp_0ee9ca59",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-08",
+    "location": "Metro",
+    "notes": "Sakinaka to ghatkopar",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.824+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T05:52:07.804+00:00",
+    "updatedAt": "2026-10-06T05:52:07.804+00:00"
+  },
+  {
+    "id": "exp_0fd90b58",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-07",
+    "location": "Metro",
+    "notes": "Andheri to saki naka office",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-12T16:41:29.339+00:00",
+    "updatedAt": "2026-10-12T16:41:29.339+00:00"
+  },
+  {
+    "id": "exp_f87747b3",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-23",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.82+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:17:02.542+00:00",
+    "updatedAt": "2026-10-07T04:17:02.542+00:00"
+  },
+  {
+    "id": "exp_tg_mu7wu5hx_w4y1",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-18",
+    "location": "ode worli to marol",
+    "notes": "ode worli to marol",
+    "total": 50,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 50
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1789793505/expense_receipts/telegram_receipts/file_1789793503953_489cl.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.852+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-19T04:51:37.941+00:00",
+    "updatedAt": "2026-09-19T04:51:45.751+00:00"
+  },
+  {
+    "id": "exp_a46eca89",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-29",
+    "location": "Metro",
+    "notes": "Rashi Peripherals limited  to  Andheri",
+    "total": 17,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 17
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790666761/expense_receipts/Amber_Soni/September_2026/29_Sep_2026/receipt_1790666758340_yx27w.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.436+00:00",
+    "source": "",
+    "createdAt": "2026-09-29T07:26:02.277+00:00",
+    "updatedAt": "2026-09-29T07:26:02.277+00:00"
+  },
+  {
+    "id": "exp_4980fe41",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-28",
+    "location": "Metro",
+    "notes": "Andheri to saki naka office",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790608200/expense_receipts/Amber_Soni/September_2026/28_Sep_2026/receipt_1790608193979_6i2mo.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.438+00:00",
+    "source": "",
+    "createdAt": "2026-09-28T15:10:01.051+00:00",
+    "updatedAt": "2026-09-28T15:10:01.051+00:00"
+  },
+  {
+    "id": "exp_ccb8dc0e",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Local",
+    "notes": "Andheri to lower Parel with material",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.828+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T06:34:57.386+00:00",
+    "updatedAt": "2026-10-07T06:34:57.386+00:00"
+  },
+  {
+    "id": "exp_5eaaa3e5",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-04",
+    "location": "Local",
+    "notes": "Ram mandir to csmt",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.817+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T05:45:34.128+00:00",
+    "updatedAt": "2026-10-06T05:45:34.128+00:00"
+  },
+  {
+    "id": "exp_fe29b2e4",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-11",
+    "location": "Local",
+    "notes": "Andheri to bandra return",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.277+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:24:07.849+00:00",
+    "updatedAt": "2026-09-25T17:24:57.178+00:00"
+  },
+  {
+    "id": "exp_dd90f8df",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-03",
+    "location": "Auto/Rapido",
+    "notes": "Home to malad  return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.814+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T06:22:24.993+00:00",
+    "updatedAt": "2026-10-05T06:22:24.993+00:00"
+  },
+  {
+    "id": "exp_f3f31287",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Auto/Rapido",
+    "notes": "Arey metro station to Rashi",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.82+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T05:53:51.254+00:00",
+    "updatedAt": "2026-10-07T05:53:51.254+00:00"
+  },
+  {
+    "id": "exp_b6d7d535",
+    "userId": "google_sonidheeraj961_gmail_com",
+    "date": "2026-09-02",
+    "location": "Others",
+    "notes": "Shirke",
+    "total": 600,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 600
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304186/expense_receipts/SoniDheeraj961/October_2026/Payment_Bills/file_1792304184173_rgq8m.pdf",
+    "settledAt": "2026-10-18T06:16:27.083+00:00",
+    "source": "",
+    "createdAt": "2026-09-12T12:49:32.373+00:00",
+    "updatedAt": "2026-09-12T12:49:32.373+00:00"
+  },
+  {
+    "id": "exp_b2581b76",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-23",
+    "location": "Food",
+    "notes": "Chai nasta",
+    "total": 150,
+    "entries": [
+      {
+        "type": "Food",
+        "amount": 150
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.276+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T14:03:26.535+00:00",
+    "updatedAt": "2026-09-25T14:03:26.535+00:00"
+  },
+  {
+    "id": "exp_e80fc8c0",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Local",
+    "notes": "Goregaon station to  Andheri  station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.819+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T06:32:10.748+00:00",
+    "updatedAt": "2026-10-07T06:32:10.748+00:00"
+  },
+  {
+    "id": "exp_tg_mue2jm5t_qlj9",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-23",
+    "location": "Metro",
+    "notes": "saki naka to western express highway for u6 + configuration",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790165899/expense_receipts/telegram_receipts/file_1790165898398_3nl8d.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.85+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-23T12:18:01.073+00:00",
+    "updatedAt": "2026-09-24T08:22:58.296+00:00"
+  },
+  {
+    "id": "exp_a00b5a57",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-24",
+    "location": "Metro",
+    "notes": "Marol to grand road station  with Amber",
+    "total": 120,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 120
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.814+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:26:53.386+00:00",
+    "updatedAt": "2026-10-07T04:26:53.386+00:00"
+  },
+  {
+    "id": "exp_889c137e",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-10",
+    "location": "Others",
+    "notes": "Electric and hardware matrial",
+    "total": 185,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 185
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.289+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:27:54.707+00:00",
+    "updatedAt": "2026-09-25T17:27:54.707+00:00"
+  },
+  {
+    "id": "exp_bfebedb1",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-15",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.828+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:14:44.387+00:00",
+    "updatedAt": "2026-10-06T07:14:44.387+00:00"
+  },
+  {
+    "id": "exp_c2e40f95",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-01",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T03:56:41.149+00:00",
+    "updatedAt": "2026-10-05T03:56:41.149+00:00"
+  },
+  {
+    "id": "exp_9d861bae",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-10-17",
+    "location": "Metro",
+    "notes": "Andheri to Saki Naka",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1792413852/expense_receipts/Subodh_Ram/October_2026/19_Oct_2026/receipt_1792413848432_g7vri.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-19T12:44:13.207+00:00",
+    "updatedAt": "2026-10-19T12:44:13.207+00:00"
+  },
+  {
+    "id": "exp_05043038",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-18",
+    "location": "Auto/Rapido",
+    "notes": "Tbse bandra",
+    "total": 60,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 60
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.434+00:00",
+    "source": "",
+    "createdAt": "2026-09-22T11:24:52.405+00:00",
+    "updatedAt": "2026-09-22T11:24:52.405+00:00"
+  },
+  {
+    "id": "exp_fd44a45a",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Metro",
+    "notes": "Jogeshwari to Aarey metro station",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.819+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T05:52:54.383+00:00",
+    "updatedAt": "2026-10-07T05:52:54.383+00:00"
+  },
+  {
+    "id": "exp_16abc2ae",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-05",
+    "location": "Auto/Rapido",
+    "notes": "Vijay sales to bandra station with Amber sharing auto",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T13:35:13.611+00:00",
+    "updatedAt": "2026-10-05T13:35:13.611+00:00"
+  },
+  {
+    "id": "exp_623d542e",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-10-13",
+    "location": "Local",
+    "notes": "Andheri to grand road to churchgate to Ghatkopar",
+    "total": 25,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 25
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-13T19:07:01.731+00:00",
+    "updatedAt": "2026-10-13T19:07:01.731+00:00"
+  },
+  {
+    "id": "exp_31bb55b8",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-19",
+    "location": "Metro",
+    "notes": "Sakinaka to Ghatkopar",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.28+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T14:37:51.854+00:00",
+    "updatedAt": "2026-09-25T14:37:51.854+00:00"
+  },
+  {
+    "id": "exp_dd13d068",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-11",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.28+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:23:45.652+00:00",
+    "updatedAt": "2026-09-25T17:24:47.339+00:00"
+  },
+  {
+    "id": "exp_032cdb0b",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-17",
+    "location": "Local",
+    "notes": "Lower Parel to bandra to Andheri",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.275+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:05:58.172+00:00",
+    "updatedAt": "2026-09-25T17:05:58.172+00:00"
+  },
+  {
+    "id": "exp_83fe0695",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-22",
+    "location": "Metro",
+    "notes": "Sakinaka to Ghatkopar return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.279+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T14:35:31.331+00:00",
+    "updatedAt": "2026-09-25T14:35:31.331+00:00"
+  },
+  {
+    "id": "exp_58178c57",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-10-01",
+    "location": "Metro",
+    "notes": "Sakinaka to DN nagar return",
+    "total": 60,
     "entries": [
       {
         "type": "Metro",
         "amount": 60
-      },
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-01T18:27:21.547+00:00",
+    "updatedAt": "2026-10-01T18:27:21.547+00:00"
+  },
+  {
+    "id": "exp_cb988d80",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-10-07",
+    "location": "Metro",
+    "notes": "Under ground metro marol Naka to acharya atre chowk  return",
+    "total": 120,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 120
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-11T15:54:07.309+00:00",
+    "updatedAt": "2026-10-11T15:54:07.309+00:00"
+  },
+  {
+    "id": "exp_39e47e05",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-16",
+    "location": "Metro",
+    "notes": "Grand road station to hutatma chowk",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.813+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:18:35.924+00:00",
+    "updatedAt": "2026-10-06T07:18:35.924+00:00"
+  },
+  {
+    "id": "exp_3a0a2e9a",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-07",
+    "location": "Local",
+    "notes": "Andheri to grant road",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-07T07:45:30.195+00:00",
+    "updatedAt": "2026-10-07T07:45:30.195+00:00"
+  },
+  {
+    "id": "exp_25ec213a",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-07",
+    "location": "Auto/Rapido",
+    "notes": "Chembur station to doolally return",
+    "total": 82,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 82
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-07T08:35:04.008+00:00",
+    "updatedAt": "2026-10-07T08:35:04.008+00:00"
+  },
+  {
+    "id": "exp_e3d60039",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-02",
+    "location": "Metro",
+    "notes": "Marol to sakinaka",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.815+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T06:12:22.63+00:00",
+    "updatedAt": "2026-10-05T06:12:22.63+00:00"
+  },
+  {
+    "id": "exp_996625cb",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-18",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.826+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:37:34.848+00:00",
+    "updatedAt": "2026-10-06T07:37:34.848+00:00"
+  },
+  {
+    "id": "exp_274dfc2d",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-10",
+    "location": "Metro",
+    "notes": "Western express Highway to Rp tech office",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-12T16:36:40.943+00:00",
+    "updatedAt": "2026-10-12T16:36:40.943+00:00"
+  },
+  {
+    "id": "exp_e0f3bffa",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-14",
+    "location": "Local",
+    "notes": "Santa Cruz to CSMT fort house",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-18T06:59:50.904+00:00",
+    "updatedAt": "2026-10-18T06:59:50.904+00:00"
+  },
+  {
+    "id": "exp_f3f47aa6",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-02",
+    "location": "Metro",
+    "notes": "Sakinaka to marol",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.815+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T06:08:59.937+00:00",
+    "updatedAt": "2026-10-05T06:08:59.937+00:00"
+  },
+  {
+    "id": "exp_tg_mumwtf0m_x428",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-29",
+    "location": "Andheri to vile parle return ABSLI setup",
+    "notes": "Andheri to vile parle return ABSLI setup",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790700465/expense_receipts/telegram_receipts/file_1790700463439_n0bhp.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.853+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-29T16:47:36.262+00:00",
+    "updatedAt": "2026-09-29T16:47:45.837+00:00"
+  },
+  {
+    "id": "exp_df40bd3b",
+    "userId": "google_sonidheeraj961_gmail_com",
+    "date": "2026-09-03",
+    "location": "Metro",
+    "notes": "Santcruz to fort",
+    "total": 80,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 80
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304186/expense_receipts/SoniDheeraj961/October_2026/Payment_Bills/file_1792304184173_rgq8m.pdf",
+    "settledAt": "2026-10-18T06:16:27.082+00:00",
+    "source": "",
+    "createdAt": "2026-09-12T12:49:14.063+00:00",
+    "updatedAt": "2026-09-12T12:49:14.063+00:00"
+  },
+  {
+    "id": "exp_daf949b7",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-11",
+    "location": "Metro",
+    "notes": "Gundvali to aarya return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.824+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T06:16:34.05+00:00",
+    "updatedAt": "2026-10-06T06:16:34.05+00:00"
+  },
+  {
+    "id": "exp_aea2f7e8",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-07",
+    "location": "Metro",
+    "notes": "Rashi Peripherals limited  to Western express Highway",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-12T16:44:46.204+00:00",
+    "updatedAt": "2026-10-12T16:44:46.204+00:00"
+  },
+  {
+    "id": "exp_96f80179",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-19",
+    "location": "Metro",
+    "notes": "Andheri to sakinaka",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.279+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T14:42:36.781+00:00",
+    "updatedAt": "2026-09-25T14:42:36.781+00:00"
+  },
+  {
+    "id": "exp_3a5cb817",
+    "userId": "google_sonidheeraj961_gmail_com",
+    "date": "2026-09-11",
+    "location": "Metro",
+    "notes": "Fort House Meting",
+    "total": 70,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 70
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304186/expense_receipts/SoniDheeraj961/October_2026/Payment_Bills/file_1792304184173_rgq8m.pdf",
+    "settledAt": "2026-10-18T06:16:27.083+00:00",
+    "source": "",
+    "createdAt": "2026-09-12T12:50:15.669+00:00",
+    "updatedAt": "2026-09-12T12:50:15.669+00:00"
+  },
+  {
+    "id": "exp_6b1dc1fa",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-28",
+    "location": "Auto/Rapido",
+    "notes": "Bandra station to vijay sales return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.826+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:05:12.381+00:00",
+    "updatedAt": "2026-10-07T08:05:12.381+00:00"
+  },
+  {
+    "id": "exp_79b28450",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-29",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri station",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.819+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:13:03.331+00:00",
+    "updatedAt": "2026-10-07T08:13:03.331+00:00"
+  },
+  {
+    "id": "exp_9760b5bb",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-12",
+    "location": "Auto/Rapido",
+    "notes": "Home to kurar metro  with material",
+    "total": 15,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 15
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.828+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T06:25:44.988+00:00",
+    "updatedAt": "2026-10-06T06:29:27.556+00:00"
+  },
+  {
+    "id": "exp_c668c2fe",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-10",
+    "location": "Local",
+    "notes": "Andheri to grant road cp plus service centre",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-10T08:46:27.878+00:00",
+    "updatedAt": "2026-10-10T08:46:27.878+00:00"
+  },
+  {
+    "id": "exp_25bc3e42",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-10-12",
+    "location": "Metro",
+    "notes": "Sakinaka to Ghatkopar return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-13T19:08:16.099+00:00",
+    "updatedAt": "2026-10-13T19:08:16.099+00:00"
+  },
+  {
+    "id": "exp_6d4a5565",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-07",
+    "location": "Local",
+    "notes": "Ghatkopar station to chembur station",
+    "total": 5,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 5
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791362046/expense_receipts/Sagar_Rathod/October_2026/07_Oct_2026/receipt_1791362044124_bzay9.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-07T08:34:07.763+00:00",
+    "updatedAt": "2026-10-07T08:34:07.763+00:00"
+  },
+  {
+    "id": "exp_6beac0fa",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-30",
+    "location": "Metro",
+    "notes": "Grand road station to hutatma chowk",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.815+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:20:31.929+00:00",
+    "updatedAt": "2026-10-07T08:20:31.929+00:00"
+  },
+  {
+    "id": "exp_895163de",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-30",
+    "location": "Others",
+    "notes": "1/2 Inch screw 15*8-5",
+    "total": 115,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 115
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.278+00:00",
+    "source": "",
+    "createdAt": "2026-10-01T18:32:57.704+00:00",
+    "updatedAt": "2026-10-01T18:32:57.704+00:00"
+  },
+  {
+    "id": "exp_fb7e61ac",
+    "userId": "google_sonidheeraj961_gmail_com",
+    "date": "2026-09-08",
+    "location": "Auto/Rapido",
+    "notes": "Manohar Lal Somani",
+    "total": 64,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 64
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304186/expense_receipts/SoniDheeraj961/October_2026/Payment_Bills/file_1792304184173_rgq8m.pdf",
+    "settledAt": "2026-10-18T06:16:27.084+00:00",
+    "source": "",
+    "createdAt": "2026-09-12T12:49:56.594+00:00",
+    "updatedAt": "2026-09-12T12:49:56.594+00:00"
+  },
+  {
+    "id": "exp_be50fa6e",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-10",
+    "location": "Metro",
+    "notes": "Western express Highway to Andheri",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-12T16:33:10.568+00:00",
+    "updatedAt": "2026-10-12T16:33:10.568+00:00"
+  },
+  {
+    "id": "exp_bad0f08c",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-01",
+    "location": "Auto/Rapido",
+    "notes": "Bandra to vijay sales return sharing auto",
+    "total": 50,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 50
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T03:59:06.283+00:00",
+    "updatedAt": "2026-10-05T03:59:06.283+00:00"
+  },
+  {
+    "id": "exp_d64e4257",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-01",
+    "location": "Local",
+    "notes": "Bandra to malad station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T03:59:48.848+00:00",
+    "updatedAt": "2026-10-05T03:59:48.848+00:00"
+  },
+  {
+    "id": "exp_cb07f2ef",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-05",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-06T04:03:30.542+00:00",
+    "updatedAt": "2026-10-06T04:03:30.542+00:00"
+  },
+  {
+    "id": "exp_tg_muckpilx_s1l2_0",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-07",
+    "location": "Local",
+    "notes": "CSMT fort house",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.435+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-22T11:10:57.141+00:00",
+    "updatedAt": "2026-09-22T11:16:45.92+00:00"
+  },
+  {
+    "id": "exp_64daeef0",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-05",
+    "location": "Local",
+    "notes": "Bandra to malad station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791207396/expense_receipts/Sagar_Rathod/October_2026/05_Oct_2026/receipt_1791207392104_umota.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T13:36:38.245+00:00",
+    "updatedAt": "2026-10-05T13:36:38.245+00:00"
+  },
+  {
+    "id": "exp_1d8cde8e",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-10-15",
+    "location": "Auto/Rapido",
+    "notes": "Concourse workloft to home",
+    "total": 305,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 305
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1792130290/expense_receipts/Subodh_Ram/October_2026/16_Oct_2026/receipt_1792130288811_4unzl.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-16T05:58:11.098+00:00",
+    "updatedAt": "2026-10-16T05:58:11.098+00:00"
+  },
+  {
+    "id": "exp_363966dd",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-12",
+    "location": "Auto/Rapido",
+    "notes": "office to Vijay sales return",
+    "total": 110,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 110
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.276+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:23:09.874+00:00",
+    "updatedAt": "2026-09-25T17:30:47.489+00:00"
+  },
+  {
+    "id": "exp_59b1f2b8",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-11",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.824+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T06:24:33.087+00:00",
+    "updatedAt": "2026-10-06T06:24:33.087+00:00"
+  },
+  {
+    "id": "exp_d76f573f",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-23",
+    "location": "Metro",
+    "notes": "Chakala to Andheri station",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.816+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:14:16.845+00:00",
+    "updatedAt": "2026-10-07T04:14:16.845+00:00"
+  },
+  {
+    "id": "exp_b3b4c266",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-23",
+    "location": "Auto/Rapido",
+    "notes": "Andheri to  hetvi thakkar house Cooper return",
+    "total": 80,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 80
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.816+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:15:48.374+00:00",
+    "updatedAt": "2026-10-07T04:15:48.374+00:00"
+  },
+  {
+    "id": "exp_d0dfa493",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-01",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.283+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:45:24.018+00:00",
+    "updatedAt": "2026-09-25T17:45:24.018+00:00"
+  },
+  {
+    "id": "exp_063d8d81",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-23",
+    "location": "Auto/Rapido",
+    "notes": "Werehouse to sakinaka station  with material",
+    "total": 30,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 30
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.827+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:10:01.66+00:00",
+    "updatedAt": "2026-10-07T04:10:01.66+00:00"
+  },
+  {
+    "id": "exp_e71e47f0",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-07",
+    "location": "Metro",
+    "notes": "Sakinaka to ghatkopar",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791361919/expense_receipts/Sagar_Rathod/October_2026/07_Oct_2026/receipt_1791361916424_iu9ee.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-07T08:32:00.793+00:00",
+    "updatedAt": "2026-10-07T08:32:00.793+00:00"
+  },
+  {
+    "id": "exp_cdc84e64",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-15",
+    "location": "Metro",
+    "notes": "Hutatma chowk to grand road station",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.815+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:11:29.527+00:00",
+    "updatedAt": "2026-10-06T07:11:29.527+00:00"
+  },
+  {
+    "id": "exp_5e14de08",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.813+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T06:44:22.078+00:00",
+    "updatedAt": "2026-10-07T06:44:22.078+00:00"
+  },
+  {
+    "id": "exp_5e84d7bb",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-22",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.826+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:08:10.307+00:00",
+    "updatedAt": "2026-10-07T04:08:10.307+00:00"
+  },
+  {
+    "id": "exp_b746c838",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-01",
+    "location": "Metro",
+    "notes": "Acharya to hutatma chowk fort house",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.815+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T05:56:24.683+00:00",
+    "updatedAt": "2026-10-05T05:56:24.683+00:00"
+  },
+  {
+    "id": "exp_af5e236c",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-06",
+    "location": "Others",
+    "notes": "Mira road station to gaurav residency with Amber",
+    "total": 22,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 22
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791273935/expense_receipts/Sagar_Rathod/October_2026/06_Oct_2026/receipt_1791273932688_3f6pz.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-06T08:05:36.766+00:00",
+    "updatedAt": "2026-10-06T08:05:36.766+00:00"
+  },
+  {
+    "id": "exp_9a51d5f4",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-17",
+    "location": "Auto/Rapido",
+    "notes": "Worli to Bandra to vijay sales return",
+    "total": 65,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 65
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.284+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:05:23.294+00:00",
+    "updatedAt": "2026-09-25T17:05:23.294+00:00"
+  },
+  {
+    "id": "exp_d3c732ad",
+    "userId": "google_sonidheeraj961_gmail_com",
+    "date": "2026-09-17",
+    "location": "Others",
+    "notes": "Bombay Stationers",
+    "total": 495,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 495
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1789650105/expense_receipts/SoniDheeraj961/September_2026/17_Sep_2026/receipt_1789650102049_p1342.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304186/expense_receipts/SoniDheeraj961/October_2026/Payment_Bills/file_1792304184173_rgq8m.pdf",
+    "settledAt": "2026-10-18T06:16:27.082+00:00",
+    "source": "",
+    "createdAt": "2026-09-17T13:01:46.145+00:00",
+    "updatedAt": "2026-09-17T13:01:46.145+00:00"
+  },
+  {
+    "id": "exp_aca30694",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-19",
+    "location": "Local",
+    "notes": "Bandra to Andheri",
+    "total": 5,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 5
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.281+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T14:41:27.588+00:00",
+    "updatedAt": "2026-09-25T14:41:27.588+00:00"
+  },
+  {
+    "id": "exp_tg_mumwsff7_4ttd",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-29",
+    "location": "saki naka to andheri",
+    "notes": "saki naka to andheri",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790700422/expense_receipts/telegram_receipts/file_1790700420799_xlbh8.jpg",
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790700464/expense_receipts/telegram_receipts/file_1790700449666_jfs3i.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.853+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-29T16:46:50.131+00:00",
+    "updatedAt": "2026-09-29T16:47:31.558+00:00"
+  },
+  {
+    "id": "exp_e1fa0f3e",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-09",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.814+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T05:57:55.591+00:00",
+    "updatedAt": "2026-10-06T05:57:55.591+00:00"
+  },
+  {
+    "id": "exp_5be81e3e",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-15",
+    "location": "Local",
+    "notes": "Grand road to bandra",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.825+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:13:09.423+00:00",
+    "updatedAt": "2026-10-06T07:13:09.423+00:00"
+  },
+  {
+    "id": "9eLotEVkUGqAfW08004b",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-26",
+    "location": "Auto/Rapido",
+    "notes": "Warehouse",
+    "total": 102,
+    "entries": [
       {
         "type": "Auto/Rapido",
         "amount": 102
       }
     ],
-    "total": 162,
-    "location": "Doolally Andheri / Varsova",
-    "id": "exp_tg_mtbc8jkf_i005_2",
-    "paymentStatus": "pending",
-    "updatedAt": "2026-08-27T09:46:19.791Z",
-    "settlementNotes": "",
-    "settledAt": null,
-    "paymentBillUrl": ""
-  },
-  {
-    "date": "2026-08-18",
-    "notes": "Food",
-    "source": "Telegram Bot",
-    "userId": "google_subodhram3350_gmail_com",
     "receipts": [],
-    "createdAt": "2026-08-27T09:46:19.881Z",
-    "entries": [
-      {
-        "type": "Food",
-        "amount": 36
-      }
-    ],
-    "total": 36,
-    "location": "Food",
-    "id": "exp_tg_mtbc8jmx_srol_3",
-    "paymentStatus": "pending",
-    "updatedAt": "2026-08-27T09:46:19.881Z",
-    "settlementNotes": "",
-    "settledAt": null,
-    "paymentBillUrl": ""
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1789060873/expense_receipts/Subodh_Ram/September_2026/Payment_Bills/file_1789060871941_z9pn9.jpg",
+    "settledAt": "2026-09-10T17:21:13.594+00:00",
+    "source": "",
+    "createdAt": "2026-08-27T16:14:15.312+00:00",
+    "updatedAt": "2026-08-27T16:14:15.312+00:00"
   },
   {
-    "date": "2026-08-19",
-    "notes": "Food",
-    "source": "Telegram Bot",
-    "userId": "google_subodhram3350_gmail_com",
+    "id": "exp_68a268b0",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-01",
+    "location": "Local",
+    "notes": "Andheri to grant road tp-link office",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
     "receipts": [],
-    "createdAt": "2026-08-27T09:46:19.989Z",
-    "entries": [
-      {
-        "type": "Food",
-        "amount": 36
-      }
-    ],
-    "total": 36,
-    "location": "Food",
-    "id": "exp_tg_mtbc8jpx_5uxx_4",
     "paymentStatus": "pending",
-    "updatedAt": "2026-08-27T09:46:19.989Z",
-    "settlementNotes": "",
-    "settledAt": null,
-    "paymentBillUrl": ""
-  },
-  {
-    "date": "2026-08-20",
-    "notes": "Belapur workloft",
-    "source": "Telegram Bot",
-    "userId": "google_subodhram3350_gmail_com",
-    "receipts": [],
-    "createdAt": "2026-08-27T09:46:20.074Z",
-    "entries": [
-      {
-        "type": "Others",
-        "amount": 780
-      }
-    ],
-    "total": 780,
-    "location": "Belapur workloft",
-    "id": "exp_tg_mtbc8jsa_ly62_5",
-    "paymentStatus": "pending",
-    "updatedAt": "2026-08-27T09:46:20.074Z",
-    "settlementNotes": "",
-    "settledAt": null,
-    "paymentBillUrl": ""
-  },
-  {
-    "date": "2026-08-31",
-    "notes": "Marol to worli",
-    "source": "Telegram Bot",
-    "userId": "google_subodhram3350_gmail_com",
-    "createdAt": "2026-08-31T05:38:28.881Z",
-    "entries": [
-      {
-        "type": "Metro",
-        "amount": 50
-      }
-    ],
-    "total": 50,
-    "location": "Marol to worli",
-    "id": "exp_tg_mtgt57rl_x0hg",
-    "paymentStatus": "pending",
-    "receipts": [
-      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788154721/expense_receipts/telegram_receipts/file_1788154720497_s5oiz.jpg"
-    ],
     "paymentBillUrl": "",
-    "updatedAt": "2026-08-31T05:38:42.069Z"
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-01T13:23:40.172+00:00",
+    "updatedAt": "2026-10-01T13:23:40.172+00:00"
   },
   {
-    "date": "2026-08-31",
-    "notes": "Worli to maril",
-    "source": "Telegram Bot",
-    "userId": "google_subodhram3350_gmail_com",
-    "createdAt": "2026-08-31T14:10:50.147Z",
+    "id": "exp_d75731bb",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-05",
+    "location": "Local",
+    "notes": "Andheri to bandra with Amber",
+    "total": 10,
     "entries": [
       {
-        "type": "Metro",
-        "amount": 50
+        "type": "Local",
+        "amount": 10
       }
     ],
-    "total": 50,
-    "location": "Worli to maril",
-    "id": "exp_tg_mthbg3vn_5cia",
-    "paymentStatus": "pending",
     "receipts": [
-      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788185465/expense_receipts/telegram_receipts/file_1788185463809_wz2j8.jpg"
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791178806/expense_receipts/Sagar_Rathod/October_2026/05_Oct_2026/receipt_1791178803719_sc56e.jpg"
     ],
+    "paymentStatus": "pending",
     "paymentBillUrl": "",
-    "updatedAt": "2026-08-31T14:11:05.580Z"
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T05:40:06.891+00:00",
+    "updatedAt": "2026-10-05T05:40:06.891+00:00"
   },
   {
+    "id": "exp_a04819c5",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-09",
+    "location": "Local",
+    "notes": "Ghatkopar to csmt  with Amber",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.826+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T05:57:04.825+00:00",
+    "updatedAt": "2026-10-06T05:57:04.825+00:00"
+  },
+  {
+    "id": "exp_8a9bf62a",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-24",
+    "location": "Auto/Rapido",
+    "notes": "Kurar to home",
+    "total": 15,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 15
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.818+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:31:19.908+00:00",
+    "updatedAt": "2026-10-07T04:31:19.908+00:00"
+  },
+  {
+    "id": "exp_45b24e5a",
+    "userId": "google_freegtech123_gmail_com",
     "date": "2026-09-02",
-    "notes": "Home to IBC powai",
-    "source": "Telegram Bot",
-    "userId": "google_subodhram3350_gmail_com",
+    "location": "Metro",
+    "notes": "Marol to grand road metro station",
+    "total": 60,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 60
+      }
+    ],
     "receipts": [],
-    "createdAt": "2026-09-02T08:49:05.094Z",
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.828+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T06:09:40.593+00:00",
+    "updatedAt": "2026-10-05T06:09:40.593+00:00"
+  },
+  {
+    "id": "exp_7228d3d9",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-18",
+    "location": "Metro",
+    "notes": "Sakinaka to marol",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.816+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:31:26.742+00:00",
+    "updatedAt": "2026-10-06T07:31:26.742+00:00"
+  },
+  {
+    "id": "exp_tg_muckchvc_m73j_0",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-22",
+    "location": "Local",
+    "notes": "Andheri to grant road",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790074909/expense_receipts/telegram_receipts/file_1790074908516_qr10y.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.438+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-22T11:00:49.656+00:00",
+    "updatedAt": "2026-09-22T11:04:42.07+00:00"
+  },
+  {
+    "id": "exp_21467da6",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-05",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri  with Amber",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791178694/expense_receipts/Sagar_Rathod/October_2026/05_Oct_2026/receipt_1791178684341_el1ws.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T05:38:15.745+00:00",
+    "updatedAt": "2026-10-05T05:38:15.745+00:00"
+  },
+  {
+    "id": "exp_5dcc27f2",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-09",
+    "location": "Local",
+    "notes": "Csmt to malad with Amber",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.818+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T05:57:36.641+00:00",
+    "updatedAt": "2026-10-06T05:57:36.641+00:00"
+  },
+  {
+    "id": "exp_tg_mtbc8jmx_srol_3",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-18",
+    "location": "Food",
+    "notes": "Food",
+    "total": 36,
+    "entries": [
+      {
+        "type": "Food",
+        "amount": 36
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1789060873/expense_receipts/Subodh_Ram/September_2026/Payment_Bills/file_1789060871941_z9pn9.jpg",
+    "settledAt": "2026-09-10T17:21:13.594+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-08-27T09:46:19.881+00:00",
+    "updatedAt": "2026-08-27T09:46:19.881+00:00"
+  },
+  {
+    "id": "exp_0485a1b6",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-05",
+    "location": "Auto/Rapido",
+    "notes": "Bandra to vijay sales sharing auto with Amber",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T05:42:02.816+00:00",
+    "updatedAt": "2026-10-05T05:42:02.816+00:00"
+  },
+  {
+    "id": "exp_0e025e66",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-10",
+    "location": "Local",
+    "notes": "CP Plus office grend road to Andheri",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-10T10:43:33.206+00:00",
+    "updatedAt": "2026-10-10T10:44:01.063+00:00"
+  },
+  {
+    "id": "exp_aa658f4c",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-17",
+    "location": "Local",
+    "notes": "Andheri to bandra station  return",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.817+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:29:22.439+00:00",
+    "updatedAt": "2026-10-06T07:29:22.439+00:00"
+  },
+  {
+    "id": "exp_tg_mtjuu1c6_oxxe",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-02",
+    "location": "Home to IBC powai",
+    "notes": "Home to IBC powai",
+    "total": 50,
     "entries": [
       {
         "type": "Auto/Rapido",
         "amount": 50
       }
     ],
-    "total": 50,
-    "paymentBillUrl": null,
-    "location": "Home to IBC powai",
-    "id": "exp_tg_mtjuu1c6_oxxe",
-    "paymentStatus": "pending",
-    "updatedAt": "2026-09-02T08:49:05.094Z"
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.852+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-02T08:49:05.094+00:00",
+    "updatedAt": "2026-09-02T08:49:05.094+00:00"
   },
   {
+    "id": "exp_309851b3",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-29",
+    "location": "Metro",
+    "notes": "Rashi Peripherals limited",
+    "total": 17,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 17
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790664926/expense_receipts/Amber_Soni/September_2026/29_Sep_2026/receipt_1790664923080_efi8o.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.437+00:00",
+    "source": "",
+    "createdAt": "2026-09-29T06:55:26.671+00:00",
+    "updatedAt": "2026-09-29T06:55:26.671+00:00"
+  },
+  {
+    "id": "exp_482889fa",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-24",
+    "location": "Local",
+    "notes": "CP Plus office",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790326522/expense_receipts/Amber_Soni/September_2026/25_Sep_2026/receipt_1790326519979_n67qs.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.439+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T08:55:22.767+00:00",
+    "updatedAt": "2026-09-25T08:55:22.767+00:00"
+  },
+  {
+    "id": "exp_8445c517",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-09",
+    "location": "Metro",
+    "notes": "Sakinaka to ghatkopar  with Amber",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.817+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T05:56:28.705+00:00",
+    "updatedAt": "2026-10-06T05:56:28.705+00:00"
+  },
+  {
+    "id": "exp_6bd2fe49",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Auto/Rapido",
+    "notes": "Rashi to goregaon station",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.829+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T06:14:42.435+00:00",
+    "updatedAt": "2026-10-07T06:14:42.435+00:00"
+  },
+  {
+    "id": "exp_4c8e5189",
+    "userId": "google_sonidheeraj961_gmail_com",
+    "date": "2026-09-01",
+    "location": "Local",
+    "notes": "Ghatkopar to Parel",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304186/expense_receipts/SoniDheeraj961/October_2026/Payment_Bills/file_1792304184173_rgq8m.pdf",
+    "settledAt": "2026-10-18T06:16:27.083+00:00",
+    "source": "",
+    "createdAt": "2026-09-12T12:47:26.208+00:00",
+    "updatedAt": "2026-09-12T12:47:41.729+00:00"
+  },
+  {
+    "id": "exp_1bf72898",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-29",
+    "location": "Auto/Rapido",
+    "notes": "Bandra station to vijay sales sharing auto return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.823+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:14:28.821+00:00",
+    "updatedAt": "2026-10-07T08:14:28.821+00:00"
+  },
+  {
+    "id": "exp_6b1294a8",
+    "userId": "google_shubhamshejwal2580_gmail_com",
     "date": "2026-09-02",
-    "notes": "IBC Powai to Sagar tech plaza",
-    "source": "Telegram Bot",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.28+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:44:03.971+00:00",
+    "updatedAt": "2026-09-25T17:44:23.676+00:00"
+  },
+  {
+    "id": "exp_2d8488bd",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-30",
+    "location": "Metro",
+    "notes": "Ghatkopar to sakinaka",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.278+00:00",
+    "source": "",
+    "createdAt": "2026-10-01T18:31:12.69+00:00",
+    "updatedAt": "2026-10-01T18:31:12.69+00:00"
+  },
+  {
+    "id": "exp_6b99ad12",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-04",
+    "location": "Auto/Rapido",
+    "notes": "Home to kurar metro",
+    "total": 15,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 15
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.825+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T06:27:32.87+00:00",
+    "updatedAt": "2026-10-05T06:27:32.87+00:00"
+  },
+  {
+    "id": "exp_712150c4",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-06",
+    "location": "Local",
+    "notes": "Andheri to mira road station with Amber",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791269613/expense_receipts/Sagar_Rathod/October_2026/06_Oct_2026/receipt_1791269594279_ofqfz.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-06T06:52:37.224+00:00",
+    "updatedAt": "2026-10-06T06:53:34.788+00:00"
+  },
+  {
+    "id": "exp_1bbc5213",
     "userId": "google_subodhram3350_gmail_com",
-    "createdAt": "2026-09-02T08:49:27.435Z",
+    "date": "2026-10-15",
+    "location": "Auto/Rapido",
+    "notes": "Belapur to concourse workloft office",
+    "total": 25,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 25
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-16T05:57:37.769+00:00",
+    "updatedAt": "2026-10-16T05:57:37.769+00:00"
+  },
+  {
+    "id": "exp_d36626f9",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-11",
+    "location": "Auto/Rapido",
+    "notes": "Aarya to Rashi return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.818+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T06:17:15.762+00:00",
+    "updatedAt": "2026-10-06T06:17:15.762+00:00"
+  },
+  {
+    "id": "exp_64fa9735",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-15",
+    "location": "Metro",
+    "notes": "Sakinaka to ghatkopar",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.82+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:10:15.284+00:00",
+    "updatedAt": "2026-10-06T07:10:15.284+00:00"
+  },
+  {
+    "id": "exp_9c76a4fd",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-11",
+    "location": "Auto/Rapido",
+    "notes": "Bandra station To vijay sales",
+    "total": 50,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 50
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.437+00:00",
+    "source": "",
+    "createdAt": "2026-09-22T11:25:47.331+00:00",
+    "updatedAt": "2026-09-22T11:25:47.331+00:00"
+  },
+  {
+    "id": "exp_8d22ca75",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Metro",
+    "notes": "Andheri to sakinaka",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.818+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T06:32:50.734+00:00",
+    "updatedAt": "2026-10-07T06:32:50.734+00:00"
+  },
+  {
+    "id": "exp_41ebfb73",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-24",
+    "location": "Metro",
+    "notes": "Grand road station to hutatma chowk",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.825+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:30:02.575+00:00",
+    "updatedAt": "2026-10-07T04:30:02.575+00:00"
+  },
+  {
+    "id": "exp_128872e9",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-18",
+    "location": "Metro",
+    "notes": "Marol to grand road station",
+    "total": 60,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 60
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.814+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:31:57.491+00:00",
+    "updatedAt": "2026-10-06T07:31:57.491+00:00"
+  },
+  {
+    "id": "exp_tg_mthbg3vn_5cia",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-01",
+    "location": "Metro",
+    "notes": "Worli to maril",
+    "total": 50,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 50
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788185465/expense_receipts/telegram_receipts/file_1788185463809_wz2j8.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.854+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-08-31T14:10:50.147+00:00",
+    "updatedAt": "2026-09-10T17:00:26.562+00:00"
+  },
+  {
+    "id": "exp_4df22369",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-07",
+    "location": "Local",
+    "notes": "Andheri to bandra return",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.287+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:37:28.079+00:00",
+    "updatedAt": "2026-09-25T17:37:28.079+00:00"
+  },
+  {
+    "id": "exp_eeb28205",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-18",
+    "location": "Local",
+    "notes": "Grand road station to bandra",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.826+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:36:05.705+00:00",
+    "updatedAt": "2026-10-06T07:36:05.705+00:00"
+  },
+  {
+    "id": "exp_e6f3e3b6",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri station with material",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.814+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T06:33:36.28+00:00",
+    "updatedAt": "2026-10-07T06:33:36.28+00:00"
+  },
+  {
+    "id": "exp_9a4e7298",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-01",
+    "location": "Metro",
+    "notes": "Sakinaka to marol",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.825+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T05:50:09.915+00:00",
+    "updatedAt": "2026-10-05T05:50:09.915+00:00"
+  },
+  {
+    "id": "exp_ea372a03",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-03",
+    "location": "Local",
+    "notes": "Malad to csmt return",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.826+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T06:22:59.265+00:00",
+    "updatedAt": "2026-10-05T06:22:59.265+00:00"
+  },
+  {
+    "id": "exp_3326edc8",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-10",
+    "location": "Metro",
+    "notes": "Andheri to saki naka office",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-12T16:30:46.775+00:00",
+    "updatedAt": "2026-10-12T16:30:46.775+00:00"
+  },
+  {
+    "id": "exp_b766a88f",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-08",
+    "location": "Food",
+    "notes": "Khopoli",
+    "total": 100,
+    "entries": [
+      {
+        "type": "Food",
+        "amount": 100
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.282+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:33:48.963+00:00",
+    "updatedAt": "2026-09-25T17:33:48.963+00:00"
+  },
+  {
+    "id": "exp_d32d2a77",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-02",
+    "location": "Auto/Rapido",
+    "notes": "Bandra to vijay sales return",
+    "total": 50,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 50
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.286+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:45:03.187+00:00",
+    "updatedAt": "2026-09-25T17:45:03.187+00:00"
+  },
+  {
+    "id": "exp_ad13b0f7",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-19",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.828+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T16:32:39.097+00:00",
+    "updatedAt": "2026-10-06T16:32:39.097+00:00"
+  },
+  {
+    "id": "exp_7a26cbe4",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-04",
+    "location": "Others",
+    "notes": "Others",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.85+00:00",
+    "source": "Web App",
+    "createdAt": "2026-09-04T16:18:10.695+00:00",
+    "updatedAt": "2026-09-04T16:18:10.695+00:00"
+  },
+  {
+    "id": "exp_d0fe9d53",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-28",
+    "location": "Local",
+    "notes": "Bandra to malad station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.814+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:05:44.67+00:00",
+    "updatedAt": "2026-10-07T08:05:44.67+00:00"
+  },
+  {
+    "id": "exp_12615b5b",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-02",
+    "location": "Metro",
+    "notes": "Grand road metro ticket to marol",
+    "total": 60,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 60
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.816+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T06:11:09.677+00:00",
+    "updatedAt": "2026-10-05T06:11:09.677+00:00"
+  },
+  {
+    "id": "exp_215497a1",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-25",
+    "location": "Auto/Rapido",
+    "notes": "Werehouse to office",
+    "total": 30,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 30
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.815+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:41:51.755+00:00",
+    "updatedAt": "2026-10-07T04:41:51.755+00:00"
+  },
+  {
+    "id": "exp_bdeacf3b",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-19",
+    "location": "Auto/Rapido",
+    "notes": "Wadala to location return",
+    "total": 46,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 46
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.286+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T14:40:03.573+00:00",
+    "updatedAt": "2026-09-25T14:40:03.573+00:00"
+  },
+  {
+    "id": "exp_53efd402",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-16",
+    "location": "Auto/Rapido",
+    "notes": "Grand road to office RMA matrial",
+    "total": 670,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 670
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.283+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:13:15.154+00:00",
+    "updatedAt": "2026-09-25T17:13:36.585+00:00"
+  },
+  {
+    "id": "exp_3a259b9a",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-29",
+    "location": "Metro",
+    "notes": "Rashi Peripherals limited  to saki naka office",
+    "total": 17,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 17
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790666816/expense_receipts/Amber_Soni/September_2026/29_Sep_2026/receipt_1790666813101_1vmeh.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.436+00:00",
+    "source": "",
+    "createdAt": "2026-09-29T07:26:57.14+00:00",
+    "updatedAt": "2026-09-29T07:26:57.14+00:00"
+  },
+  {
+    "id": "exp_22ef29a4",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-01",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T04:00:23.576+00:00",
+    "updatedAt": "2026-10-05T04:00:23.576+00:00"
+  },
+  {
+    "id": "exp_680a30a1",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-19",
+    "location": "Local",
+    "notes": "Csmt to malad with dheeraj sir",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.819+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T16:32:14.716+00:00",
+    "updatedAt": "2026-10-06T16:32:14.716+00:00"
+  },
+  {
+    "id": "exp_a46c2791",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-17",
+    "location": "Metro",
+    "notes": "Sakinaka to marol Naka and Worli Naka and Andheri to sakinaka",
+    "total": 90,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 90
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.282+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:04:35.437+00:00",
+    "updatedAt": "2026-09-25T17:04:35.437+00:00"
+  },
+  {
+    "id": "exp_578f401e",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-18",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.288+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:01:34.02+00:00",
+    "updatedAt": "2026-09-25T17:01:34.02+00:00"
+  },
+  {
+    "id": "exp_00a79246",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-11",
+    "location": "Auto/Rapido",
+    "notes": "Bandra to Vijay sales return",
+    "total": 50,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 50
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.28+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:24:29.969+00:00",
+    "updatedAt": "2026-09-25T17:25:04.158+00:00"
+  },
+  {
+    "id": "exp_634869c0",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-01",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.815+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T05:57:58.226+00:00",
+    "updatedAt": "2026-10-05T05:57:58.226+00:00"
+  },
+  {
+    "id": "exp_891a29e6",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-17",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.828+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:28:44.296+00:00",
+    "updatedAt": "2026-10-06T07:28:44.296+00:00"
+  },
+  {
+    "id": "exp_e2154570",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-16",
+    "location": "Local",
+    "notes": "Csmt to malad station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.826+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:18:59.309+00:00",
+    "updatedAt": "2026-10-06T07:18:59.309+00:00"
+  },
+  {
+    "id": "exp_bdc77bfe",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-25",
+    "location": "Auto/Rapido",
+    "notes": "Office to werehouse  with material",
+    "total": 30,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 30
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.816+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:35:16.141+00:00",
+    "updatedAt": "2026-10-07T04:35:16.141+00:00"
+  },
+  {
+    "id": "exp_810d1759",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-06",
+    "location": "Others",
+    "notes": "Gaurav residency to mira road station with Amber",
+    "total": 22,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 22
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791303632/expense_receipts/Sagar_Rathod/October_2026/06_Oct_2026/receipt_1791303627685_mu6uj.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-06T16:20:33.122+00:00",
+    "updatedAt": "2026-10-06T16:20:33.122+00:00"
+  },
+  {
+    "id": "exp_3a5a473e",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-30",
+    "location": "Auto/Rapido",
+    "notes": "Office to vashi location",
+    "total": 410,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 410
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790879405/expense_receipts/Shubhamshejwal2580/October_2026/02_Oct_2026/receipt_1790879400129_wk013.png"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.276+00:00",
+    "source": "",
+    "createdAt": "2026-10-01T18:30:06.505+00:00",
+    "updatedAt": "2026-10-01T18:30:06.505+00:00"
+  },
+  {
+    "id": "exp_42184567",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-30",
+    "location": "Metro",
+    "notes": "Sakinaka to marol",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.819+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:18:35.674+00:00",
+    "updatedAt": "2026-10-07T08:18:35.674+00:00"
+  },
+  {
+    "id": "exp_16fbb887",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-03",
+    "location": "Metro",
+    "notes": "Sakinaka to Ghatkopar return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.281+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:43:19.732+00:00",
+    "updatedAt": "2026-09-25T17:43:19.732+00:00"
+  },
+  {
+    "id": "exp_tg_mtbc8jpx_5uxx_4",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-19",
+    "location": "Food",
+    "notes": "Food",
+    "total": 36,
+    "entries": [
+      {
+        "type": "Food",
+        "amount": 36
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1789060873/expense_receipts/Subodh_Ram/September_2026/Payment_Bills/file_1789060871941_z9pn9.jpg",
+    "settledAt": "2026-09-10T17:21:13.593+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-08-27T09:46:19.989+00:00",
+    "updatedAt": "2026-08-27T09:46:19.989+00:00"
+  },
+  {
+    "id": "exp_d3ea8f61",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-01",
+    "location": "Local",
+    "notes": "Andheri to bandra return",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.288+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:45:39.165+00:00",
+    "updatedAt": "2026-09-25T17:45:39.165+00:00"
+  },
+  {
+    "id": "exp_a9bc04ab",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Metro",
+    "notes": "Sakinaka to gundvali",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.82+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:51:52.831+00:00",
+    "updatedAt": "2026-10-07T04:51:52.831+00:00"
+  },
+  {
+    "id": "exp_4a6d851e",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-28",
+    "location": "Auto/Rapido",
+    "notes": "Bike to IBC Powai office and Ghatkopar station and TBSE JUHU and vijay sales",
+    "total": 228,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 228
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.287+00:00",
+    "source": "",
+    "createdAt": "2026-10-01T18:37:00.563+00:00",
+    "updatedAt": "2026-10-01T18:37:00.563+00:00"
+  },
+  {
+    "id": "exp_0d222c62",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-26",
+    "location": "Local",
+    "notes": "Andheri to lower Parel return and Ghatkopar to thane return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.289+00:00",
+    "source": "",
+    "createdAt": "2026-10-01T18:40:19.447+00:00",
+    "updatedAt": "2026-10-01T18:40:41.876+00:00"
+  },
+  {
+    "id": "exp_190e7cf3",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-08",
+    "location": "Auto/Rapido",
+    "notes": "Office to Khopoli return",
+    "total": 700,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 700
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.283+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:33:21.833+00:00",
+    "updatedAt": "2026-09-25T17:33:21.833+00:00"
+  },
+  {
+    "id": "exp_5327dc18",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-01",
+    "location": "Auto/Rapido",
+    "notes": "Bandra to vijay sales return",
+    "total": 50,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 50
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.279+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:45:56.49+00:00",
+    "updatedAt": "2026-09-25T17:45:56.49+00:00"
+  },
+  {
+    "id": "exp_b076397d",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-18",
+    "location": "Local",
+    "notes": "Bandra to malad station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.827+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:37:10.901+00:00",
+    "updatedAt": "2026-10-06T07:37:10.901+00:00"
+  },
+  {
+    "id": "exp_0bae3e6a",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-08",
+    "location": "Local",
+    "notes": "Ghatkopar to csmt",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.826+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T05:52:55.013+00:00",
+    "updatedAt": "2026-10-06T05:52:55.013+00:00"
+  },
+  {
+    "id": "exp_8c8d6746",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-26",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri to Ghatkopar to sakinaka return",
+    "total": 70,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 70
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.288+00:00",
+    "source": "",
+    "createdAt": "2026-10-01T18:39:29.481+00:00",
+    "updatedAt": "2026-10-01T18:39:29.481+00:00"
+  },
+  {
+    "id": "exp_b9be760a",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-19",
+    "location": "Metro",
+    "notes": "Sakinaka to ghatkopar",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.829+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:38:35.931+00:00",
+    "updatedAt": "2026-10-06T07:38:35.931+00:00"
+  },
+  {
+    "id": "exp_aec3dfa4",
+    "userId": "google_sonidheeraj961_gmail_com",
+    "date": "2026-09-03",
+    "location": "Metro",
+    "notes": "Santcruz to fort",
+    "total": 170,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 170
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304186/expense_receipts/SoniDheeraj961/October_2026/Payment_Bills/file_1792304184173_rgq8m.pdf",
+    "settledAt": "2026-10-18T06:16:27.081+00:00",
+    "source": "",
+    "createdAt": "2026-09-12T12:48:37.829+00:00",
+    "updatedAt": "2026-09-12T12:48:37.829+00:00"
+  },
+  {
+    "id": "exp_fe584f83",
+    "userId": "google_sonidheeraj961_gmail_com",
+    "date": "2026-09-16",
+    "location": "Others",
+    "notes": "ram telecom USB to USB 10 Mtr cable",
+    "total": 500,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 500
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1789650126/expense_receipts/SoniDheeraj961/September_2026/17_Sep_2026/receipt_1789650124665_0hs9x.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304186/expense_receipts/SoniDheeraj961/October_2026/Payment_Bills/file_1792304184173_rgq8m.pdf",
+    "settledAt": "2026-10-18T06:16:27.083+00:00",
+    "source": "",
+    "createdAt": "2026-09-16T10:36:12.687+00:00",
+    "updatedAt": "2026-09-17T13:02:06.992+00:00"
+  },
+  {
+    "id": "exp_85c5dbd5",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-22",
+    "location": "Local",
+    "notes": "Csmt to Ghatkopar",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.284+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T14:35:52.27+00:00",
+    "updatedAt": "2026-09-25T14:35:52.27+00:00"
+  },
+  {
+    "id": "exp_1b985a0a",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Local",
+    "notes": "Lower Parel station to malad station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.825+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T06:43:58.23+00:00",
+    "updatedAt": "2026-10-07T06:43:58.23+00:00"
+  },
+  {
+    "id": "exp_65d7692d",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Metro",
+    "notes": "Gundvali to jogeshwari metro station",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.814+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:55:37.048+00:00",
+    "updatedAt": "2026-10-07T04:55:37.048+00:00"
+  },
+  {
+    "id": "exp_b3925cc8",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-23",
+    "location": "Metro",
+    "notes": "Sakinaka to chakala jb Nagar with material",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.82+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:10:53.547+00:00",
+    "updatedAt": "2026-10-07T04:10:53.547+00:00"
+  },
+  {
+    "id": "exp_4b63cedb",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-15",
+    "location": "Local",
+    "notes": "Santacruz to  fort house CSMT",
+    "total": 215,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 215
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1792306736/expense_receipts/Amber_Soni/October_2026/18_Oct_2026/receipt_1792306730594_fx6a7.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-18T06:58:57.508+00:00",
+    "updatedAt": "2026-10-18T08:29:51.289+00:00"
+  },
+  {
+    "id": "exp_998ebc93",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-15",
+    "location": "Local",
+    "notes": "Ghatkopar to csmt",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.815+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:10:53.701+00:00",
+    "updatedAt": "2026-10-06T07:10:53.701+00:00"
+  },
+  {
+    "id": "exp_tg_mtsuegqu_gay9",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-08",
+    "location": "Thane Dosti location to Home",
+    "notes": "Thane Dosti location to Home",
+    "total": 300,
+    "entries": [
+      {
+        "type": "Ola/Uber",
+        "amount": 300
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788882427/expense_receipts/telegram_receipts/file_1788882426349_kwqdw.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.851+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-08T15:46:54.15+00:00",
+    "updatedAt": "2026-09-08T15:47:08.048+00:00"
+  },
+  {
+    "id": "exp_b9c74f66",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-16",
+    "location": "Metro",
+    "notes": "Marol to grand road station",
+    "total": 60,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 60
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.825+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:17:00.128+00:00",
+    "updatedAt": "2026-10-06T07:17:00.128+00:00"
+  },
+  {
+    "id": "exp_3948cf52",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-03",
+    "location": "Auto/Rapido",
+    "notes": "Ark royal to Grand road",
+    "total": 24,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 24
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791040043/expense_receipts/Amber_Soni/October_2026/03_Oct_2026/receipt_1791039997440_28nla.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-03T15:07:24.553+00:00",
+    "updatedAt": "2026-10-03T15:07:24.553+00:00"
+  },
+  {
+    "id": "exp_0159ffff",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-10-06",
+    "location": "Auto/Rapido",
+    "notes": "Bike office to aayush resort karjat and Harish jare vasi configuration return",
+    "total": 280,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 280
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-11T15:49:30.981+00:00",
+    "updatedAt": "2026-10-11T15:49:30.981+00:00"
+  },
+  {
+    "id": "exp_a4986679",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-26",
+    "location": "Auto/Rapido",
+    "notes": "Lower Parel station to nanabhai parelkar bungalow return",
+    "total": 120,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 120
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.825+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T06:38:39.288+00:00",
+    "updatedAt": "2026-10-07T06:38:39.288+00:00"
+  },
+  {
+    "id": "exp_20551213",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-29",
+    "location": "Local",
+    "notes": "Bandra station to Andheri station",
+    "total": 5,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 5
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.827+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:14:50.331+00:00",
+    "updatedAt": "2026-10-07T08:14:50.331+00:00"
+  },
+  {
+    "id": "exp_63e748d3",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-10-15",
+    "location": "Metro",
+    "notes": "Saki naka to ghatkopar",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1792130195/expense_receipts/Subodh_Ram/October_2026/16_Oct_2026/receipt_1792130193578_xli7c.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-16T05:56:36.089+00:00",
+    "updatedAt": "2026-10-16T05:56:36.089+00:00"
+  },
+  {
+    "id": "exp_dedd1a30",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-07",
+    "location": "Local",
+    "notes": "Chembur station to csmt",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791362184/expense_receipts/Sagar_Rathod/October_2026/07_Oct_2026/receipt_1791362181539_3atof.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-07T08:36:24.786+00:00",
+    "updatedAt": "2026-10-07T08:36:24.786+00:00"
+  },
+  {
+    "id": "exp_f2b34912",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-18",
+    "location": "Auto/Rapido",
+    "notes": "Bandra to vijay sales sharing auto return",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.829+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:36:41.234+00:00",
+    "updatedAt": "2026-10-06T07:36:41.234+00:00"
+  },
+  {
+    "id": "exp_0fd8372e",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-05",
+    "location": "Auto/Rapido",
+    "notes": "Oshiwara to doolally Versova to versova metro return + 1",
+    "total": 137,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 137
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.277+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:40:31.153+00:00",
+    "updatedAt": "2026-09-25T17:41:52.926+00:00"
+  },
+  {
+    "id": "exp_b58e86e3",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-24",
+    "location": "Metro",
+    "notes": "Tp-link office",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790326459/expense_receipts/Amber_Soni/September_2026/25_Sep_2026/receipt_1790326457228_7lcq6.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.438+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T08:54:20.591+00:00",
+    "updatedAt": "2026-09-25T08:54:20.591+00:00"
+  },
+  {
+    "id": "exp_b35989dc",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-04",
+    "location": "Metro",
+    "notes": "Kurar metro to jogeshwari metro data forces",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.817+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T06:28:11.323+00:00",
+    "updatedAt": "2026-10-05T06:28:11.323+00:00"
+  },
+  {
+    "id": "exp_tg_muckkfpq_xznu",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-22",
+    "location": "Grant road to Andheri cp plus office to saki naka",
+    "notes": "Grant road to Andheri cp plus office to saki naka",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 10
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790075237/expense_receipts/telegram_receipts/file_1790075236305_5zek8.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.438+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-22T11:07:00.11+00:00",
+    "updatedAt": "2026-09-22T11:07:17.797+00:00"
+  },
+  {
+    "id": "exp_tg_muckm5uu_t2ms",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-22",
+    "location": "Andheri to saki naka office",
+    "notes": "Andheri to saki naka office",
+    "total": 18,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 18
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790075314/expense_receipts/telegram_receipts/file_1790075313149_4sd9n.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.437+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-22T11:08:20.646+00:00",
+    "updatedAt": "2026-09-22T11:08:34.658+00:00"
+  },
+  {
+    "id": "exp_83674559",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-01",
+    "location": "Metro",
+    "notes": "Saki naka to Andheri tp-link office",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790860911/expense_receipts/Amber_Soni/October_2026/01_Oct_2026/receipt_1790860907604_jqz6z.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-01T13:21:52.256+00:00",
+    "updatedAt": "2026-10-01T13:21:52.256+00:00"
+  },
+  {
+    "id": "exp_9231996c",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-29",
+    "location": "Metro",
+    "notes": "Andheri station to sakinaka station",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.824+00:00",
+    "source": "Web App",
+    "createdAt": "2026-10-07T08:15:15.368+00:00",
+    "updatedAt": "2026-10-07T08:15:15.368+00:00"
+  },
+  {
+    "id": "exp_9ddf32f3",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-17",
+    "location": "Metro",
+    "notes": "Sakinaka to worli to Andheri return",
+    "total": 90,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 90
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1789654775/expense_receipts/Shubhamshejwal2580/September_2026/17_Sep_2026/receipt_1789654770894_ip536.png"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.282+00:00",
+    "source": "",
+    "createdAt": "2026-09-17T14:16:15.325+00:00",
+    "updatedAt": "2026-09-17T14:19:36.438+00:00"
+  },
+  {
+    "id": "exp_daac820f",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-04",
+    "location": "Metro",
+    "notes": "western express to saki naka",
+    "total": 30,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 30
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.851+00:00",
+    "source": "Web App",
+    "createdAt": "2026-09-04T16:17:07.12+00:00",
+    "updatedAt": "2026-09-04T16:49:23.555+00:00"
+  },
+  {
+    "id": "exp_ef56d77d",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-19",
+    "location": "Local",
+    "notes": "Wadala to bandra",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.282+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T14:40:32.057+00:00",
+    "updatedAt": "2026-09-25T14:40:32.057+00:00"
+  },
+  {
+    "id": "exp_954c4703",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-24",
+    "location": "Metro",
+    "notes": "Sakinaka to marol  with Amber",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.818+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T04:25:00.147+00:00",
+    "updatedAt": "2026-10-07T04:25:00.147+00:00"
+  },
+  {
+    "id": "exp_1761f981",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-18",
+    "location": "Local",
+    "notes": "Andheri to khar road return",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.279+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:02:07.644+00:00",
+    "updatedAt": "2026-09-25T17:02:07.644+00:00"
+  },
+  {
+    "id": "exp_8c93f5f0",
+    "userId": "google_sonidheeraj961_gmail_com",
+    "date": "2026-09-16",
+    "location": "Auto/Rapido",
+    "notes": "Ansa to Sagar tech plaza  amber soni material",
+    "total": 40,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 40
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304186/expense_receipts/SoniDheeraj961/October_2026/Payment_Bills/file_1792304184173_rgq8m.pdf",
+    "settledAt": "2026-10-18T06:16:27.082+00:00",
+    "source": "",
+    "createdAt": "2026-09-16T10:36:36.766+00:00",
+    "updatedAt": "2026-09-16T10:36:36.766+00:00"
+  },
+  {
+    "id": "exp_6b291cb6",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-04",
+    "location": "Local",
+    "notes": "Csmt to malad station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.827+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T05:46:14.864+00:00",
+    "updatedAt": "2026-10-06T05:46:14.864+00:00"
+  },
+  {
+    "id": "exp_874e4dce",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-11",
+    "location": "Metro",
+    "notes": "Gundvali to Andheri station Matrix",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.816+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T06:18:34.45+00:00",
+    "updatedAt": "2026-10-06T06:18:34.45+00:00"
+  },
+  {
+    "id": "exp_eef689bc",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-07",
+    "location": "Auto/Rapido",
+    "notes": "Bandra to vijay sales return",
+    "total": 50,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 50
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.283+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:37:08.617+00:00",
+    "updatedAt": "2026-09-25T17:37:08.617+00:00"
+  },
+  {
+    "id": "exp_a8ff7508",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-01",
+    "location": "Metro",
+    "notes": "Marol to acharya chowk",
+    "total": 60,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 60
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.816+00:00",
+    "source": "",
+    "createdAt": "2026-10-05T05:52:54.667+00:00",
+    "updatedAt": "2026-10-05T05:52:54.667+00:00"
+  },
+  {
+    "id": "exp_0b141e3c",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-28",
+    "location": "Metro",
+    "notes": "Sakinaka to Andheri station",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.813+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:04:01.367+00:00",
+    "updatedAt": "2026-10-07T08:04:01.367+00:00"
+  },
+  {
+    "id": "exp_b647b43c",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-17",
+    "location": "Local",
+    "notes": "Lower Parel to bandra to Andheri",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.284+00:00",
+    "source": "",
+    "createdAt": "2026-09-17T14:18:00.804+00:00",
+    "updatedAt": "2026-09-17T14:18:00.804+00:00"
+  },
+  {
+    "id": "exp_28136441",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-19",
+    "location": "Local",
+    "notes": "Ghatkopar to wadala",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.29+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T14:38:10.833+00:00",
+    "updatedAt": "2026-09-25T14:38:10.833+00:00"
+  },
+  {
+    "id": "exp_affa552f",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-29",
+    "location": "Local",
+    "notes": "Andheri station to bandra",
+    "total": 5,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 5
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.817+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:13:55.45+00:00",
+    "updatedAt": "2026-10-07T08:13:55.45+00:00"
+  },
+  {
+    "id": "exp_4457d22f",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-11",
+    "location": "Local",
+    "notes": "Andheri to grand road station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.817+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T06:21:35.434+00:00",
+    "updatedAt": "2026-10-06T06:21:35.434+00:00"
+  },
+  {
+    "id": "exp_a16d41d3",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-16",
+    "location": "Metro",
+    "notes": "Sakinaka to marol Naka to grand road",
+    "total": 70,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 70
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.287+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:12:15.635+00:00",
+    "updatedAt": "2026-09-25T17:12:15.635+00:00"
+  },
+  {
+    "id": "exp_9be5f938",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-08",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.827+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T05:53:45.748+00:00",
+    "updatedAt": "2026-10-06T05:53:45.748+00:00"
+  },
+  {
+    "id": "exp_64963833",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-04",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.817+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T05:46:43.771+00:00",
+    "updatedAt": "2026-10-06T05:46:43.771+00:00"
+  },
+  {
+    "id": "exp_tg_mue2knpl_wrt0",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-23",
+    "location": "western express highway to saki naka office",
+    "notes": "western express highway to saki naka office",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790165936/expense_receipts/telegram_receipts/file_1790165935564_h66nk.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.851+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-23T12:18:49.737+00:00",
+    "updatedAt": "2026-09-23T12:18:57.143+00:00"
+  },
+  {
+    "id": "exp_61fde776",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-29",
+    "location": "Metro",
+    "notes": "Saki naka to Western express Rp tech office",
+    "total": 17,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 17
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790664868/expense_receipts/Amber_Soni/September_2026/29_Sep_2026/receipt_1790664865398_0m9oo.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.436+00:00",
+    "source": "",
+    "createdAt": "2026-09-29T06:54:29.348+00:00",
+    "updatedAt": "2026-09-29T06:54:29.348+00:00"
+  },
+  {
+    "id": "exp_tg_mtjuuikr_t2jh",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-02",
+    "location": "Auto/Rapido",
+    "notes": "IBC Powai to Sagar tech plaza",
+    "total": 98,
     "entries": [
       {
         "type": "Auto/Rapido",
         "amount": 98
       }
     ],
-    "total": 98,
-    "paymentBillUrl": null,
-    "id": "exp_tg_mtjuuikr_t2jh",
-    "paymentStatus": "pending",
     "receipts": [
       "https://res.cloudinary.com/vrxb6o67/image/upload/v1788339080/expense_receipts/Subodh_Ram/September_2026/02_Sep_2026/receipt_1788339078600_vfwni.jpg"
     ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.85+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-02T08:49:27.435+00:00",
+    "updatedAt": "2026-09-02T08:51:21.196+00:00"
+  },
+  {
+    "id": "exp_e9c8a955",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-30",
+    "location": "Metro",
+    "notes": "Marol to grand road station",
+    "total": 60,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 60
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.818+00:00",
+    "source": "",
+    "createdAt": "2026-10-07T08:19:25.37+00:00",
+    "updatedAt": "2026-10-07T08:19:25.37+00:00"
+  },
+  {
+    "id": "exp_f919ef5b",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-09-16",
+    "location": "Others",
+    "notes": "Three Arrow Tech Office ( sarvodaya hospital)  By bus",
+    "total": 12,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 12
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
+    "settledAt": "2026-10-18T06:19:39.435+00:00",
+    "source": "",
+    "createdAt": "2026-09-22T11:18:41.52+00:00",
+    "updatedAt": "2026-09-22T11:18:41.52+00:00"
+  },
+  {
+    "id": "exp_6a2a180e",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-05",
+    "location": "Metro",
+    "notes": "Sakinaka to DN nagar to Oshiwara return+1",
+    "total": 130,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 130
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.285+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:41:26.682+00:00",
+    "updatedAt": "2026-09-25T17:41:26.682+00:00"
+  },
+  {
+    "id": "exp_66a819c3",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-10-01",
     "location": "Auto/Rapido",
-    "updatedAt": "2026-09-02T08:51:21.196Z"
+    "notes": "Tplink service centre to office",
+    "total": 650,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 650
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1790879210/expense_receipts/Shubhamshejwal2580/October_2026/01_Oct_2026/receipt_1790879208251_pzbse.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-01T18:26:50.598+00:00",
+    "updatedAt": "2026-10-01T18:26:50.598+00:00"
+  },
+  {
+    "id": "exp_tg_mtmxttaq_gvsq",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-04",
+    "location": "Rtech city to western express",
+    "notes": "Rtech city to western express",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788525382/expense_receipts/telegram_receipts/file_1788525381659_ok415.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.853+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-04T12:36:12.05+00:00",
+    "updatedAt": "2026-09-04T12:36:23.173+00:00"
+  },
+  {
+    "id": "exp_3e7ffad3",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-24",
+    "location": "Local",
+    "notes": "Ghatkopar to dadar to csmt return",
+    "total": 25,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 25
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.285+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T13:22:12.8+00:00",
+    "updatedAt": "2026-09-25T13:22:12.8+00:00"
+  },
+  {
+    "id": "exp_tg_mtbc8jsa_ly62_5",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-20",
+    "location": "Belapur workloft",
+    "notes": "Belapur workloft",
+    "total": 780,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 780
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1789060873/expense_receipts/Subodh_Ram/September_2026/Payment_Bills/file_1789060871941_z9pn9.jpg",
+    "settledAt": "2026-09-10T17:21:13.594+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-08-27T09:46:20.074+00:00",
+    "updatedAt": "2026-08-27T09:46:20.074+00:00"
+  },
+  {
+    "id": "exp_tg_mtr32x56_a1ep",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-07",
+    "location": "Food",
+    "notes": "Food",
+    "total": 48,
+    "entries": [
+      {
+        "type": "Food",
+        "amount": 48
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788776068/expense_receipts/telegram_receipts/file_1788776066939_ngk1b.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.852+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-07T10:14:19.722+00:00",
+    "updatedAt": "2026-09-07T10:14:29.486+00:00"
+  },
+  {
+    "id": "exp_11b9faf0",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-03",
+    "location": "Local",
+    "notes": "Andheri to grant road",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-03T14:11:16.154+00:00",
+    "updatedAt": "2026-10-03T14:11:16.154+00:00"
+  },
+  {
+    "id": "exp_tg_mtsjutij_lulm",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-09-08",
+    "location": "Saki naka to thane Dosti office",
+    "notes": "Saki naka to thane Dosti office",
+    "total": 323,
+    "entries": [
+      {
+        "type": "Ola/Uber",
+        "amount": 323
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1788864708/expense_receipts/telegram_receipts/file_1788864707669_gv1dh.jpg"
+    ],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304115/expense_receipts/Subodh_Ram/October_2026/Payment_Bills/file_1792304112896_a1nzc.pdf",
+    "settledAt": "2026-10-18T06:15:15.852+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-09-08T10:51:41.419+00:00",
+    "updatedAt": "2026-09-08T10:51:49.318+00:00"
+  },
+  {
+    "id": "exp_98fa2798",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-24",
+    "location": "Metro",
+    "notes": "Jogeshwari metro to kurar metro",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.819+00:00",
+    "source": "Web App",
+    "createdAt": "2026-10-07T04:30:59.576+00:00",
+    "updatedAt": "2026-10-07T04:30:59.576+00:00"
+  },
+  {
+    "id": "exp_3bfd118a",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-19",
+    "location": "Local",
+    "notes": "Ghatkopar to csmt with dheeraj sir",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.82+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:38:53.393+00:00",
+    "updatedAt": "2026-10-06T16:28:23.755+00:00"
+  },
+  {
+    "id": "exp_f46e9160",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-02",
+    "location": "Local",
+    "notes": "Andheri to bandra return",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.288+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:44:45.273+00:00",
+    "updatedAt": "2026-09-25T17:44:45.273+00:00"
+  },
+  {
+    "id": "exp_167f2d4b",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-03",
+    "location": "Local",
+    "notes": "Ghatkopar station to thane station",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T04:02:57.539+00:00",
+    "updatedAt": "2026-10-05T04:02:57.539+00:00"
+  },
+  {
+    "id": "exp_ba7a43c4",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-09-16",
+    "location": "Auto/Rapido",
+    "notes": "Malad station to home",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304247/expense_receipts/Sagar_Rathod/October_2026/Payment_Bills/file_1792304244841_j5is0.pdf",
+    "settledAt": "2026-10-18T06:17:27.825+00:00",
+    "source": "",
+    "createdAt": "2026-10-06T07:19:16.745+00:00",
+    "updatedAt": "2026-10-06T07:19:16.745+00:00"
+  },
+  {
+    "id": "exp_6d6ff08e",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-03",
+    "location": "Local",
+    "notes": "grant road to Santacruz",
+    "total": 10,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 10
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791040149/expense_receipts/Amber_Soni/October_2026/03_Oct_2026/receipt_1791040140452_3k6wn.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-03T15:09:10.75+00:00",
+    "updatedAt": "2026-10-03T15:09:10.75+00:00"
+  },
+  {
+    "id": "exp_tg_mtbc8j8t_67n8_0",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-06",
+    "location": "Warehosue",
+    "notes": "Warehosue",
+    "total": 32,
+    "entries": [
+      {
+        "type": "Others",
+        "amount": 32
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1789060873/expense_receipts/Subodh_Ram/September_2026/Payment_Bills/file_1789060871941_z9pn9.jpg",
+    "settledAt": "2026-09-10T17:21:13.594+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-08-27T09:46:19.373+00:00",
+    "updatedAt": "2026-08-27T09:46:19.373+00:00"
+  },
+  {
+    "id": "exp_b31a225c",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-09",
+    "location": "Auto/Rapido",
+    "notes": "Office to doolally Chembur",
+    "total": 80,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 80
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.289+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:32:34.317+00:00",
+    "updatedAt": "2026-09-25T17:32:34.317+00:00"
+  },
+  {
+    "id": "exp_30dfd4bb",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-03",
+    "location": "Metro",
+    "notes": "Saki naka to Andheri",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Metro",
+        "amount": 20
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791036645/expense_receipts/Amber_Soni/October_2026/03_Oct_2026/receipt_1791036643676_w0juc.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-03T14:10:46.491+00:00",
+    "updatedAt": "2026-10-03T14:10:46.491+00:00"
+  },
+  {
+    "id": "exp_3a190849",
+    "userId": "google_soniamber01_gmail_com",
+    "date": "2026-10-03",
+    "location": "Auto/Rapido",
+    "notes": "Grand road to Ark Royal",
+    "total": 24,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 24
+      }
+    ],
+    "receipts": [
+      "https://res.cloudinary.com/vrxb6o67/image/upload/v1791036800/expense_receipts/Amber_Soni/October_2026/03_Oct_2026/receipt_1791036796602_h4nek.jpg"
+    ],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-03T14:13:20.833+00:00",
+    "updatedAt": "2026-10-03T14:13:20.833+00:00"
+  },
+  {
+    "id": "exp_f876af7a",
+    "userId": "google_freegtech123_gmail_com",
+    "date": "2026-10-01",
+    "location": "Local",
+    "notes": "Andheri to bandra station",
+    "total": 5,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 5
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "pending",
+    "paymentBillUrl": "",
+    "settledAt": null,
+    "source": "",
+    "createdAt": "2026-10-05T03:57:50.79+00:00",
+    "updatedAt": "2026-10-05T03:57:50.79+00:00"
+  },
+  {
+    "id": "exp_tg_mtb2bxii_3adh",
+    "userId": "google_subodhram3350_gmail_com",
+    "date": "2026-08-26",
+    "location": "Auto/Rapido",
+    "notes": "Tbse juhu on 26th august",
+    "total": 280,
+    "entries": [
+      {
+        "type": "Auto/Rapido",
+        "amount": 280
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1789060873/expense_receipts/Subodh_Ram/September_2026/Payment_Bills/file_1789060871941_z9pn9.jpg",
+    "settledAt": "2026-09-10T17:21:13.594+00:00",
+    "source": "Telegram Bot",
+    "createdAt": "2026-08-27T05:09:01.674+00:00",
+    "updatedAt": "2026-08-27T16:12:58.661+00:00"
+  },
+  {
+    "id": "exp_2bbc1eb8",
+    "userId": "google_shubhamshejwal2580_gmail_com",
+    "date": "2026-09-03",
+    "location": "Local",
+    "notes": "Ghatkopar to CSMT return",
+    "total": 20,
+    "entries": [
+      {
+        "type": "Local",
+        "amount": 20
+      }
+    ],
+    "receipts": [],
+    "paymentStatus": "paid",
+    "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304316/expense_receipts/Shubhamshejwal2580/October_2026/Payment_Bills/file_1792304314355_pt7uh.pdf",
+    "settledAt": "2026-10-18T06:18:37.285+00:00",
+    "source": "",
+    "createdAt": "2026-09-25T17:43:38.578+00:00",
+    "updatedAt": "2026-09-25T17:43:38.578+00:00"
   }
 ]

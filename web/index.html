@@ -222,6 +222,46 @@
   <div class="bg-shape shape-1"></div>
   <div class="bg-shape shape-2"></div>
 
+  <!-- PAGE 2.5: PENDING APPROVAL PAGE -->
+  <div id="pendingApprovalPage" class="app-page-view hidden" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f0f4ff 0%,#e8f0fe 50%,#f5f3ff 100%);padding:24px;">
+    <div style="text-align:center;max-width:480px;width:100%;">
+      <div style="margin-bottom:24px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" style="width:56px;height:56px;filter:drop-shadow(0 4px 14px rgba(0,71,255,0.2));">
+          <rect x="414" y="26" width="52" height="52" rx="4" fill="#0047ff"/><rect x="24" y="422" width="52" height="52" rx="4" fill="#0047ff"/>
+          <path d="M 24 235 C 24 115 115 26 235 26 H 390 V 78 H 235 C 145 78 76 145 76 235 V 396 H 24 Z" fill="#0047ff"/>
+          <path d="M 414 104 H 466 V 235 C 466 355 365 466 235 466 H 198 V 414 H 235 C 332 414 414 332 414 235 Z" fill="#0047ff"/>
+          <path d="M 247 218 H 414 V 284 H 247 Z" fill="#0047ff"/>
+        </svg>
+      </div>
+      <div style="background:#fff;border-radius:24px;padding:36px 32px;box-shadow:0 8px 40px rgba(0,71,255,0.1),0 2px 12px rgba(0,0,0,0.06);border:1px solid #e0e7ff;">
+        <div style="width:80px;height:80px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:pendingPulse 2s ease-in-out infinite;">
+          <i class="fa-solid fa-clock" style="font-size:2.2rem;color:#b45309;"></i>
+        </div>
+        <h2 style="font-size:1.5rem;font-weight:800;color:#0f172a;margin:0 0 10px;">Waiting for Approval</h2>
+        <p style="color:#64748b;font-size:0.92rem;margin:0 0 12px;line-height:1.6;">Your account has been created! Admin needs to verify your identity before granting access.</p>
+        <div id="pendingApprovalEmailBadge" style="display:inline-block;background:#f1f5f9;color:#475569;font-size:0.82rem;font-weight:700;padding:5px 14px;border-radius:20px;margin-bottom:24px;border:1px solid #e2e8f0;"></div>
+        <div style="background:#f8fafc;border-radius:12px;padding:14px 18px;margin-bottom:20px;text-align:left;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="width:22px;height:22px;background:#059669;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-check" style="color:#fff;font-size:0.65rem;"></i></span>
+            <span style="font-size:0.84rem;color:#0f172a;font-weight:600;">OTP Verified — Account Created</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="width:22px;height:22px;background:#f59e0b;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:pendingPulse 1.5s ease-in-out infinite;"><i class="fa-solid fa-hourglass-half" style="color:#fff;font-size:0.65rem;"></i></span>
+            <span style="font-size:0.84rem;color:#b45309;font-weight:600;">Pending Admin Approval</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="width:22px;height:22px;background:#cbd5e1;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-lock" style="color:#94a3b8;font-size:0.65rem;"></i></span>
+            <span style="font-size:0.84rem;color:#94a3b8;font-weight:600;">Access Granted</span>
+          </div>
+        </div>
+        <p style="font-size:0.79rem;color:#94a3b8;margin:0 0 18px;">Contact admin at <strong style="color:#475569;">subodhram3350@gmail.com</strong> if this takes too long.</p>
+        <button type="button" onclick="performSilentSignOut()" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;border-radius:10px;font-weight:700;font-size:0.87rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <i class="fa-solid fa-right-from-bracket" style="color:#94a3b8;"></i> Sign out &amp; use different account
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- PAGE 3: DASHBOARD CONTAINER VIEW -->
   <div id="appDashboard" class="app-page-view hidden">
     <!-- User Dashboard Header -->
@@ -693,7 +733,10 @@
             </button>
 
             <button type="button" class="btn" onclick="exportMembersToExcel()" style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-              <i class="fa-solid fa-file-excel" style="color: #059669; font-size: 0.85rem;"></i> Export Member Details Excel
+              <i class="fa-solid fa-file-excel" style="color: #059669; font-size: 0.85rem;"></i> Export Members (Excel)
+            </button>
+            <button type="button" class="btn" onclick="exportMembersToCSV()" style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+              <i class="fa-solid fa-file-csv" style="color: #2563eb; font-size: 0.85rem;"></i> Export Members (CSV)
             </button>
 
             <div style="display: flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px;">
@@ -1377,7 +1420,10 @@
 
         <div style="display: flex; gap: 8px; align-items: center;">
           <button type="button" class="btn" onclick="exportInspectUserExpensesExcel()" style="padding: 9px 18px; background: #059669; color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(5,150,105,0.25);">
-            <i class="fa-solid fa-file-excel"></i> Download Monthly Expenses (Excel)
+            <i class="fa-solid fa-file-excel"></i> Download (Excel)
+          </button>
+          <button type="button" class="btn" onclick="exportInspectUserExpensesCSV()" style="padding: 9px 18px; background: #2563eb; color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(37,99,235,0.25);">
+            <i class="fa-solid fa-file-csv"></i> Download (CSV)
           </button>
         </div>
       </div>

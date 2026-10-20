@@ -245,7 +245,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (state.sharedMode || state.currentGoogleUser) {
     const u = state.currentGoogleUser;
     const isSuperAdmin = (u && (u.role === 'super_admin' || (u.email && u.email.toLowerCase().trim() === 'subodhram3350@gmail.com'))) || window.location.hash === '#superadmin';
-    if (isSuperAdmin && !state.sharedMode && u) {
+    // Check approval status (undefined = legacy user = approved)
+    const isApproved = !u || u.approved !== false;
+    if (!state.sharedMode && u && !isApproved) {
+      switchAppPage('pending-approval', false);
+    } else if (isSuperAdmin && !state.sharedMode && u) {
       switchAppPage('superadmin', false);
     } else {
       switchAppPage('dashboard', false);
@@ -552,7 +556,13 @@ function saveGoogleUser(user) {
   }).catch(err => console.warn('Backend profile sync note:', err));
 
   const isSuperAdmin = safeUser && (safeUser.role === 'super_admin' || (safeUser.email && (safeUser.email.toLowerCase() === 'subodhram3350@gmail.com' || safeUser.email.toLowerCase().includes('admin'))));
-  if (isSuperAdmin) {
+  // Check approval — undefined means legacy/existing user (auto-approved)
+  const isApproved = safeUser.approved !== false;
+
+  if (!isApproved) {
+    // New user pending admin approval
+    switchAppPage('pending-approval');
+  } else if (isSuperAdmin) {
     switchAppPage('superadmin');
   } else {
     switchAppPage('dashboard');
@@ -3257,11 +3267,13 @@ function switchAppPage(viewName, pushToHistory = true) {
   const fullAuthPage = document.getElementById('fullAuthPage');
   const appDashboard = document.getElementById('appDashboard');
   const superAdminDashboard = document.getElementById('superAdminDashboard');
+  const pendingApprovalPage = document.getElementById('pendingApprovalPage');
   const mobileNav = document.querySelector('.mobile-nav-bar');
 
   if (fullAuthPage) fullAuthPage.classList.add('hidden');
   if (appDashboard) appDashboard.classList.add('hidden');
   if (superAdminDashboard) superAdminDashboard.classList.add('hidden');
+  if (pendingApprovalPage) pendingApprovalPage.classList.add('hidden');
 
   // If user is not logged in, force auth screen
   if (!state.currentGoogleUser) {
@@ -3273,6 +3285,12 @@ function switchAppPage(viewName, pushToHistory = true) {
     if (mobileNav) mobileNav.classList.remove('nav-visible');
     toggleAuthPageView('signin');
     viewName = 'auth';
+  } else if (viewName === 'pending-approval') {
+    if (pendingApprovalPage) pendingApprovalPage.classList.remove('hidden');
+    if (mobileNav) mobileNav.classList.remove('nav-visible');
+    // Show user email in the badge
+    const badge = document.getElementById('pendingApprovalEmailBadge');
+    if (badge && state.currentGoogleUser) badge.textContent = state.currentGoogleUser.email || '';
   } else if (viewName === 'dashboard' && appDashboard) {
     appDashboard.classList.remove('hidden');
     if (mobileNav) mobileNav.classList.add('nav-visible');
@@ -3445,6 +3463,39 @@ function renderAdminUsersTable(users) {
   const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'all';
 
   tbody.innerHTML = users.map(user => {
+    // ── Unapproved users get a special row ──
+    const isApproved = user.approved !== false; // undefined = legacy = approved
+    if (!isApproved) {
+      return `
+        <tr style="border-bottom: 1px solid #fef3c7; background: #fffbeb;">
+          <td style="padding: 12px 16px;">
+            <img src="${getUserAvatarUrl(user)}" alt="${user.name || 'Member'}" style="width:38px;height:38px;border-radius:50%;border:1.5px solid #fde68a;object-fit:cover;" />
+          </td>
+          <td style="padding: 12px 16px;">
+            <strong style="color:#0f172a;font-size:0.92rem;display:block;">${user.name || 'Member'}</strong>
+            <span style="color:#64748b;font-size:0.8rem;">${user.email || 'N/A'}</span>
+          </td>
+          <td style="padding:12px 16px;font-weight:800;color:#b45309;font-size:0.9rem;" class="col-numeric">&mdash;</td>
+          <td style="padding:12px 16px;">
+            <span style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;padding:4px 10px;border-radius:6px;font-weight:700;font-size:0.78rem;display:inline-flex;align-items:center;gap:4px;">
+              <i class="fa-solid fa-hourglass-half"></i> Approval Pending
+            </span>
+          </td>
+          <td style="padding:12px 16px;" class="col-actions">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button type="button" onclick="adminApproveUser('${user.id}', 'approve')" title="Approve this user" style="padding:5px 12px;font-size:0.78rem;font-weight:700;background:#059669;color:#fff;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                <i class="fa-solid fa-check"></i> Approve
+              </button>
+              <button type="button" onclick="adminApproveUser('${user.id}', 'reject')" title="Reject &amp; remove this user" style="padding:5px 12px;font-size:0.78rem;font-weight:700;background:#fff;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                <i class="fa-solid fa-xmark"></i> Reject
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    // ── Normal approved user row ──
     const isPending = user.pendingAmount > 0;
     const isPaid = !isPending && user.paidAmount > 0;
 
@@ -3454,7 +3505,9 @@ function renderAdminUsersTable(users) {
 
     const amountDisplay = isPending
       ? `₹${(user.pendingAmount || 0).toLocaleString('en-IN')}`
-      : `₹0`;
+      : isPaid
+        ? `₹${(user.paidAmount || 0).toLocaleString('en-IN')}`
+        : `—`;
 
     const billBtnLabel = isPaid
       ? `<i class="fa-solid fa-pen-to-square"></i> Edit Bill`
@@ -3462,10 +3515,10 @@ function renderAdminUsersTable(users) {
 
     return `
       <tr style="border-bottom: 1px solid #f1f5f9;">
-        <td style="padding: 12px 16px; cursor: pointer;" onclick="inspectUserExpenses('${user.id}')" title="Click to view ${user.name}'s entries & export Excel">
+        <td style="padding: 12px 16px; cursor: pointer;" onclick="inspectUserExpenses('${user.id}')" title="Click to view ${user.name}'s entries &amp; export Excel">
           <img src="${getUserAvatarUrl(user)}" alt="${user.name || 'Member'}" style="width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid #cbd5e1; object-fit: cover;" />
         </td>
-        <td style="padding: 12px 16px; cursor: pointer;" onclick="inspectUserExpenses('${user.id}')" title="Click to view ${user.name}'s entries & export Excel">
+        <td style="padding: 12px 16px; cursor: pointer;" onclick="inspectUserExpenses('${user.id}')" title="Click to view ${user.name}'s entries &amp; export Excel">
           <strong style="color: #0f172a; font-size: 0.92rem; display: block;">${user.name || 'Member'}</strong>
           <span style="color: #64748b; font-size: 0.8rem;">${user.email || 'N/A'}</span>
         </td>
@@ -3480,7 +3533,7 @@ function renderAdminUsersTable(users) {
             <button type="button" class="btn btn-sm" onclick="openSettleModal('${user.id}')" title="Upload or Edit Bill Proof" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #0f172a; color: #ffffff; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
               ${billBtnLabel}
             </button>
-            <button type="button" class="btn btn-sm" onclick="inspectUserExpenses('${user.id}')" title="View Member Expenses & Export Excel" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+            <button type="button" class="btn btn-sm" onclick="inspectUserExpenses('${user.id}')" title="View Member Expenses &amp; Export Excel" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
               <i class="fa-solid fa-eye"></i> View
             </button>
             <button type="button" class="btn btn-sm" onclick="handleDeleteSettlementOrUser('${user.id}')" title="Delete Settlement or Member" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #dc2626; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
@@ -3491,6 +3544,42 @@ function renderAdminUsersTable(users) {
       </tr>
     `;
   }).join('');
+}
+
+// ─── Admin: Approve or Reject a pending user ─────────────────────────────────
+async function adminApproveUser(userId, action) {
+  const label = action === 'approve' ? 'Approve' : 'Reject';
+  const msg = action === 'approve'
+    ? 'Approve this user and grant them access to the system?'
+    : 'Reject and permanently remove this user from the system?';
+
+  showConfirmModal({
+    title: `${label} User`,
+    message: msg,
+    iconClass: action === 'approve' ? 'fa-user-check' : 'fa-user-xmark',
+    btnText: label,
+    onConfirm: async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/admin/approve-user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'user-id': state.currentGoogleUser?.id || '' },
+          body: JSON.stringify({ userId, action })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const toastMsg = action === 'approve'
+            ? `✅ ${data.name || userId} approved — they can now log in!`
+            : `🚫 User rejected and removed from system.`;
+          if (typeof showCustomToast === 'function') showCustomToast(toastMsg);
+          loadSuperAdminData(); // refresh admin table
+        } else {
+          alert('Error: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Request failed: ' + err.message);
+      }
+    }
+  });
 }
 
 let currentActiveBillUrl = '';
@@ -4235,6 +4324,92 @@ function exportMembersToExcel() {
   }
 }
 
+// ─── CSV Export: Members Directory ───────────────────────────────────────────
+function exportMembersToCSV() {
+  if (!adminUsersCache || adminUsersCache.length === 0) {
+    alert('No member records available to export.');
+    return;
+  }
+
+  const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'All_Months';
+
+  // Helper: safe CSV cell (RFC-4180)
+  const csvCell = (val) => {
+    const str = (val === null || val === undefined) ? '' : String(val);
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
+  let totalPendingSum = 0;
+  let totalPaidSum = 0;
+  let totalLifetimeSum = 0;
+
+  const colHeaders = [
+    'SR NO', 'MEMBER NAME', 'GMAIL ID / EMAIL',
+    'PENDING REIMBURSEMENT (INR)', 'PAID REIMBURSEMENT (INR)', 'LIFETIME TOTAL (INR)',
+    'STATUS', 'PAYMENT PROOF BILL URL'
+  ];
+
+  const dataRows = adminUsersCache.map((u, idx) => {
+    const isPending = (u.pendingAmount || 0) > 0;
+    const statusText = isPending ? 'PENDING REIMBURSEMENT' : 'SETTLED & PAID';
+    const pending = u.pendingAmount || 0;
+    const paid = u.paidAmount || 0;
+    const lifetime = u.lifetimeAmount || (pending + paid);
+
+    totalPendingSum += pending;
+    totalPaidSum += paid;
+    totalLifetimeSum += lifetime;
+
+    return [
+      idx + 1,
+      u.name || 'Member',
+      u.email || '',
+      pending,
+      paid,
+      lifetime,
+      statusText,
+      u.paymentBillUrl || ''
+    ].map(csvCell).join(',');
+  });
+
+  const totalRow = [
+    '', '', 'SYSTEM TOTALS:',
+    totalPendingSum, totalPaidSum, totalLifetimeSum,
+    '', ''
+  ].map(csvCell).join(',');
+
+  const metaRows = [
+    `System Members Reimbursement Summary Report`,
+    `Selected Month: ${selectedMonth} | Total Members: ${adminUsersCache.length} | Generated: ${new Date().toLocaleString()}`,
+    ``
+  ];
+
+  const csvLines = [
+    ...metaRows.map(r => csvCell(r)),
+    colHeaders.map(csvCell).join(','),
+    ...dataRows,
+    totalRow
+  ];
+
+  // BOM for Excel UTF-8 compat (₹ symbol etc.)
+  const csvContent = '\uFEFF' + csvLines.join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const fileName = `TravelExpense_Members_Report_${selectedMonth}.csv`;
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  if (typeof showCustomToast === 'function') {
+    showCustomToast(`📄 Exported Members CSV: ${fileName}`);
+  }
+}
+
 function filterAdminUserTable() {
   const query = (document.getElementById('adminSearchUsers')?.value || '').toLowerCase().trim();
   if (!query) {
@@ -4468,7 +4643,11 @@ function populateInspectUserMonthSelector() {
   if (!select) return;
 
   const monthsSet = new Set();
-  const selectedMonthFromAdmin = document.getElementById('adminMonthFilter')?.value || CURRENT_YEAR_MONTH;
+  const adminVal = document.getElementById('adminMonthFilter')?.value || '';
+  // If admin panel has 'all' selected, we'll default inspect modal to ALL too
+  const isAdminAll = (adminVal === 'all' || adminVal === 'ALL' || adminVal === '');
+  const selectedMonthFromAdmin = isAdminAll ? 'ALL' : adminVal;
+
   if (CURRENT_YEAR_MONTH >= PROJECT_START_MONTH) monthsSet.add(CURRENT_YEAR_MONTH);
   monthsSet.add(PROJECT_START_MONTH);
 
@@ -4489,7 +4668,8 @@ function populateInspectUserMonthSelector() {
     const label = `${monthName}${isCurrent ? ' (Current)' : ''}`;
     html += `<option value="${m}" ${m === selectedMonthFromAdmin ? 'selected' : ''}>📅 ${label}</option>`;
   });
-  html += `<option value="ALL" ${selectedMonthFromAdmin === 'ALL' || selectedMonthFromAdmin === 'all' ? 'selected' : ''}>🌐 All Months (Historical)</option>`;
+  // 'All Months' option — selected when admin had 'all' or we default to it
+  html += `<option value="ALL" ${selectedMonthFromAdmin === 'ALL' ? 'selected' : ''}>🌐 All Months (Historical)</option>`;
 
   select.innerHTML = html;
 }
@@ -4502,7 +4682,7 @@ function renderInspectUserExpensesTable() {
   const tbody = document.getElementById('inspectUserTableBody');
   const badge = document.getElementById('inspectUserEntriesCountBadge');
   const sumEl = document.getElementById('inspectUserTotalAmountSum');
-  const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || CURRENT_YEAR_MONTH;
+  const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || 'ALL';
 
   if (!tbody) return;
 
@@ -4559,7 +4739,7 @@ function renderInspectUserExpensesTable() {
 
 function exportInspectUserExpensesExcel() {
   const user = (adminUsersCache && adminUsersCache.find(u => u.id === currentInspectUserId)) || { name: 'Member', email: currentInspectUserId };
-  const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || CURRENT_YEAR_MONTH;
+  const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || 'ALL';
 
   let filtered = currentInspectUserExpenses || [];
   if (selectedMonth && selectedMonth !== 'ALL' && selectedMonth !== 'all') {
@@ -4695,6 +4875,105 @@ function exportInspectUserExpensesExcel() {
   }
 }
 
+// ─── CSV Export: Inspect User Expenses ──────────────────────────────────────
+function exportInspectUserExpensesCSV() {
+  const user = (adminUsersCache && adminUsersCache.find(u => u.id === currentInspectUserId)) || { name: 'Member', email: currentInspectUserId };
+  const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || 'ALL';
+
+  let filtered = currentInspectUserExpenses || [];
+  if (selectedMonth && selectedMonth !== 'ALL' && selectedMonth !== 'all') {
+    filtered = filtered.filter(e => e.date && e.date.startsWith(selectedMonth));
+  }
+
+  if (filtered.length === 0) {
+    alert('No entries available to export for this month.');
+    return;
+  }
+
+  const cleanName = (user.name || 'Member').trim();
+  const cleanEmail = (user.email || '').trim();
+
+  let monthLabel = selectedMonth;
+  if (selectedMonth && selectedMonth !== 'ALL' && selectedMonth !== 'all') {
+    try {
+      const [y, m] = selectedMonth.split('-');
+      const d = new Date(parseInt(y), parseInt(m) - 1, 1);
+      monthLabel = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    } catch (e) {}
+  } else {
+    monthLabel = 'All Months';
+  }
+
+  // Helper: wrap cell value safely (escape double-quotes, wrap in quotes)
+  const csvCell = (val) => {
+    const str = (val === null || val === undefined) ? '' : String(val);
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
+  // Header rows (metadata)
+  const metaRows = [
+    `Monthly Travel Expense Log Report`,
+    `Member: ${cleanName} | Email: ${cleanEmail} | Month: ${monthLabel} | Generated: ${new Date().toLocaleString()}`,
+    ``, // blank spacer
+  ];
+
+  // Column headers
+  const colHeaders = ['SR NO', 'DATE & TIME', 'CATEGORY', 'AMOUNT (INR)', 'COMMENT / LOCATION', 'RECEIPT URL', 'PAYMENT STATUS'];
+
+  const dataRows = filtered.map((exp, idx) => {
+    const dateTimeStr = formatExpenseDateTimeString(exp);
+
+    const categoryName = (exp.entries && exp.entries[0] && exp.entries[0].type)
+      ? exp.entries.map(e => e.type).join(', ')
+      : (exp.location || 'Travel');
+
+    const firstReceipt = exp.receipts && exp.receipts[0];
+    const receiptUrl = firstReceipt ? (typeof firstReceipt === 'string' ? firstReceipt : firstReceipt.fileUrl) : '';
+
+    const statusText = exp.paymentStatus === 'paid' ? 'PAID' : 'PENDING';
+
+    return [
+      idx + 1,
+      dateTimeStr,
+      categoryName,
+      exp.total || 0,
+      exp.notes || exp.location || '',
+      receiptUrl,
+      statusText
+    ].map(csvCell).join(',');
+  });
+
+  // Total row
+  const totalSum = filtered.reduce((sum, e) => sum + (e.total || 0), 0);
+  const totalRow = [
+    '', '', 'TOTAL EXPENSES:', totalSum, '', '', ''
+  ].map(csvCell).join(',');
+
+  const csvLines = [
+    ...metaRows.map(r => csvCell(r)),           // metadata as single-cell rows
+    colHeaders.map(csvCell).join(','),           // column header row
+    ...dataRows,                                 // data rows
+    totalRow                                     // totals row
+  ];
+
+  // BOM (\uFEFF) ensures Excel opens UTF-8 CSV with special chars (₹, etc.) correctly
+  const csvContent = '\uFEFF' + csvLines.join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const fileName = `${cleanName.replace(/\s+/g, '_')}_Travel_Expenses_${selectedMonth}.csv`;
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  if (typeof showCustomToast === 'function') {
+    showCustomToast(`📄 Exported CSV file: ${fileName}`);
+  }
+}
 
 function openAuthScreen(mode = 'signin') {
   switchAppPage('auth');
