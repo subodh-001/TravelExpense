@@ -1362,6 +1362,41 @@ app.post('/api/auth/register', (req, res) => {
     delete safeUser.passwordHash;
 
     console.log(`👤 Registered new user account: ${cleanEmail} (approved: ${users[userId].approved})`);
+
+    // Send approval notification email to admin
+    if (users[userId].approved === false) {
+      const adminEmail = 'subodhram3350@gmail.com';
+      const dashboardUrl = `${process.env.FRONTEND_URL || 'https://fgtx.trexxitpro.net'}/#superadmin`;
+      sendEmailNotification({
+        to: adminEmail,
+        subject: `🔔 New User Signup — Approval Required: ${capitalizedName}`,
+        fromName: 'FGTech Travel System',
+        html: `
+          <div style="font-family:'Inter',Arial,sans-serif;max-width:540px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+            <div style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:32px;text-align:center;">
+              <div style="width:56px;height:56px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;">🔔</div>
+              <h1 style="color:#ffffff;font-size:1.4rem;font-weight:800;margin:0;">New User — Approval Required</h1>
+            </div>
+            <div style="padding:32px;">
+              <p style="color:#475569;font-size:0.95rem;margin-bottom:20px;">A new user has registered and is waiting for your approval to access the system.</p>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
+                <table style="width:100%;border-collapse:collapse;">
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;width:100px;">Name</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${capitalizedName}</td></tr>
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Email</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${cleanEmail}</td></tr>
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Signed up</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST</td></tr>
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Status</td><td style="padding:6px 0;"><span style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;padding:2px 10px;border-radius:6px;font-weight:700;font-size:0.8rem;">⏳ Pending Approval</span></td></tr>
+                </table>
+              </div>
+              <div style="text-align:center;">
+                <a href="${dashboardUrl}" style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:800;font-size:1rem;display:inline-block;">👤 Review in Admin Dashboard</a>
+              </div>
+              <p style="color:#94a3b8;font-size:0.8rem;text-align:center;margin-top:20px;">Go to Members tab → look for "Approval Pending" users → Approve or Reject.</p>
+            </div>
+          </div>
+        `
+      }).catch(e => console.warn('Admin notification email note:', e.message));
+    }
+
     res.json({ success: true, user: safeUser });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1369,7 +1404,7 @@ app.post('/api/auth/register', (req, res) => {
 });
 
 // Google Sign-In & Auth Handler
-app.post('/api/auth/google', (req, res) => {
+app.post('/api/auth/google', async (req, res) => {
   try {
     const { credential, email, name, picture, id } = req.body;
     let userEmail = email;
@@ -1426,10 +1461,57 @@ app.post('/api/auth/google', (req, res) => {
     users[userId] = userData;
     saveLocalUsers(users);
 
+    // Sync to Firebase — especially to persist approved:false for new users
+    if (useFirebase && db) {
+      try {
+        const safeForFirebase = { ...userData };
+        delete safeForFirebase.passwordHash;
+        await db.collection('users').doc(userId).set(safeForFirebase, { merge: true });
+      } catch (fbErr) {
+        console.warn('Firebase Google auth user sync note:', fbErr.message);
+      }
+    }
+
     const safeUser = { ...userData };
     delete safeUser.passwordHash;
 
-    console.log(`🎉 Google Auth successful for: ${cleanEmail} (${userId})`);
+    console.log(`🎉 Google Auth successful for: ${cleanEmail} (${userId}) | approved: ${userData.approved}`);
+
+    // Send admin notification for brand new Google users pending approval
+    if (isNewUser && userData.approved === false) {
+      const adminEmail = 'subodhram3350@gmail.com';
+      const dashboardUrl = `${process.env.FRONTEND_URL || 'https://fgtx.trexxitpro.net'}/#superadmin`;
+      sendEmailNotification({
+        to: adminEmail,
+        subject: `🔔 New User Signup — Approval Required: ${capitalizedName}`,
+        fromName: 'FGTech Travel System',
+        html: `
+          <div style="font-family:'Inter',Arial,sans-serif;max-width:540px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+            <div style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:32px;text-align:center;">
+              <div style="width:56px;height:56px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;">🔔</div>
+              <h1 style="color:#ffffff;font-size:1.4rem;font-weight:800;margin:0;">New User — Approval Required</h1>
+            </div>
+            <div style="padding:32px;">
+              <p style="color:#475569;font-size:0.95rem;margin-bottom:20px;">A new user signed in via Google and is waiting for your approval.</p>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
+                <table style="width:100%;border-collapse:collapse;">
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;width:100px;">Name</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${capitalizedName}</td></tr>
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Email</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${cleanEmail}</td></tr>
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Signed up</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST</td></tr>
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Method</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">Google OAuth</td></tr>
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Status</td><td style="padding:6px 0;"><span style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;padding:2px 10px;border-radius:6px;font-weight:700;font-size:0.8rem;">⏳ Pending Approval</span></td></tr>
+                </table>
+              </div>
+              <div style="text-align:center;">
+                <a href="${dashboardUrl}" style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:800;font-size:1rem;display:inline-block;">👤 Review in Admin Dashboard</a>
+              </div>
+              <p style="color:#94a3b8;font-size:0.8rem;text-align:center;margin-top:20px;">Go to Members tab → look for "Approval Pending" users → Approve or Reject.</p>
+            </div>
+          </div>
+        `
+      }).catch(e => console.warn('Admin notification email note:', e.message));
+    }
+
     res.json({ success: true, user: safeUser });
   } catch (err) {
     console.error('Google Auth error:', err);
@@ -1646,6 +1728,41 @@ app.post('/api/auth/verify-otp', (req, res) => {
 
     const hasPassword = !!existing.passwordHash;
     console.log(`✅ Real OTP Verified for ${cleanEmail}: ${capitalizedName} (hasPassword: ${hasPassword})`);
+
+    // Send admin notification for brand new users pending approval
+    if (isNewUser && users[userId].approved === false) {
+      const adminEmail = 'subodhram3350@gmail.com';
+      const dashboardUrl = `${process.env.FRONTEND_URL || 'https://fgtx.trexxitpro.net'}/#superadmin`;
+      sendEmailNotification({
+        to: adminEmail,
+        subject: `🔔 New User Signup — Approval Required: ${capitalizedName}`,
+        fromName: 'FGTech Travel System',
+        html: `
+          <div style="font-family:'Inter',Arial,sans-serif;max-width:540px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+            <div style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:32px;text-align:center;">
+              <div style="width:56px;height:56px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;">🔔</div>
+              <h1 style="color:#ffffff;font-size:1.4rem;font-weight:800;margin:0;">New User — Approval Required</h1>
+            </div>
+            <div style="padding:32px;">
+              <p style="color:#475569;font-size:0.95rem;margin-bottom:20px;">A new user has registered and is waiting for your approval to access the system.</p>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
+                <table style="width:100%;border-collapse:collapse;">
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;width:100px;">Name</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${capitalizedName}</td></tr>
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Email</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${cleanEmail}</td></tr>
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Signed up</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST</td></tr>
+                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Status</td><td style="padding:6px 0;"><span style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;padding:2px 10px;border-radius:6px;font-weight:700;font-size:0.8rem;">⏳ Pending Approval</span></td></tr>
+                </table>
+              </div>
+              <div style="text-align:center;">
+                <a href="${dashboardUrl}" style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:800;font-size:1rem;display:inline-block;">👤 Review in Admin Dashboard</a>
+              </div>
+              <p style="color:#94a3b8;font-size:0.8rem;text-align:center;margin-top:20px;">Go to Members tab → look for "Approval Pending" users → Approve or Reject.</p>
+            </div>
+          </div>
+        `
+      }).catch(e => console.warn('Admin notification email note:', e.message));
+    }
+
     res.json({ success: true, user: safeUser, hasPassword });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2092,6 +2209,7 @@ app.get('/api/admin/users', async (req, res) => {
       }
     } else if (useFirebase && db) {
       try {
+        // Fetch expenses from Firebase
         const snapshot = await db.collection('expenses').get();
         const fbExpenses = [];
         snapshot.forEach(doc => {
@@ -2107,7 +2225,31 @@ app.get('/api/admin/users', async (req, res) => {
         if (fbExpenses.length > 0) {
           allExpenses = fbExpenses;
         }
-        usersObj = getLocalUsers();
+
+        // Fetch users from Firebase users collection
+        const localUsers = getLocalUsers();
+        usersObj = { ...localUsers }; // start with local users as base
+        try {
+          const usersSnapshot = await db.collection('users').get();
+          usersSnapshot.forEach(doc => {
+            const fbUser = doc.data();
+            const uid = fbUser.id || doc.id;
+            if (!uid) return;
+            // Merge: local user data takes priority (especially approved field)
+            const localUser = localUsers[uid] || {};
+            usersObj[uid] = {
+              ...fbUser,
+              id: uid,
+              // Local 'approved' field is authoritative — Firebase may not have it
+              approved: localUser.approved !== undefined ? localUser.approved : fbUser.approved,
+              // Keep other local overrides
+              ...(localUser.id ? { name: localUser.name || fbUser.name, picture: localUser.picture || fbUser.picture } : {})
+            };
+          });
+          console.log(`📋 Admin users: loaded ${Object.keys(usersObj).length} users (Firebase + local merged)`);
+        } catch (fbUsersErr) {
+          console.warn('Firebase users collection fetch note:', fbUsersErr.message);
+        }
       } catch (e) {
         console.warn('Firebase admin users expenses fetch warning:', e.message);
         usersObj = getLocalUsers();
