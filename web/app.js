@@ -3636,8 +3636,6 @@ function renderAdminUsersTable(users) {
       ? `<i class="fa-solid fa-pen-to-square"></i> Edit Bill`
       : `<i class="fa-solid fa-upload"></i> Upload Bill`;
 
-    const canRevoke = user.role !== 'super_admin' && (!user.email || user.email.toLowerCase() !== 'subodhram3350@gmail.com');
-
     return `
       <tr style="border-bottom: 1px solid #f1f5f9;">
         <td style="padding: 12px 16px; cursor: pointer;" onclick="inspectUserExpenses('${user.id}')" title="Click to view ${user.name}'s entries &amp; export Excel">
@@ -3661,11 +3659,6 @@ function renderAdminUsersTable(users) {
             <button type="button" class="btn btn-sm" onclick="inspectUserExpenses('${user.id}')" title="View Member Expenses &amp; Export Excel" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
               <i class="fa-solid fa-eye"></i> View
             </button>
-            ${canRevoke ? `
-              <button type="button" class="btn btn-sm" onclick="adminApproveUser('${user.id}', 'revoke')" title="Revoke software approval (put back on Waiting for Approval)" style="padding: 5px 8px; font-size: 0.78rem; font-weight: 600; background: #fff; color: #b45309; border: 1px solid #fde68a; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-                <i class="fa-solid fa-user-lock"></i> Revoke
-              </button>
-            ` : ''}
             <button type="button" class="btn btn-sm" onclick="handleDeleteSettlementOrUser('${user.id}')" title="Delete Settlement or Member" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #dc2626; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
               <i class="fa-solid fa-trash-can"></i> Del
             </button>
@@ -3676,27 +3669,20 @@ function renderAdminUsersTable(users) {
   }).join('');
 }
 
-// ─── Admin: Approve, Reject, or Revoke a user ────────────────────────────────
+// ─── Admin: Approve or Reject a pending user ─────────────────────────────────
 async function adminApproveUser(userId, action) {
-  let label = 'Approve';
-  let msg = 'Approve this user and grant them access to use the software?';
-  let icon = 'fa-user-check';
-
-  if (action === 'reject') {
-    label = 'Reject';
-    msg = 'Reject and permanently remove this user from the system?';
-    icon = 'fa-user-xmark';
-  } else if (action === 'revoke') {
-    label = 'Revoke Approval';
-    msg = 'Revoke approval for this member? They will be locked to the "Waiting for Approval" screen until approved again.';
-    icon = 'fa-user-lock';
-  }
+  let label = action === 'reject' ? 'Reject' : 'Approve';
+  let msg = action === 'reject'
+    ? 'Reject and permanently remove this user from the system?'
+    : 'Approve this member and grant them access to use the software? They will receive an approval confirmation email.';
+  let icon = action === 'reject' ? 'fa-user-xmark' : 'fa-circle-check';
+  let confirmBtnText = action === 'reject' ? 'Yes, Reject' : 'Yes, Approve';
 
   showConfirmModal({
-    title: `${label} Member`,
+    title: `${label} Member Access`,
     message: msg,
     iconClass: icon,
-    btnText: label,
+    btnText: confirmBtnText,
     onConfirm: async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/admin/approve-user`, {
