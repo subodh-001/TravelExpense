@@ -126,7 +126,7 @@
     "telegramVerified": false,
     "paymentBillUrl": "",
     "createdAt": "2026-10-20T15:55:36.207335+00:00",
-    "updatedAt": "2026-10-20T17:34:31.545Z",
+    "updatedAt": "2026-10-20T17:34:31.545+00:00",
     "approved": false
   }
 }
