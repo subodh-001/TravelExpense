@@ -50,6 +50,13 @@ if (!fs.existsSync(USERS_DB_FILE)) fs.writeFileSync(USERS_DB_FILE, JSON.stringif
 if (!fs.existsSync(INVITES_DB_FILE)) fs.writeFileSync(INVITES_DB_FILE, JSON.stringify({}));
 if (!fs.existsSync(DELETED_USERS_FILE)) fs.writeFileSync(DELETED_USERS_FILE, JSON.stringify([]));
 
+// User approvals cache (key: userId or cleanEmail -> boolean)
+// Tracks user approval state dynamically; false = waiting for admin approval, true = approved
+let userApprovalsCache = {
+  'nothingsubodh@gmail.com': false,
+  'google_nothingsubodh_gmail_com': false
+};
+
 // Helpers for persistent user deletion blacklist
 const getDeletedUsers = () => {
   try {
@@ -120,6 +127,11 @@ const isUserDeleted = (userIdOrEmail) => {
   const clean = userIdOrEmail.toLowerCase().trim();
   const base = clean.replace(/^(google_)+/, '');
   const googleKey = `google_${base}`;
+
+  // If user is actively tracked in userApprovalsCache, they are NOT deleted
+  if (typeof userApprovalsCache !== 'undefined' && (userApprovalsCache[clean] !== undefined || userApprovalsCache[googleKey] !== undefined || userApprovalsCache[base] !== undefined)) {
+    return false;
+  }
 
   // If user exists in active users database, they are NOT deleted
   try {
@@ -481,6 +493,96 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
   } catch (err) {
     console.error('Error writing USERS_DB_FILE:', err);
   }
+};
+
+// ==================== USER APPROVALS STORE & SYNC ====================
+// Tracks approval status: key = userId or cleanEmail -> boolean (true = approved, false = pending)
+const loadUserApprovalsFromCloud = async () => {
+  if (useSupabase && supabase) {
+    try {
+      const { data, error } = await supabase.from('whatsapp_auth').select('value').eq('key', 'system_user_approvals').single();
+      if (!error && data && data.value && typeof data.value === 'object') {
+        userApprovalsCache = { ...userApprovalsCache, ...data.value };
+        console.log(`📋 Loaded ${Object.keys(userApprovalsCache).length} user approval records from Supabase`);
+      }
+    } catch (e) {
+      console.warn('Note loading approvals from Supabase:', e.message);
+    }
+  }
+};
+loadUserApprovalsFromCloud();
+
+const isUserApproved = (userId, email, userObj = null) => {
+  const cleanId = (userId || '').toLowerCase().trim();
+  const cleanEmail = (email || '').toLowerCase().trim();
+
+  // Super Admin is ALWAYS approved
+  if (cleanEmail === 'subodhram3350@gmail.com' || cleanId === 'google_subodhram3350_gmail_com' || cleanEmail.includes('subodhram3350')) {
+    return true;
+  }
+
+  // Explicit approval check in cache
+  if (cleanId && userApprovalsCache[cleanId] !== undefined) {
+    return !!userApprovalsCache[cleanId];
+  }
+  if (cleanEmail && userApprovalsCache[cleanEmail] !== undefined) {
+    return !!userApprovalsCache[cleanEmail];
+  }
+
+  // Check user object if passed
+  if (userObj && userObj.approved !== undefined) {
+    return !!userObj.approved;
+  }
+
+  // Check local users
+  const localUsers = getLocalUsers();
+  const localU = localUsers[userId] || (cleanEmail && Object.values(localUsers).find(u => u && u.email && u.email.toLowerCase() === cleanEmail));
+  if (localU && localU.approved !== undefined) {
+    return !!localU.approved;
+  }
+
+  // Legacy users default to true (approved)
+  return true;
+};
+
+const saveUserApproval = async (userId, email, isApproved) => {
+  const cleanId = (userId || '').toLowerCase().trim();
+  const cleanEmail = (email || '').toLowerCase().trim();
+
+  if (cleanId) userApprovalsCache[cleanId] = !!isApproved;
+  if (cleanEmail) userApprovalsCache[cleanEmail] = !!isApproved;
+
+  // Update local users
+  try {
+    const localUsers = getLocalUsers();
+    const u = localUsers[userId] || (cleanEmail && Object.values(localUsers).find(x => x && x.email && x.email.toLowerCase() === cleanEmail));
+    if (u) {
+      u.approved = !!isApproved;
+      u.updatedAt = new Date().toISOString();
+      localUsers[u.id] = u;
+      saveLocalUsers(localUsers);
+    }
+  } catch (err) {}
+
+  // Sync to Supabase
+  if (useSupabase && supabase) {
+    try {
+      await supabase.from('whatsapp_auth').upsert({
+        key: 'system_user_approvals',
+        value: userApprovalsCache,
+        updated_at: new Date().toISOString()
+      });
+    } catch (spErr) {
+      console.warn('Supabase approvals save note:', spErr.message);
+    }
+  }
+
+  // Broadcast to SSE clients so connected users immediately detect status changes
+  broadcastEvent('user_approval_updated', {
+    userId: cleanId,
+    email: cleanEmail,
+    approved: !!isApproved
+  });
 };
 
 // 🔥 Automatic Cloud Sync: Pulls master DB state directly from Firebase Firestore on server startup
@@ -1313,7 +1415,7 @@ app.post('/api/auth/check-email', (req, res) => {
   }
 });
 
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
     if (!email || !email.includes('@')) {
@@ -1344,6 +1446,8 @@ app.post('/api/auth/register', (req, res) => {
 
     const isNewUser = !existingUser || !existingUser.id;
 
+    const isApproved = isNewUser ? false : isUserApproved(userId, cleanEmail, existingUser);
+
     users[userId] = {
       ...(existingUser || {}),
       id: userId,
@@ -1353,10 +1457,13 @@ app.post('/api/auth/register', (req, res) => {
       picture,
       verified: true,
       // New users start as pending; existing users keep their approval status
-      approved: isNewUser ? false : (existingUser.approved !== undefined ? existingUser.approved : true),
+      approved: isApproved,
       updatedAt: new Date().toISOString()
     };
     saveLocalUsers(users);
+    if (isNewUser) {
+      await saveUserApproval(userId, cleanEmail, false);
+    }
 
     const safeUser = { ...users[userId] };
     delete safeUser.passwordHash;
@@ -1453,13 +1560,16 @@ app.post('/api/auth/google', async (req, res) => {
       picture: finalPic,
       verified: true,
       // New users (first time Google login) start as pending; existing users keep their approval
-      approved: isNewUser ? false : (existing.approved !== undefined ? existing.approved : true),
+      approved: isNewUser ? false : isUserApproved(userId, cleanEmail, existing),
       role: existing.role || 'user',
       updatedAt: new Date().toISOString()
     };
 
     users[userId] = userData;
     saveLocalUsers(users);
+    if (isNewUser) {
+      await saveUserApproval(userId, cleanEmail, false);
+    }
 
     // Sync to Firebase — especially to persist approved:false for new users
     if (useFirebase && db) {
@@ -1674,7 +1784,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
 });
 
 // Strict Verify 6-Digit OTP Code (NO DEMO BYPASS)
-app.post('/api/auth/verify-otp', (req, res) => {
+app.post('/api/auth/verify-otp', async (req, res) => {
   try {
     const { email, name, otp } = req.body;
     if (!email || !otp) {
@@ -1709,6 +1819,8 @@ app.post('/api/auth/verify-otp', (req, res) => {
     const existing = users[userId] || {};
     const isNewUser = !existing.id; // brand new user, never seen before
 
+    const isApproved = isNewUser ? false : isUserApproved(userId, cleanEmail, existing);
+
     users[userId] = {
       ...existing,
       id: userId,
@@ -1717,10 +1829,13 @@ app.post('/api/auth/verify-otp', (req, res) => {
       picture: existing.picture && (existing.picture.startsWith('http') || existing.picture.startsWith('data:image')) ? existing.picture : DEFAULT_USER_AVATAR,
       verified: true,
       // New users start as pending approval; existing users keep their approved status
-      approved: isNewUser ? false : (existing.approved !== undefined ? existing.approved : true),
+      approved: isApproved,
       updatedAt: new Date().toISOString()
     };
     saveLocalUsers(users);
+    if (isNewUser) {
+      await saveUserApproval(userId, cleanEmail, false);
+    }
     otpStore.delete(cleanEmail);
 
     const safeUser = { ...users[userId] };
@@ -1853,6 +1968,7 @@ app.post('/api/user/profile', async (req, res) => {
       phone: cleanPhone || existingUser.phone || '',
       whatsapp: cleanPhone || existingUser.whatsapp || '',
       passwordHash,
+      approved: isUserApproved(id, email, existingUser),
       updatedAt: new Date().toISOString()
     };
 
@@ -1905,6 +2021,7 @@ app.get('/api/user/profile/:userId', async (req, res) => {
         const { data: spUser, error: spErr } = await supabase.from('users').select('*').eq('id', userId).single();
         if (!spErr && spUser) {
           delete spUser.password_hash;
+          spUser.approved = isUserApproved(spUser.id, spUser.email, spUser);
           return res.json({ success: true, user: spUser });
         }
       } catch (spFetchErr) {
@@ -1918,6 +2035,7 @@ app.get('/api/user/profile/:userId', async (req, res) => {
         if (doc.exists) {
           const uData = doc.data();
           delete uData.passwordHash;
+          uData.approved = isUserApproved(userId, uData.email, uData);
           return res.json({ success: true, user: uData });
         }
       } catch (fbErr) {
@@ -2171,6 +2289,8 @@ app.get('/api/admin/users', async (req, res) => {
     let usersObj = {};
     let allExpenses = [];
 
+    await loadUserApprovalsFromCloud();
+
     if (useSupabase && supabase) {
       try {
         const { data: spUsers } = await supabase.from('users').select('*');
@@ -2305,7 +2425,7 @@ app.get('/api/admin/users', async (req, res) => {
         email: user.email,
         picture: user.picture,
         verified: !!user.verified,
-        approved: user.approved !== undefined ? !!user.approved : true, // undefined = legacy user = approved
+        approved: isUserApproved(user.id, user.email, user),
         role,
         totalAmount: pendingAmount,
         pendingAmount,
@@ -2333,14 +2453,31 @@ app.get('/api/admin/users', async (req, res) => {
   }
 });
 
-// ─── Admin: Approve Pending User ─────────────────────────────────────────────
+// ─── Admin: Approve / Reject / Revoke Pending User ───────────────────────────
 app.post('/api/admin/approve-user', async (req, res) => {
   try {
-    const { userId, action } = req.body; // action: 'approve' | 'reject'
+    const { userId, action } = req.body; // action: 'approve' | 'reject' | 'revoke'
     if (!userId) return res.status(400).json({ error: 'userId is required' });
 
+    // Look up user from local, Supabase, or Firebase
     const users = getLocalUsers();
-    const user = users[userId] || Object.values(users).find(u => u && (u.id === userId || u.email === userId));
+    let user = users[userId] || Object.values(users).find(u => u && (u.id === userId || u.email === userId));
+
+    if (!user && useSupabase && supabase) {
+      try {
+        const { data: spUser } = await supabase.from('users').select('*').or(`id.eq.${userId},email.eq.${userId}`).maybeSingle();
+        if (spUser) {
+          user = {
+            id: spUser.id,
+            name: spUser.name,
+            email: spUser.email,
+            picture: spUser.picture,
+            role: spUser.role || 'user'
+          };
+        }
+      } catch (e) {}
+    }
+
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     if (action === 'reject') {
@@ -2350,30 +2487,70 @@ app.post('/api/admin/approve-user', async (req, res) => {
       saveLocalUsers(users);
       addDeletedUser(cleanEmail);
       addDeletedUser(cleanId);
+      if (useSupabase && supabase) {
+        try { await supabase.from('users').delete().eq('id', cleanId); } catch (e) {}
+      }
+      if (typeof userApprovalsCache !== 'undefined') {
+        delete userApprovalsCache[cleanId.toLowerCase()];
+        delete userApprovalsCache[cleanEmail.toLowerCase()];
+        await saveUserApproval(cleanId, cleanEmail, false);
+      }
       console.log(`🚫 Admin rejected & removed user: ${cleanEmail} (${cleanId})`);
       return res.json({ success: true, action: 'rejected', userId });
     }
 
-    // approve
-    user.approved = true;
-    user.updatedAt = new Date().toISOString();
-    users[user.id] = user;
-    saveLocalUsers(users);
+    if (action === 'revoke' || action === 'set_pending') {
+      await saveUserApproval(user.id, user.email, false);
+      console.log(`⏳ Admin revoked approval for user: ${user.email} (${user.id})`);
+      return res.json({ success: true, action: 'revoked', userId: user.id, name: user.name, email: user.email });
+    }
 
-    // Sync to Firebase/Supabase
-    if (useFirebase && db) {
-      try {
-        await db.collection('users').doc(user.id).update({ approved: true, updatedAt: new Date().toISOString() });
-      } catch (e) { console.warn('Firebase approve-user sync note:', e.message); }
-    }
-    if (useSupabase && supabase) {
-      try {
-        await supabase.from('users').update({ approved: true, updated_at: new Date().toISOString() }).eq('id', user.id);
-      } catch (e) { console.warn('Supabase approve-user sync note:', e.message); }
-    }
+    // Default: 'approve'
+    await saveUserApproval(user.id, user.email, true);
+
+    // Send email notification to user informing them of approval
+    const frontendUrl = process.env.FRONTEND_URL || 'https://fgtx.trexxitpro.net';
+    sendEmailNotification({
+      to: user.email,
+      subject: `🎉 Account Approved! Welcome to FGTech Travel System`,
+      fromName: 'FGTech Travel System',
+      html: `
+        <div style="font-family:'Inter',Arial,sans-serif;max-width:540px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+          <div style="background:linear-gradient(135deg,#059669 0%,#10b981 100%);padding:32px;text-align:center;">
+            <div style="width:56px;height:56px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;">🎉</div>
+            <h1 style="color:#ffffff;font-size:1.4rem;font-weight:800;margin:0;">Account Approved!</h1>
+          </div>
+          <div style="padding:32px;">
+            <p style="color:#0f172a;font-size:1.05rem;font-weight:700;margin-bottom:12px;">Hello ${user.name || 'Member'},</p>
+            <p style="color:#475569;font-size:0.95rem;line-height:1.6;margin-bottom:20px;">
+              Great news! Your account has been reviewed and approved by the Administrator. You now have full access to the FGTech Travel Expense system.
+            </p>
+            <div style="text-align:center;margin:28px 0;">
+              <a href="${frontendUrl}" style="background:linear-gradient(135deg,#059669 0%,#10b981 100%);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:12px;font-weight:800;font-size:1rem;display:inline-block;box-shadow:0 4px 14px rgba(5,150,105,0.3);">🚀 Open Travel Expense App</a>
+            </div>
+            <p style="color:#94a3b8;font-size:0.8rem;text-align:center;">If you have any questions, reach out to admin at subodhram3350@gmail.com</p>
+          </div>
+        </div>
+      `
+    }).catch(e => console.warn('User approval email note:', e.message));
 
     console.log(`✅ Admin approved user: ${user.email} (${user.id})`);
     res.json({ success: true, action: 'approved', userId: user.id, name: user.name, email: user.email });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── User Side: Check Live Approval Status ────────────────────────────────────
+app.get('/api/auth/approval-status', async (req, res) => {
+  try {
+    const { userId, email } = req.query;
+    if (!userId && !email) {
+      return res.status(400).json({ error: 'userId or email is required' });
+    }
+    await loadUserApprovalsFromCloud();
+    const approved = isUserApproved(userId, email);
+    res.json({ success: true, approved, userId, email });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

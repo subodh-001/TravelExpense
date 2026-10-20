@@ -249,6 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const isApproved = !u || u.approved !== false;
     if (!state.sharedMode && u && !isApproved) {
       switchAppPage('pending-approval', false);
+      // Immediately verify with backend in background in case admin already approved
+      if (typeof checkUserApprovalStatus === 'function') checkUserApprovalStatus(false);
     } else if (isSuperAdmin && !state.sharedMode && u) {
       switchAppPage('superadmin', false);
     } else {
@@ -262,16 +264,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // Render Logged In Google User Profile UI
   updateUserProfileUI();
 
-  // On page load/refresh: Sync latest profile picture & name from backend/Firestore
+  // On page load/refresh: Sync latest profile picture, name, and approval status from backend
   if (state.currentGoogleUser && state.currentGoogleUser.id) {
     const activeUserId = state.currentGoogleUser.id;
     fetch(`${API_BASE_URL}/user/profile/${encodeURIComponent(activeUserId)}`)
       .then(r => r.json())
       .then(data => {
-        if (data && data.success && data.user && data.user.picture) {
+        if (data && data.success && data.user) {
           if (state.currentGoogleUser && state.currentGoogleUser.id === activeUserId) {
-            state.currentGoogleUser.picture = data.user.picture;
+            if (data.user.picture) state.currentGoogleUser.picture = data.user.picture;
             if (data.user.name) state.currentGoogleUser.name = data.user.name;
+            if (data.user.approved !== undefined) {
+              const prev = state.currentGoogleUser.approved;
+              state.currentGoogleUser.approved = data.user.approved;
+              if (prev === false && data.user.approved === true && (window.location.hash === '#pending-approval' || state.currentPage === 'pending-approval')) {
+                const isSuperAdmin = (data.user.role === 'super_admin' || (data.user.email && data.user.email.toLowerCase().includes('admin')));
+                switchAppPage(isSuperAdmin ? 'superadmin' : 'dashboard', false);
+              }
+            }
             try { localStorage.setItem('google_user', JSON.stringify(state.currentGoogleUser)); } catch (e) {}
             updateUserProfileUI();
           }
@@ -3285,6 +3295,12 @@ function switchAppPage(viewName, pushToHistory = true) {
   if (superAdminDashboard) superAdminDashboard.classList.add('hidden');
   if (pendingApprovalPage) pendingApprovalPage.classList.add('hidden');
 
+  // Stop polling if moving away from pending-approval page
+  if (viewName !== 'pending-approval' && typeof pendingApprovalPollingTimer !== 'undefined' && pendingApprovalPollingTimer) {
+    clearInterval(pendingApprovalPollingTimer);
+    pendingApprovalPollingTimer = null;
+  }
+
   // If user is not logged in, force auth screen
   if (!state.currentGoogleUser) {
     viewName = 'auth';
@@ -3301,6 +3317,14 @@ function switchAppPage(viewName, pushToHistory = true) {
     // Show user email in the badge
     const badge = document.getElementById('pendingApprovalEmailBadge');
     if (badge && state.currentGoogleUser) badge.textContent = state.currentGoogleUser.email || '';
+
+    // Active polling every 4 seconds while on pending-approval page
+    if (typeof pendingApprovalPollingTimer !== 'undefined' && pendingApprovalPollingTimer) {
+      clearInterval(pendingApprovalPollingTimer);
+    }
+    pendingApprovalPollingTimer = setInterval(() => {
+      if (typeof checkUserApprovalStatus === 'function') checkUserApprovalStatus(false);
+    }, 4000);
   } else if (viewName === 'dashboard' && appDashboard) {
     appDashboard.classList.remove('hidden');
     if (mobileNav) mobileNav.classList.add('nav-visible');
@@ -3322,6 +3346,54 @@ function switchAppPage(viewName, pushToHistory = true) {
     try {
       window.history.pushState({ page: viewName }, '', '#' + viewName);
     } catch (e) {}
+  }
+}
+
+// ─── Live Check User Approval Status (Polling & Manual Button) ───────────────
+let pendingApprovalPollingTimer = null;
+
+async function checkUserApprovalStatus(isManual = false) {
+  const user = state.currentGoogleUser;
+  if (!user || !user.email) return;
+
+  const btn = document.getElementById('checkApprovalStatusBtn');
+  const icon = document.getElementById('checkApprovalIcon');
+  if (isManual && icon) icon.classList.add('fa-spin');
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/approval-status?userId=${encodeURIComponent(user.id || '')}&email=${encodeURIComponent(user.email || '')}`);
+    const data = await res.json();
+
+    if (data && data.success && data.approved === true) {
+      if (pendingApprovalPollingTimer) {
+        clearInterval(pendingApprovalPollingTimer);
+        pendingApprovalPollingTimer = null;
+      }
+      state.currentGoogleUser.approved = true;
+      try { localStorage.setItem('google_user', JSON.stringify(state.currentGoogleUser)); } catch (e) {}
+
+      const successMsg = `🎉 Congratulations! Your account has been approved by Admin!`;
+      if (typeof showCustomToast === 'function') showCustomToast(successMsg);
+      else if (typeof showToast === 'function') showToast(successMsg);
+
+      const isSuperAdmin = state.currentGoogleUser && (state.currentGoogleUser.role === 'super_admin' || (state.currentGoogleUser.email && (state.currentGoogleUser.email.toLowerCase().includes('admin') || state.currentGoogleUser.email.toLowerCase() === 'subodhram3350@gmail.com')));
+      if (isSuperAdmin) {
+        switchAppPage('superadmin');
+      } else {
+        switchAppPage('dashboard');
+      }
+      return;
+    }
+
+    if (isManual) {
+      const pendingMsg = '⏳ Your account is still pending admin approval. Please check back shortly.';
+      if (typeof showCustomToast === 'function') showCustomToast(pendingMsg);
+      else if (typeof showToast === 'function') showToast(pendingMsg);
+    }
+  } catch (err) {
+    if (isManual) alert('Could not reach server: ' + err.message);
+  } finally {
+    if (isManual && icon) icon.classList.remove('fa-spin');
   }
 }
 
@@ -3470,33 +3542,74 @@ function renderAdminUsersTable(users) {
     return;
   }
 
+  // Identify all pending approval users
+  const pendingUsers = users.filter(u => u && u.approved === false);
+  const banner = document.getElementById('adminPendingApprovalBanner');
+  const pendingCountEl = document.getElementById('adminPendingUsersCount');
+  const pendingListEl = document.getElementById('adminPendingUsersList');
+  const pendingBadge = document.getElementById('adminPendingApprovalBadge');
+
+  if (banner) {
+    if (pendingUsers.length > 0) {
+      banner.style.display = 'flex';
+      if (pendingCountEl) pendingCountEl.textContent = pendingUsers.length;
+      if (pendingListEl) {
+        const names = pendingUsers.map(u => `<strong>${u.name || u.email}</strong>`).join(', ');
+        pendingListEl.innerHTML = `Waiting for access: ${names} — Click <strong>Approve</strong> below to grant software access.`;
+      }
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  if (pendingBadge) {
+    if (pendingUsers.length > 0) {
+      pendingBadge.style.display = 'inline-flex';
+      pendingBadge.innerHTML = `<i class="fa-solid fa-hourglass-half fa-spin"></i> ${pendingUsers.length} Approval Pending`;
+    } else {
+      pendingBadge.style.display = 'none';
+    }
+  }
+
+  // Sort so pending users appear at the very top of the table
+  const sortedUsers = [...users].sort((a, b) => {
+    const aPending = a && a.approved === false;
+    const bPending = b && b.approved === false;
+    if (aPending && !bPending) return -1;
+    if (!aPending && bPending) return 1;
+    return 0;
+  });
+
   const selectedMonth = document.getElementById('adminMonthFilter')?.value || 'all';
 
-  tbody.innerHTML = users.map(user => {
-    // ── Unapproved users get a special row ──
+  tbody.innerHTML = sortedUsers.map(user => {
+    // ── Unapproved users get a highlighted pending approval row ──
     const isApproved = user.approved !== false; // undefined = legacy = approved
     if (!isApproved) {
       return `
-        <tr style="border-bottom: 1px solid #fef3c7; background: #fffbeb;">
+        <tr style="border-bottom: 2px solid #fde68a; background: #fffdf5;">
           <td style="padding: 12px 16px;">
-            <img src="${getUserAvatarUrl(user)}" alt="${user.name || 'Member'}" style="width:38px;height:38px;border-radius:50%;border:1.5px solid #fde68a;object-fit:cover;" />
+            <img src="${getUserAvatarUrl(user)}" alt="${user.name || 'Member'}" style="width:38px;height:38px;border-radius:50%;border:2px solid #f59e0b;object-fit:cover;" />
           </td>
           <td style="padding: 12px 16px;">
-            <strong style="color:#0f172a;font-size:0.92rem;display:block;">${user.name || 'Member'}</strong>
+            <strong style="color:#0f172a;font-size:0.92rem;display:flex;align-items:center;gap:6px;">
+              ${user.name || 'Member'}
+              <span style="background:#fef3c7;color:#b45309;font-size:0.7rem;padding:2px 7px;border-radius:4px;font-weight:700;border:1px solid #fde68a;">NEW SIGNUP</span>
+            </strong>
             <span style="color:#64748b;font-size:0.8rem;">${user.email || 'N/A'}</span>
           </td>
-          <td style="padding:12px 16px;font-weight:800;color:#b45309;font-size:0.9rem;" class="col-numeric">&mdash;</td>
+          <td style="padding:12px 16px;font-weight:700;color:#94a3b8;font-size:0.88rem;" class="col-numeric">&mdash;</td>
           <td style="padding:12px 16px;">
-            <span style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;padding:4px 10px;border-radius:6px;font-weight:700;font-size:0.78rem;display:inline-flex;align-items:center;gap:4px;">
-              <i class="fa-solid fa-hourglass-half"></i> Approval Pending
+            <span style="background:#fef3c7;color:#b45309;border:1.5px solid #fde68a;padding:5px 12px;border-radius:20px;font-weight:700;font-size:0.8rem;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 2px rgba(245,158,11,0.1);">
+              <i class="fa-solid fa-hourglass-half fa-spin"></i> Approval Pending
             </span>
           </td>
           <td style="padding:12px 16px;" class="col-actions">
             <div style="display:flex;gap:6px;align-items:center;">
-              <button type="button" onclick="adminApproveUser('${user.id}', 'approve')" title="Approve this user" style="padding:5px 12px;font-size:0.78rem;font-weight:700;background:#059669;color:#fff;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+              <button type="button" class="btn btn-sm" onclick="adminApproveUser('${user.id}', 'approve')" title="Approve and grant software access" style="padding:6px 14px;font-size:0.8rem;font-weight:700;background:#059669;color:#fff;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 4px rgba(5,150,105,0.25);">
                 <i class="fa-solid fa-check"></i> Approve
               </button>
-              <button type="button" onclick="adminApproveUser('${user.id}', 'reject')" title="Reject &amp; remove this user" style="padding:5px 12px;font-size:0.78rem;font-weight:700;background:#fff;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+              <button type="button" class="btn btn-sm" onclick="adminApproveUser('${user.id}', 'reject')" title="Reject & remove user" style="padding:6px 10px;font-size:0.8rem;font-weight:700;background:#fff;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
                 <i class="fa-solid fa-xmark"></i> Reject
               </button>
             </div>
@@ -3523,6 +3636,8 @@ function renderAdminUsersTable(users) {
       ? `<i class="fa-solid fa-pen-to-square"></i> Edit Bill`
       : `<i class="fa-solid fa-upload"></i> Upload Bill`;
 
+    const canRevoke = user.role !== 'super_admin' && (!user.email || user.email.toLowerCase() !== 'subodhram3350@gmail.com');
+
     return `
       <tr style="border-bottom: 1px solid #f1f5f9;">
         <td style="padding: 12px 16px; cursor: pointer;" onclick="inspectUserExpenses('${user.id}')" title="Click to view ${user.name}'s entries &amp; export Excel">
@@ -3546,6 +3661,11 @@ function renderAdminUsersTable(users) {
             <button type="button" class="btn btn-sm" onclick="inspectUserExpenses('${user.id}')" title="View Member Expenses &amp; Export Excel" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
               <i class="fa-solid fa-eye"></i> View
             </button>
+            ${canRevoke ? `
+              <button type="button" class="btn btn-sm" onclick="adminApproveUser('${user.id}', 'revoke')" title="Revoke software approval (put back on Waiting for Approval)" style="padding: 5px 8px; font-size: 0.78rem; font-weight: 600; background: #fff; color: #b45309; border: 1px solid #fde68a; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                <i class="fa-solid fa-user-lock"></i> Revoke
+              </button>
+            ` : ''}
             <button type="button" class="btn btn-sm" onclick="handleDeleteSettlementOrUser('${user.id}')" title="Delete Settlement or Member" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 700; background: #ffffff; color: #dc2626; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
               <i class="fa-solid fa-trash-can"></i> Del
             </button>
@@ -3556,17 +3676,26 @@ function renderAdminUsersTable(users) {
   }).join('');
 }
 
-// ─── Admin: Approve or Reject a pending user ─────────────────────────────────
+// ─── Admin: Approve, Reject, or Revoke a user ────────────────────────────────
 async function adminApproveUser(userId, action) {
-  const label = action === 'approve' ? 'Approve' : 'Reject';
-  const msg = action === 'approve'
-    ? 'Approve this user and grant them access to the system?'
-    : 'Reject and permanently remove this user from the system?';
+  let label = 'Approve';
+  let msg = 'Approve this user and grant them access to use the software?';
+  let icon = 'fa-user-check';
+
+  if (action === 'reject') {
+    label = 'Reject';
+    msg = 'Reject and permanently remove this user from the system?';
+    icon = 'fa-user-xmark';
+  } else if (action === 'revoke') {
+    label = 'Revoke Approval';
+    msg = 'Revoke approval for this member? They will be locked to the "Waiting for Approval" screen until approved again.';
+    icon = 'fa-user-lock';
+  }
 
   showConfirmModal({
-    title: `${label} User`,
+    title: `${label} Member`,
     message: msg,
-    iconClass: action === 'approve' ? 'fa-user-check' : 'fa-user-xmark',
+    iconClass: icon,
     btnText: label,
     onConfirm: async () => {
       try {
@@ -3577,10 +3706,11 @@ async function adminApproveUser(userId, action) {
         });
         const data = await res.json();
         if (data.success) {
-          const toastMsg = action === 'approve'
-            ? `✅ ${data.name || userId} approved — they can now log in!`
-            : `🚫 User rejected and removed from system.`;
+          let toastMsg = `✅ ${data.name || userId} approved — they can now use the software!`;
+          if (action === 'reject') toastMsg = `🚫 User rejected and removed from system.`;
+          if (action === 'revoke') toastMsg = `⏳ User access revoked — moved to Waiting for Approval.`;
           if (typeof showCustomToast === 'function') showCustomToast(toastMsg);
+          else if (typeof showToast === 'function') showToast(toastMsg);
           loadSuperAdminData(); // refresh admin table
         } else {
           alert('Error: ' + (data.error || 'Unknown error'));
@@ -3588,6 +3718,35 @@ async function adminApproveUser(userId, action) {
       } catch (err) {
         alert('Request failed: ' + err.message);
       }
+    }
+  });
+}
+
+// ─── Admin: Bulk Approve All Pending Users ───────────────────────────────────
+async function adminApproveAllPending() {
+  const pendingUsers = (adminUsersCache || []).filter(u => u && u.approved === false);
+  if (pendingUsers.length === 0) {
+    if (typeof showCustomToast === 'function') showCustomToast('No pending users to approve.');
+    return;
+  }
+
+  showConfirmModal({
+    title: `Approve All Pending Users`,
+    message: `Approve software access for all ${pendingUsers.length} waiting member(s)?`,
+    iconClass: 'fa-check-double',
+    btnText: 'Approve All',
+    onConfirm: async () => {
+      for (const u of pendingUsers) {
+        try {
+          await fetch(`${API_BASE_URL}/admin/approve-user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'user-id': state.currentGoogleUser?.id || '' },
+            body: JSON.stringify({ userId: u.id, action: 'approve' })
+          });
+        } catch (e) {}
+      }
+      if (typeof showCustomToast === 'function') showCustomToast(`✅ All ${pendingUsers.length} pending members approved!`);
+      loadSuperAdminData();
     }
   });
 }

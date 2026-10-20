@@ -14,7 +14,7 @@
     "telegramChatId": "1539961698",
     "picture": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjEwMCIgZmlsbD0iI2YwZjRmOCIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc4IiByPSIzOCIgZmlsbD0iIzljYTNhZiIvPjxwYXRoIGQ9Ik0gMjAgMjAwIFEgMjAgMTM4IDEwMCAxMzggUSAxODAgMTM4IDE4MCAyMDAgWiIgZmlsbD0iIzljYTNhZiIvPjwvc3ZnPg==",
     "telegramUsername": "Grandmaster3350",
-    "updatedAt": "2026-10-20T15:39:17.937+00:00",
+    "updatedAt": "2026-10-20T17:24:37.443+00:00",
     "telegramVerified": true,
     "createdAt": "2026-09-03T16:01:13.344+00:00"
   },
@@ -108,5 +108,25 @@
     "paymentBillUrl": "https://res.cloudinary.com/vrxb6o67/image/upload/v1792304378/expense_receipts/Amber_Soni/October_2026/Payment_Bills/file_1792304376421_0a193.pdf",
     "createdAt": "2026-09-21T08:37:22.165668+00:00",
     "updatedAt": "2026-10-18T06:19:39.439+00:00"
+  },
+  "google_nothingsubodh_gmail_com": {
+    "id": "google_nothingsubodh_gmail_com",
+    "name": "Subodh ram",
+    "email": "nothingsubodh@gmail.com",
+    "role": "user",
+    "verified": true,
+    "picture": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjEwMCIgZmlsbD0iI2YwZjRmOCIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc4IiByPSIzOCIgZmlsbD0iIzljYTNhZiIvPjxwYXRoIGQ9Ik0gMjAgMjAwIFEgMjAgMTM4IDEwMCAxMzggUSAxODAgMTM4IDE4MCAyMDAgWiIgZmlsbD0iIzljYTNhZiIvPjwvc3ZnPg==",
+    "passwordHash": "",
+    "lastActive": null,
+    "whatsapp": "",
+    "whatsappVerified": false,
+    "phone": "",
+    "telegramChatId": "",
+    "telegramUsername": "",
+    "telegramVerified": false,
+    "paymentBillUrl": "",
+    "createdAt": "2026-10-20T15:55:36.207335+00:00",
+    "updatedAt": "2026-10-20T17:34:31.545Z",
+    "approved": false
   }
 }
