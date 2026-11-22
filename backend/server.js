@@ -212,12 +212,12 @@ app.get('/api/app-version', (req, res) => {
   });
 });
 
-// Serve static web app with no-cache on HTML to ensure instant online updates on mobile APK
+// Serve static web app with zero-cache on HTML/JS/CSS to ensure instant online updates on mobile APK
 app.use(express.static(path.join(__dirname, '../web'), {
   etag: true,
   lastModified: true,
   setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.html')) {
+    if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
