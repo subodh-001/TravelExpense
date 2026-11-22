@@ -701,23 +701,42 @@ function saveGoogleUser(user) {
     body: JSON.stringify(safeUser)
   }).catch(err => console.warn('Backend profile sync note:', err));
 
-  const isSuperAdmin = safeUser && (safeUser.role === 'super_admin' || (safeUser.email && (safeUser.email.toLowerCase() === 'subodhram3350@gmail.com' || safeUser.email.toLowerCase().includes('admin'))));
+  const isMasterAdmin = safeUser.email && safeUser.email.toLowerCase().trim() === 'subodhram3350@gmail.com';
+  if (isMasterAdmin) {
+    safeUser.role = 'super_admin';
+    safeUser.approved = true;
+  }
+  const isSuperAdmin = safeUser && (safeUser.role === 'super_admin' || isMasterAdmin || (safeUser.email && safeUser.email.toLowerCase().includes('admin')));
   // Check approval — undefined means legacy/existing user (auto-approved)
   const isApproved = safeUser.approved !== false;
 
-  if (!isApproved) {
-    // New user pending admin approval
-    switchAppPage('pending-approval');
-  } else if (isSuperAdmin) {
-    switchAppPage('superadmin');
-  } else {
-    switchAppPage('dashboard');
+  try {
+    if (!isApproved) {
+      switchAppPage('pending-approval');
+    } else if (isSuperAdmin) {
+      switchAppPage('superadmin');
+    } else {
+      switchAppPage('dashboard');
+    }
+  } catch (pageErr) {
+    console.error('switchAppPage error in saveGoogleUser:', pageErr);
   }
 
-  if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
-  closeModal(googleAuthModal);
-  updateUserProfileUI();
-  loadExpenses();
+  try {
+    const fullAuth = document.getElementById('fullAuthPage');
+    if (fullAuth) fullAuth.classList.add('hidden');
+    if (closeGoogleAuthModalBtn) closeGoogleAuthModalBtn.style.display = 'block';
+    closeModal(googleAuthModal);
+  } catch (mErr) {
+    console.warn('modal close note:', mErr);
+  }
+
+  try {
+    updateUserProfileUI();
+    loadExpenses();
+  } catch (uiErr) {
+    console.error('updateUserProfileUI error:', uiErr);
+  }
 }
 
 function performSignOut() {
@@ -3055,31 +3074,76 @@ async function sendGoogleOtp(isResend = false) {
   }
 }
 
+let isVerifyingGoogleOtp = false;
+
 // Step 2: Verify OTP code entered by user
 async function verifyGoogleOtp() {
-  const otp = document.getElementById('googleOtpCode')?.value.trim() || '';
+  if (isVerifyingGoogleOtp) return;
+
+  const codeInput = document.getElementById('googleOtpCode');
+  const otp = codeInput?.value.trim() || '';
   const codeErrEl = document.getElementById('googleOtpCodeError');
   const step2Hint = document.getElementById('googleOtpStep2Hint');
   const btnText = document.getElementById('verifyOtpBtnText');
+  const verifyBtn = btnText?.closest('button');
 
-  if (!otp || otp.length !== 6) {
-    if (codeErrEl) { codeErrEl.textContent = 'Please enter the complete 6-digit code'; codeErrEl.style.display = 'block'; }
+  const targetEmailEl = document.getElementById('googleOtpTargetEmail');
+  const emailInput = document.getElementById('googleOtpEmail');
+  const email = (googleOtpFlowEmail || targetEmailEl?.textContent || emailInput?.value || '').toLowerCase().trim();
+
+  if (!email) {
+    if (codeErrEl) {
+      codeErrEl.textContent = 'Email address missing. Please click Back and re-enter your email.';
+      codeErrEl.style.display = 'block';
+    }
     return;
   }
 
+  if (!otp || otp.length !== 6) {
+    if (codeErrEl) {
+      codeErrEl.textContent = 'Please enter the complete 6-digit code';
+      codeErrEl.style.display = 'block';
+    }
+    return;
+  }
+
+  if (codeErrEl) { codeErrEl.textContent = ''; codeErrEl.style.display = 'none'; }
+  isVerifyingGoogleOtp = true;
   if (btnText) btnText.textContent = 'Verifying...';
+  if (verifyBtn) verifyBtn.disabled = true;
   if (step2Hint) step2Hint.innerHTML = '<span style="color:#6e6e73">⏳ Verifying code...</span>';
 
   try {
     const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: googleOtpFlowEmail, otp })
+      body: JSON.stringify({ email, otp })
     });
-    const data = await res.json();
+
+    const rawText = await res.text();
+    let data = null;
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseErr) {
+      console.warn('Verify-otp non-JSON response:', rawText);
+    }
 
     if (!res.ok) {
-      if (codeErrEl) { codeErrEl.textContent = data.error || 'Invalid code. Try again.'; codeErrEl.style.display = 'block'; }
+      const errorMsg = (data && data.error) ? data.error : (rawText && rawText.length < 120 ? rawText : `Server error (${res.status}). Please try again.`);
+      if (codeErrEl) {
+        codeErrEl.textContent = errorMsg;
+        codeErrEl.style.display = 'block';
+      }
+      if (step2Hint) step2Hint.innerHTML = '';
+      if (btnText) btnText.textContent = 'Verify Code';
+      return;
+    }
+
+    if (!data || !data.user) {
+      if (codeErrEl) {
+        codeErrEl.textContent = 'Invalid response from server. Please try again.';
+        codeErrEl.style.display = 'block';
+      }
       if (step2Hint) step2Hint.innerHTML = '';
       if (btnText) btnText.textContent = 'Verify Code';
       return;
@@ -3088,6 +3152,8 @@ async function verifyGoogleOtp() {
     // OTP verified! Check if user already has a password set
     const user = data.user;
     googleOtpFlowIsExistingUser = !!data.hasPassword;
+
+    if (step2Hint) step2Hint.innerHTML = '<span style="color:#10b981">✓ Verified! Logging in...</span>';
 
     if (data.hasPassword) {
       // Existing user with password → login directly
@@ -3101,8 +3167,16 @@ async function verifyGoogleOtp() {
       setTimeout(() => document.getElementById('setupName')?.focus(), 100);
     }
   } catch (err) {
-    if (codeErrEl) { codeErrEl.textContent = 'Server error. Please try again.'; codeErrEl.style.display = 'block'; }
+    console.error('OTP verification network error:', err);
+    if (codeErrEl) {
+      codeErrEl.textContent = err.message || 'Connection error. Please try again.';
+      codeErrEl.style.display = 'block';
+    }
+    if (step2Hint) step2Hint.innerHTML = '';
     if (btnText) btnText.textContent = 'Verify Code';
+  } finally {
+    isVerifyingGoogleOtp = false;
+    if (verifyBtn) verifyBtn.disabled = false;
   }
 }
 

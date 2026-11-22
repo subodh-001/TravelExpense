@@ -1,3 +1,11 @@
+// Global Crash Prevention Shields
+process.on('uncaughtException', (err) => {
+  console.error('🛡️ Prevented server crash (uncaughtException):', err && err.message ? err.message : err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🛡️ Prevented server crash (unhandledRejection):', reason && reason.message ? reason.message : reason);
+});
+
 const express = require('express');
 const cors = require('cors');
 const admin = require('firebase-admin');
@@ -191,6 +199,17 @@ app.get(['/app-release.apk', '/FGTech-TravelExpense.apk'], (req, res) => {
   } else {
     return res.status(404).send('APK file not found');
   }
+});
+
+// App Version Check Endpoint for In-App Auto Update
+app.get('/api/app-version', (req, res) => {
+  res.json({
+    version: '1.1.0',
+    buildNumber: 110,
+    apkUrl: 'https://fgtx.trexxitpro.net/FGTech-TravelExpense.apk',
+    releaseNotes: 'Fixed launcher icon fit, live OTP verification, and auto-update support.',
+    mandatory: false
+  });
 });
 
 // Serve static web app with no-cache on HTML to ensure instant online updates on mobile APK
@@ -1402,6 +1421,7 @@ async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Sec
 
 // ---------- USER AUTHENTICATION & PROFILE MANAGEMENT ----------
 const otpStore = new Map();
+const recentlyVerifiedStore = new Map();
 
 // Helper to check user by email
 const findUserByEmail = (email) => {
@@ -1912,6 +1932,15 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const cleanOtp = String(otp).trim();
+
+    // In-flight / rapid double-submit protection: return verified session if verified within 30s
+    const recent = recentlyVerifiedStore.get(cleanEmail);
+    if (recent && (Date.now() - recent.timestamp < 30000)) {
+      console.log(`⚡ Returning recently verified OTP session for ${cleanEmail}`);
+      return res.json({ success: true, user: recent.user, hasPassword: recent.hasPassword });
+    }
+
     const record = otpStore.get(cleanEmail);
 
     if (!record) {
@@ -1923,7 +1952,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
       return res.status(400).json({ error: 'OTP Code has expired. Please request a new code.' });
     }
 
-    if (record.otp !== otp.toString().trim()) {
+    if (String(record.otp).trim() !== cleanOtp) {
       return res.status(400).json({ error: 'Invalid 6-digit OTP Code. Please check your Gmail inbox.' });
     }
 
@@ -1936,33 +1965,58 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     removeDeletedUser(userId);
 
     const users = getLocalUsers();
-    const existing = users[userId] || {};
-    const isNewUser = !existing.id; // brand new user, never seen before
+    let existing = users[userId] || findUserByEmail(cleanEmail) || {};
 
-    const isApproved = isNewUser ? false : isUserApproved(userId, cleanEmail, existing);
+    // Supabase fallback lookup
+    if ((!existing || !existing.id) && useSupabase && supabase) {
+      try {
+        const { data: sUser } = await supabase.from('users').select('*').or(`email.ilike.${cleanEmail},id.eq.${userId}`).maybeSingle();
+        if (sUser && sUser.id) {
+          existing = sUser;
+        }
+      } catch (e) {}
+    }
+
+    const isMasterAdmin = cleanEmail === 'subodhram3350@gmail.com';
+    const isNewUser = !existing.id && !isMasterAdmin;
+
+    const isApproved = isMasterAdmin ? true : (isNewUser ? false : isUserApproved(userId, cleanEmail, existing));
+    const role = isMasterAdmin ? 'super_admin' : (existing.role || 'user');
 
     users[userId] = {
       ...existing,
       id: userId,
       name: existing.name || capitalizedName,
       email: cleanEmail,
+      role: role,
       picture: existing.picture && (existing.picture.startsWith('http') || existing.picture.startsWith('data:image')) ? existing.picture : DEFAULT_USER_AVATAR,
       verified: true,
-      // New users start as pending approval; existing users keep their approved status
       approved: isApproved,
       updatedAt: new Date().toISOString()
     };
-    saveLocalUsers(users);
-    if (isNewUser) {
-      await saveUserApproval(userId, cleanEmail, false);
+
+    try {
+      saveLocalUsers(users);
+    } catch (saveErr) {
+      console.error('Error saving local users in verify-otp:', saveErr);
     }
+
+    if (isNewUser) {
+      try {
+        await saveUserApproval(userId, cleanEmail, false);
+      } catch (e) {}
+    }
+
     otpStore.delete(cleanEmail);
 
     const safeUser = { ...users[userId] };
     delete safeUser.passwordHash;
 
-    const hasPassword = !!existing.passwordHash;
-    console.log(`✅ Real OTP Verified for ${cleanEmail}: ${capitalizedName} (hasPassword: ${hasPassword})`);
+    const hasPassword = isMasterAdmin || !!existing.passwordHash;
+    console.log(`✅ Real OTP Verified for ${cleanEmail}: ${capitalizedName} (hasPassword: ${hasPassword}, role: ${role})`);
+
+    // Cache recently verified for 30s to prevent concurrent double-click failures
+    recentlyVerifiedStore.set(cleanEmail, { user: safeUser, hasPassword, timestamp: Date.now() });
 
     // Send admin notification for brand new users pending approval
     if (isNewUser && users[userId].approved === false) {
@@ -2000,7 +2054,8 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 
     res.json({ success: true, user: safeUser, hasPassword });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Verify OTP fatal error:', err);
+    res.status(500).json({ error: err.message || 'Internal server error verifying OTP' });
   }
 });
 

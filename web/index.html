@@ -149,7 +149,7 @@
           <div class="auth-field-group" style="margin-top:20px; text-align:center;">
             <input type="text" id="googleOtpCode" maxlength="6" placeholder="000000"
               style="font-size:2rem; font-weight:900; letter-spacing:10px; text-align:center; width:100%; padding:16px 12px; border:2px solid #e5e5ea; border-radius:14px; outline:none;"
-              oninput="this.value=this.value.replace(/\D/g,''); if(this.value.length===6) verifyGoogleOtp();" />
+              oninput="this.value=this.value.replace(/\D/g,''); if(this.value.length===6){ this.blur(); setTimeout(verifyGoogleOtp, 80); }" />
             <p class="auth-field-error" id="googleOtpCodeError" style="display:none; margin-top:8px;"></p>
           </div>
           <div id="googleOtpStep2Hint" style="font-size:0.82rem; color:#6e6e73; margin-top:10px; text-align:center;"></div>
