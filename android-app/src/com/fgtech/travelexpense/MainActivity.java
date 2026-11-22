@@ -27,7 +27,7 @@ import java.io.File;
 
 public class MainActivity extends Activity {
 
-    public static final String APP_URL = "https://travelexpense-52gp.onrender.com";
+    public static final String APP_URL = "https://fgtx.trexxitpro.net";
     private static final int FILE_CHOOSER_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 2002;
 
@@ -167,7 +167,7 @@ public class MainActivity extends Activity {
             @Override
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 super.onReceivedError(view, errorCode, description, failingUrl);
-                if (failingUrl != null && (failingUrl.contains("travelexpense") || failingUrl.equals(APP_URL))) {
+                if (failingUrl != null && (failingUrl.contains("trexxitpro") || failingUrl.equals(APP_URL))) {
                     mSplashLayout.setVisibility(View.GONE);
                     mErrorLayout.setVisibility(View.VISIBLE);
                 }
@@ -271,6 +271,16 @@ public class MainActivity extends Activity {
         } else {
             mLastBackPressTime = System.currentTimeMillis();
             Toast.makeText(this, R.string.press_again_exit, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mWebView != null && mErrorLayout != null && mErrorLayout.getVisibility() == View.VISIBLE) {
+            mErrorLayout.setVisibility(View.GONE);
+            mSplashLayout.setVisibility(View.VISIBLE);
+            mWebView.loadUrl(APP_URL);
         }
     }
 
