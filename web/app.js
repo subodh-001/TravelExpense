@@ -232,15 +232,15 @@ const customGoogleEmail = document.getElementById('customGoogleEmail');
 const customGoogleSignInBtn = document.getElementById('customGoogleSignInBtn');
 
 // ==================== MATH CAPTCHA FOR BOT PROTECTION ====================
-let currentSignInCaptchaAnswer = null;
-let currentSignUpCaptchaAnswer = null;
-let currentGoogleOtpCaptchaAnswer = null;
-
 function generateMathPuzzle() {
   const num1 = Math.floor(Math.random() * 8) + 2; // 2 to 9
   const num2 = Math.floor(Math.random() * 8) + 1; // 1 to 8
   return { num1, num2, answer: num1 + num2, display: `${num1} + ${num2} =` };
 }
+
+let currentSignInCaptchaAnswer = 8;
+let currentSignUpCaptchaAnswer = 8;
+let currentGoogleOtpCaptchaAnswer = 8;
 
 function generateSignInCaptcha() {
   const puzzle = generateMathPuzzle();
@@ -273,6 +273,21 @@ function generateGoogleOtpCaptcha() {
   if (ansInput) ansInput.value = '';
   const errEl = document.getElementById('googleOtpCaptchaError');
   if (errEl) errEl.style.display = 'none';
+}
+
+// Immediate check on evaluation if DOM is already ready
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      generateSignInCaptcha();
+      generateSignUpCaptcha();
+      generateGoogleOtpCaptcha();
+    });
+  } else {
+    generateSignInCaptcha();
+    generateSignUpCaptcha();
+    generateGoogleOtpCaptcha();
+  }
 }
 
 // ==================== 50+ EXPENSE PRICING RULE (PHOTO OR COMMENT REQUIRED) ====================

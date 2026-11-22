@@ -1419,14 +1419,22 @@ const findUserByEmail = (email) => {
 };
 
 // Check if email already registered (Must be pre-created by Super Admin)
-app.post('/api/auth/check-email', (req, res) => {
+app.post('/api/auth/check-email', async (req, res) => {
   try {
     const { email } = req.body;
     const cleanEmail = email ? email.toLowerCase().trim() : '';
-    const user = findUserByEmail(cleanEmail);
+    let user = findUserByEmail(cleanEmail);
+
+    if (!user && useSupabase && supabase) {
+      try {
+        const { data: spUser } = await supabase.from('users').select('*').or(`email.ilike.${cleanEmail},id.eq.google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`).maybeSingle();
+        if (spUser) user = spUser;
+      } catch (e) {}
+    }
+
     res.json({
       exists: !!user,
-      hasPassword: !!(user && user.passwordHash),
+      hasPassword: !!(user && (user.passwordHash || user.password_hash)),
       isCreatedByAdmin: !!user
     });
   } catch (err) {
@@ -1528,6 +1536,27 @@ app.post('/api/auth/google', async (req, res) => {
 
     const users = getLocalUsers();
     let existing = users[userId] || findUserByEmail(cleanEmail);
+
+    if ((!existing || !existing.id) && useSupabase && supabase) {
+      try {
+        const { data: spUser, error: spErr } = await supabase.from('users').select('*').or(`email.ilike.${cleanEmail},id.eq.${userId}`).maybeSingle();
+        if (!spErr && spUser) {
+          existing = {
+            id: spUser.id,
+            name: spUser.name,
+            email: spUser.email,
+            passwordHash: spUser.password_hash || spUser.passwordHash,
+            role: spUser.role || 'user',
+            approved: isUserApproved(spUser.id, spUser.email, spUser),
+            picture: spUser.picture || DEFAULT_USER_AVATAR
+          };
+          users[existing.id] = existing;
+          saveLocalUsers(users);
+        }
+      } catch (spErr) {
+        console.warn('Supabase fallback google check note:', spErr.message);
+      }
+    }
 
     if ((!existing || !existing.id) && useFirebase && db) {
       try {
@@ -1642,6 +1671,28 @@ app.post('/api/auth/login', async (req, res) => {
 
     const cleanEmail = email.toLowerCase().trim();
     let user = findUserByEmail(cleanEmail);
+
+    if (!user && useSupabase && supabase) {
+      try {
+        const { data: spUser, error: spErr } = await supabase.from('users').select('*').or(`email.ilike.${cleanEmail},id.eq.google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`).maybeSingle();
+        if (!spErr && spUser) {
+          user = {
+            id: spUser.id,
+            name: spUser.name,
+            email: spUser.email,
+            passwordHash: spUser.password_hash || spUser.passwordHash,
+            role: spUser.role || 'user',
+            approved: isUserApproved(spUser.id, spUser.email, spUser),
+            picture: spUser.picture || DEFAULT_USER_AVATAR
+          };
+          const lUsers = getLocalUsers();
+          lUsers[user.id] = user;
+          saveLocalUsers(lUsers);
+        }
+      } catch (spErr) {
+        console.warn('Supabase fallback login check note:', spErr.message);
+      }
+    }
 
     if (!user && useFirebase && db) {
       try {
@@ -1763,6 +1814,28 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
     const cleanEmail = email.toLowerCase().trim();
     let user = findUserByEmail(cleanEmail);
+
+    if (!user && useSupabase && supabase) {
+      try {
+        const { data: spUser, error: spErr } = await supabase.from('users').select('*').or(`email.ilike.${cleanEmail},id.eq.google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`).maybeSingle();
+        if (!spErr && spUser) {
+          user = {
+            id: spUser.id,
+            name: spUser.name,
+            email: spUser.email,
+            passwordHash: spUser.password_hash || spUser.passwordHash,
+            role: spUser.role || 'user',
+            approved: isUserApproved(spUser.id, spUser.email, spUser),
+            picture: spUser.picture || DEFAULT_USER_AVATAR
+          };
+          const lUsers = getLocalUsers();
+          lUsers[user.id] = user;
+          saveLocalUsers(lUsers);
+        }
+      } catch (spErr) {
+        console.warn('Supabase fallback login check note:', spErr.message);
+      }
+    }
 
     if (!user && useFirebase && db) {
       try {
