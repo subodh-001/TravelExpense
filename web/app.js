@@ -231,10 +231,130 @@ const closeGoogleAuthModalBtn = document.getElementById('closeGoogleAuthModalBtn
 const customGoogleEmail = document.getElementById('customGoogleEmail');
 const customGoogleSignInBtn = document.getElementById('customGoogleSignInBtn');
 
+// ==================== MATH CAPTCHA FOR BOT PROTECTION ====================
+let currentSignInCaptchaAnswer = null;
+let currentSignUpCaptchaAnswer = null;
+let currentGoogleOtpCaptchaAnswer = null;
+
+function generateMathPuzzle() {
+  const num1 = Math.floor(Math.random() * 8) + 2; // 2 to 9
+  const num2 = Math.floor(Math.random() * 8) + 1; // 1 to 8
+  return { num1, num2, answer: num1 + num2, display: `${num1} + ${num2} =` };
+}
+
+function generateSignInCaptcha() {
+  const puzzle = generateMathPuzzle();
+  currentSignInCaptchaAnswer = puzzle.answer;
+  const qEl = document.getElementById('signInCaptchaQuestion');
+  if (qEl) qEl.textContent = puzzle.display;
+  const ansInput = document.getElementById('signInCaptchaAnswer');
+  if (ansInput) ansInput.value = '';
+  const errEl = document.getElementById('signInCaptchaError');
+  if (errEl) errEl.style.display = 'none';
+}
+
+function generateSignUpCaptcha() {
+  const puzzle = generateMathPuzzle();
+  currentSignUpCaptchaAnswer = puzzle.answer;
+  const qEl = document.getElementById('signUpCaptchaQuestion');
+  if (qEl) qEl.textContent = puzzle.display;
+  const ansInput = document.getElementById('signUpCaptchaAnswer');
+  if (ansInput) ansInput.value = '';
+  const errEl = document.getElementById('signUpCaptchaError');
+  if (errEl) errEl.style.display = 'none';
+}
+
+function generateGoogleOtpCaptcha() {
+  const puzzle = generateMathPuzzle();
+  currentGoogleOtpCaptchaAnswer = puzzle.answer;
+  const qEl = document.getElementById('googleOtpCaptchaQuestion');
+  if (qEl) qEl.textContent = puzzle.display;
+  const ansInput = document.getElementById('googleOtpCaptchaAnswer');
+  if (ansInput) ansInput.value = '';
+  const errEl = document.getElementById('googleOtpCaptchaError');
+  if (errEl) errEl.style.display = 'none';
+}
+
+// ==================== 50+ EXPENSE PRICING RULE (PHOTO OR COMMENT REQUIRED) ====================
+function updateExpense50PlusRuleUI() {
+  const amountInput = document.getElementById('userAmountInput');
+  const commentInput = document.getElementById('userCommentInput');
+  const photoInput = document.getElementById('userPhotoFileInput');
+  const notice = document.getElementById('photoCommentRequiredNotice');
+  const photoBadge = document.getElementById('photoRequiredBadge');
+  const commentBadge = document.getElementById('commentRequiredBadge');
+
+  if (!amountInput) return;
+
+  const amountVal = parseFloat(amountInput.value) || 0;
+  const is50Plus = amountVal >= 50;
+
+  if (notice) {
+    notice.style.display = is50Plus ? 'flex' : 'none';
+  }
+
+  if (!is50Plus) {
+    if (photoBadge) photoBadge.style.display = 'none';
+    if (commentBadge) commentBadge.style.display = 'none';
+    return;
+  }
+
+  const isEditMode = Boolean(state.editingExpenseId);
+  const existingExp = isEditMode ? state.expenses.find(e => e.id === state.editingExpenseId) : null;
+  const hasPhoto = Boolean(photoInput && photoInput.files && photoInput.files.length > 0) ||
+                   Boolean(isEditMode && existingExp && existingExp.receipts && existingExp.receipts.length > 0);
+  const hasComment = Boolean(commentInput && commentInput.value.trim().length > 0);
+
+  if (hasPhoto || hasComment) {
+    if (photoBadge) photoBadge.style.display = 'none';
+    if (commentBadge) commentBadge.style.display = 'none';
+    if (notice) {
+      notice.style.background = '#f0fdf4';
+      notice.style.borderColor = '#bbf7d0';
+      notice.style.color = '#15803d';
+      notice.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #16a34a;"></i> <span>Amount is ₹${amountVal}: Requirement met (${hasPhoto ? 'Photo attached' : 'Comment added'})! ✓</span>`;
+    }
+  } else {
+    if (photoBadge) photoBadge.style.display = 'inline-block';
+    if (commentBadge) commentBadge.style.display = 'inline-block';
+    if (notice) {
+      notice.style.background = '#fef2f2';
+      notice.style.borderColor = '#fecaca';
+      notice.style.color = '#b91c1c';
+      notice.innerHTML = `<i class="fa-solid fa-circle-exclamation" style="color: #dc2626;"></i> <span>Amount is ₹${amountVal} (50+): Please provide either a <strong>Receipt Photo</strong> OR a <strong>Comment</strong>.</span>`;
+    }
+  }
+}
+
+function setupExpense50PlusListeners() {
+  const userAmountInput = document.getElementById('userAmountInput');
+  const userCommentInput = document.getElementById('userCommentInput');
+  const userPhotoFileInput = document.getElementById('userPhotoFileInput');
+
+  if (userAmountInput) {
+    userAmountInput.addEventListener('input', updateExpense50PlusRuleUI);
+  }
+  if (userCommentInput) {
+    userCommentInput.addEventListener('input', updateExpense50PlusRuleUI);
+  }
+  if (userPhotoFileInput) {
+    userPhotoFileInput.addEventListener('change', updateExpense50PlusRuleUI);
+  }
+}
+
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {
   // Check if opened via shareable URL (?userId=...)
   checkSharedViewUrl();
+
+  // Initialize Math Captchas
+  generateSignInCaptcha();
+  generateSignUpCaptcha();
+  generateGoogleOtpCaptcha();
+
+  // Setup 50+ Expense pricing rule listeners
+  setupExpense50PlusListeners();
+  updateExpense50PlusRuleUI();
 
   // Set default date input to today
   if (expDateInput) expDateInput.value = new Date().toISOString().split('T')[0];
@@ -919,19 +1039,32 @@ function selectGoogleAccount(id, name, email, picture) {
   }, 1500);
 }
 
-function handleCustomGoogleSignIn() {
-  const email = customGoogleEmail.value.trim();
+async function handleCustomGoogleSignIn() {
+  const email = customGoogleEmail ? customGoogleEmail.value.trim() : '';
   if (!email || !email.includes('@')) {
     alert('Please enter a valid Google email address (e.g. name@gmail.com)');
     return;
   }
-  const name = email.split('@')[0].replace(/[\._]/g, ' ');
-  const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
-  const id = `google_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
-  const picture = '';
 
-  selectGoogleAccount(id, capitalizedName, email, picture);
-  customGoogleEmail.value = '';
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(`⚠️ ${data.error || 'Access Restricted: This email is not registered in our system. Please contact your Super Admin.'}`);
+      return;
+    }
+    if (data.user) {
+      saveGoogleUser(data.user);
+      if (googleAuthModal) closeModal(googleAuthModal);
+      showToast(`✅ Signed in as ${email}`);
+    }
+  } catch (err) {
+    alert('Connection error: ' + err.message);
+  }
 }
 
 function initGoogleIdentityServices() {
@@ -965,8 +1098,12 @@ function handleGoogleGsiResponse(response) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ credential: response.credential })
     })
-    .then(res => res.json())
-    .then(data => {
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'No account found. Please contact your Super Admin to create your account first.');
+        return;
+      }
       if (data.user) {
         saveGoogleUser(data.user);
       }
@@ -1248,6 +1385,7 @@ function handleUserPhotoSelect(e) {
     nameEl.textContent = file.name;
     preview.style.display = 'flex';
   }
+  updateExpense50PlusRuleUI();
 }
 
 async function handleUserSubmitExpense(e) {
@@ -1275,6 +1413,28 @@ async function handleUserSubmitExpense(e) {
   const isEditMode = Boolean(state.editingExpenseId);
   const existingExp = isEditMode ? state.expenses.find(e => e.id === state.editingExpenseId) : null;
 
+  // 50+ Pricing Rule: For amounts >= 50, either Photo OR Comment must be provided
+  if (amountVal >= 50) {
+    const hasPhoto = Boolean(photoInput && photoInput.files && photoInput.files.length > 0) ||
+                     Boolean(isEditMode && existingExp && existingExp.receipts && existingExp.receipts.length > 0);
+    const hasComment = Boolean(commentVal && commentVal.length > 0);
+
+    if (!hasPhoto && !hasComment) {
+      alert('⚠️ For expenses of ₹50 and above, either a Ticket/Receipt Photo or a Comment/Description is required.\n\n₹50 या उससे अधिक के खर्चे के लिए Photo या Comment में से एक भरना अनिवार्य है।');
+      const commentEl = document.getElementById('userCommentInput');
+      if (commentEl) {
+        commentEl.focus();
+        commentEl.style.borderColor = '#ef4444';
+        commentEl.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.15)';
+        setTimeout(() => {
+          commentEl.style.borderColor = '';
+          commentEl.style.boxShadow = '';
+        }, 3500);
+      }
+      return;
+    }
+  }
+
   if (btn) btn.innerHTML = isEditMode 
     ? '<i class="fa-solid fa-spinner fa-spin"></i> Updating...' 
     : '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
@@ -1291,7 +1451,7 @@ async function handleUserSubmitExpense(e) {
   const payload = {
     date: userDateVal,
     location: itemCategory,
-    notes: commentVal || itemCategory,
+    notes: commentVal || '',
     paymentStatus: 'pending',
     entries: [
       { type: itemCategory, amount: amountVal }
@@ -1335,6 +1495,7 @@ async function handleUserSubmitExpense(e) {
       if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
       const preview = document.getElementById('uploadedPhotoPreview');
       if (preview) preview.style.display = 'none';
+      updateExpense50PlusRuleUI();
       await loadExpenses();
       if (typeof loadSuperAdminData === 'function') {
         loadSuperAdminData();
@@ -1888,6 +2049,7 @@ function openAddExpenseModal() {
   if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
   const btn = document.getElementById('userSubmitExpenseBtn');
   if (btn) btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Travel Expense';
+  updateExpense50PlusRuleUI();
   scrollToExpenseForm();
 }
 
@@ -1903,7 +2065,7 @@ function openEditExpenseModal(expenseId) {
   const btn = document.getElementById('userSubmitExpenseBtn');
   const preview = document.getElementById('uploadedPhotoPreview');
   const nameEl = document.getElementById('uploadedPhotoName');
-  const photoInput = document.getElementById('userPhotoInput');
+  const photoInput = document.getElementById('userPhotoFileInput');
 
   if (photoInput) photoInput.value = '';
 
@@ -1924,6 +2086,7 @@ function openEditExpenseModal(expenseId) {
 
   if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Update Travel Expense';
 
+  updateExpense50PlusRuleUI();
   scrollToExpenseForm();
 }
 
@@ -2616,32 +2779,16 @@ function switchAuthTab(tabName) {
   const tabSignInBtn = document.getElementById('tabSignInBtn');
   const tabSignUpBtn = document.getElementById('tabSignUpBtn');
 
-  if (!authViewSignIn || !authViewSignUp) return;
-
-  if (tabName === 'signin') {
-    authViewSignIn.style.display = 'block';
-    authViewSignUp.style.display = 'none';
+  if (authViewSignIn) authViewSignIn.style.display = 'block';
+  if (authViewSignUp) authViewSignUp.style.display = 'none';
+  if (tabSignInBtn) {
     tabSignInBtn.style.background = '#ffffff';
     tabSignInBtn.style.color = '#000000';
     tabSignInBtn.style.fontWeight = '700';
     tabSignInBtn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
-    
-    tabSignUpBtn.style.background = 'transparent';
-    tabSignUpBtn.style.color = '#64748b';
-    tabSignUpBtn.style.fontWeight = '600';
-    tabSignUpBtn.style.boxShadow = 'none';
-  } else {
-    authViewSignIn.style.display = 'none';
-    authViewSignUp.style.display = 'block';
-    tabSignUpBtn.style.background = '#ffffff';
-    tabSignUpBtn.style.color = '#2563eb';
-    tabSignUpBtn.style.fontWeight = '700';
-    tabSignUpBtn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
-    
-    tabSignInBtn.style.background = 'transparent';
-    tabSignInBtn.style.color = '#64748b';
-    tabSignInBtn.style.fontWeight = '600';
-    tabSignInBtn.style.boxShadow = 'none';
+  }
+  if (tabSignUpBtn) {
+    tabSignUpBtn.style.display = 'none';
   }
 }
 
@@ -2665,7 +2812,7 @@ async function requestOtpCode() {
     });
 
     const data = await res.json();
-    if (data.success) {
+    if (res.ok && data.success) {
       const target = document.getElementById('otpTargetEmail');
       if (target) target.textContent = email;
       const input = document.getElementById('otpCodeInput');
@@ -2676,7 +2823,7 @@ async function requestOtpCode() {
 
       showToast(`✉️ 6-Digit OTP code sent to your email (${email})`);
     } else {
-      customAlert(`OTP request failed: ${data.error}`);
+      alert(`⚠️ ${data.error || 'Access Restricted: This email is not registered in our system. Please contact your Super Admin.'}`);
     }
   } catch (err) {
     console.error('OTP request error:', err);
@@ -2733,24 +2880,9 @@ function toggleAuthPageView(view) {
   const signInView = document.getElementById('authPageSignInView');
   const signUpView = document.getElementById('authPageSignUpView');
 
-  if (!signInView || !signUpView) return;
-
-  const signInEmail = document.getElementById('fullSignInEmail');
-  const signUpEmail = document.getElementById('fullSignUpEmail');
-
-  if (view === 'signup') {
-    if (signInEmail && signUpEmail && signInEmail.value && !signUpEmail.value) {
-      signUpEmail.value = signInEmail.value;
-    }
-    signInView.style.display = 'none';
-    signUpView.style.display = 'block';
-  } else {
-    if (signUpEmail && signInEmail && signUpEmail.value && !signInEmail.value) {
-      signInEmail.value = signUpEmail.value;
-    }
-    signInView.style.display = 'block';
-    signUpView.style.display = 'none';
-  }
+  if (signInView) signInView.style.display = 'block';
+  if (signUpView) signUpView.style.display = 'none';
+  generateSignInCaptcha();
 }
 
 async function sendFullSignInOtp() {
@@ -2763,15 +2895,24 @@ async function sendFullSignInOtp() {
     return;
   }
 
-  const passwordInput = document.getElementById('fullSignInPassword');
   const hintEl = document.getElementById('signInOtpHint');
 
   try {
-    await fetch(`${API_BASE_URL}/auth/send-otp`, {
+    const res = await fetch(`${API_BASE_URL}/auth/send-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
     });
+    const data = await res.json();
+    if (!res.ok) {
+      const errMsg = data.error || 'Access Restricted: This email is not registered. Please contact your Super Admin.';
+      if (hintEl) {
+        hintEl.style.display = 'block';
+        hintEl.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> ${errMsg}</span>`;
+      }
+      alert(`⚠️ ${errMsg}`);
+      return;
+    }
     if (hintEl) {
       hintEl.style.display = 'block';
       hintEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Verification OTP code sent to <strong>${email}</strong>`;
@@ -2807,6 +2948,7 @@ function startGoogleOtpFlow() {
   const hintEl = document.getElementById('googleOtpStep1Hint');
   if (hintEl) hintEl.innerHTML = '';
   showGoogleOtpStep(1);
+  generateGoogleOtpCaptcha();
   setTimeout(() => document.getElementById('googleOtpEmail')?.focus(), 100);
 }
 
@@ -2820,6 +2962,7 @@ function cancelGoogleOtpFlow() {
   // Show whichever view was active before
   const signInView = document.getElementById('authPageSignInView');
   if (signInView) signInView.style.display = 'block';
+  generateSignInCaptcha();
 }
 
 // Step 1: Send OTP to email
@@ -2831,6 +2974,23 @@ async function sendGoogleOtp(isResend = false) {
   if (!email || !email.includes('@')) {
     const errEl = document.getElementById('googleOtpEmailError');
     if (errEl) { errEl.textContent = 'Please enter a valid email address'; errEl.style.display = 'block'; }
+    return;
+  }
+
+  // Math Captcha validation
+  const captchaInput = document.getElementById('googleOtpCaptchaAnswer');
+  const captchaVal = parseInt(captchaInput?.value?.trim(), 10);
+  if (isNaN(captchaVal) || currentGoogleOtpCaptchaAnswer === null || captchaVal !== currentGoogleOtpCaptchaAnswer) {
+    const errEl = document.getElementById('googleOtpCaptchaError');
+    if (errEl) {
+      errEl.textContent = '❌ Incorrect captcha answer. Please solve the math problem.';
+      errEl.style.display = 'block';
+    }
+    generateGoogleOtpCaptcha();
+    if (captchaInput) {
+      captchaInput.value = '';
+      captchaInput.focus();
+    }
     return;
   }
 
@@ -2853,8 +3013,13 @@ async function sendGoogleOtp(isResend = false) {
     }
 
     if (!res.ok) {
-      if (hintEl) hintEl.innerHTML = `<span style="color:#ef4444">❌ ${data.error || 'Failed to send verification code'}</span>`;
+      const errMsg = data.error || 'Access Restricted: This email is not registered in our system. Please contact your Super Admin.';
+      if (hintEl) {
+        hintEl.innerHTML = `<div style="background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; padding:12px 14px; border-radius:12px; margin-top:12px; font-weight:600; font-size:0.86rem; line-height:1.45;"><i class="fa-solid fa-triangle-exclamation" style="margin-right:6px; color:#dc2626;"></i> ${errMsg}</div>`;
+      }
       if (btnText) btnText.textContent = 'Send Verification Code';
+      generateGoogleOtpCaptcha();
+      alert(`⚠️ ${errMsg}`);
       return;
     }
 
@@ -2985,6 +3150,19 @@ async function handleFullPageSignIn(e) {
     return;
   }
 
+  // Math Captcha validation
+  const captchaInput = document.getElementById('signInCaptchaAnswer');
+  const captchaVal = parseInt(captchaInput?.value?.trim(), 10);
+  if (isNaN(captchaVal) || currentSignInCaptchaAnswer === null || captchaVal !== currentSignInCaptchaAnswer) {
+    showFieldError('signInCaptchaError', '❌ Incorrect captcha answer. Please solve the math problem.');
+    generateSignInCaptcha();
+    if (captchaInput) {
+      captchaInput.value = '';
+      captchaInput.focus();
+    }
+    return;
+  }
+
   const submitBtn = document.querySelector('#fullSignInForm button[type="submit"]');
   if (submitBtn) submitBtn.textContent = 'Signing in...';
 
@@ -2997,6 +3175,7 @@ async function handleFullPageSignIn(e) {
     const data = await res.json();
 
     if (!res.ok) {
+      showFieldError('signInEmailError', data.error || 'Sign in failed. Please check your email and password.');
       alert(data.error || 'Sign in failed. Please check your email and password.');
       if (submitBtn) submitBtn.textContent = 'Sign in';
       return;
@@ -3124,6 +3303,19 @@ async function handleSignUpStep1(e) {
     return;
   }
 
+  // Math Captcha validation
+  const captchaInput = document.getElementById('signUpCaptchaAnswer');
+  const captchaVal = parseInt(captchaInput?.value?.trim(), 10);
+  if (isNaN(captchaVal) || currentSignUpCaptchaAnswer === null || captchaVal !== currentSignUpCaptchaAnswer) {
+    showFieldError('signUpCaptchaError', '❌ Incorrect captcha answer. Please solve the math problem.');
+    generateSignUpCaptcha();
+    if (captchaInput) {
+      captchaInput.value = '';
+      captchaInput.focus();
+    }
+    return;
+  }
+
   signUpPendingEmail = email;
   signUpPendingName = name;
   signUpPendingPassword = password;
@@ -3132,7 +3324,7 @@ async function handleSignUpStep1(e) {
   if (btn) btn.querySelector('span').textContent = 'Checking...';
 
   try {
-    // First check if email already registered
+    // First check if email is created by Super Admin
     const checkRes = await fetch(`${API_BASE_URL}/auth/check-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3140,8 +3332,28 @@ async function handleSignUpStep1(e) {
     });
     const checkData = await checkRes.json();
 
-    if (checkData.exists) {
-      // Email already registered — show clear error with sign in option
+    if (!checkData.exists) {
+      // Email is NOT in the database (Not created by Super Admin)
+      const emailInput = document.getElementById('fullSignUpEmail');
+      if (emailInput) {
+        emailInput.style.borderColor = '#ef4444';
+        emailInput.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
+        setTimeout(() => {
+          emailInput.style.borderColor = '';
+          emailInput.style.boxShadow = '';
+        }, 3500);
+      }
+      const errEl = document.getElementById('signUpEmailError');
+      if (errEl) {
+        errEl.innerHTML = `⚠️ Account not found for this email. Only the Super Admin can create accounts. Please contact your admin (<a href="mailto:subodhram3350@gmail.com" style="color:#000;font-weight:700;text-decoration:underline;">subodhram3350@gmail.com</a>).`;
+        errEl.style.display = 'block';
+      }
+      if (btn) btn.querySelector('span').textContent = 'Continue';
+      return;
+    }
+
+    if (checkData.exists && checkData.hasPassword) {
+      // Email already has password set — tell them to sign in
       const emailInput = document.getElementById('fullSignUpEmail');
       if (emailInput) {
         emailInput.style.borderColor = '#ef4444';
@@ -3153,14 +3365,14 @@ async function handleSignUpStep1(e) {
       }
       const errEl = document.getElementById('signUpEmailError');
       if (errEl) {
-        errEl.innerHTML = `⚠️ This email is already registered. <a href="#" style="color:#000;font-weight:700;text-decoration:underline;" onclick="toggleAuthPageView('signin'); return false;">Sign in instead →</a>`;
+        errEl.innerHTML = `⚠️ This account is already active. <a href="#" style="color:#000;font-weight:700;text-decoration:underline;" onclick="toggleAuthPageView('signin'); return false;">Sign in instead →</a>`;
         errEl.style.display = 'block';
       }
       if (btn) btn.querySelector('span').textContent = 'Continue';
       return;
     }
 
-    // Email is new — send OTP
+    // Email is created by Super Admin — send OTP to activate account
     if (btn) btn.querySelector('span').textContent = 'Sending code...';
     const res = await fetch(`${API_BASE_URL}/auth/send-otp`, {
       method: 'POST',
@@ -3308,12 +3520,18 @@ function switchAppPage(viewName, pushToHistory = true) {
 
   if (viewName === 'auth' || viewName === 'landing') {
     if (fullAuthPage) fullAuthPage.classList.remove('hidden');
-    if (mobileNav) mobileNav.classList.remove('nav-visible');
+    if (mobileNav) {
+      mobileNav.classList.remove('nav-visible');
+      mobileNav.style.display = 'none';
+    }
     toggleAuthPageView('signin');
     viewName = 'auth';
   } else if (viewName === 'pending-approval') {
     if (pendingApprovalPage) pendingApprovalPage.classList.remove('hidden');
-    if (mobileNav) mobileNav.classList.remove('nav-visible');
+    if (mobileNav) {
+      mobileNav.classList.remove('nav-visible');
+      mobileNav.style.display = 'none';
+    }
     // Show user email in the badge
     const badge = document.getElementById('pendingApprovalEmailBadge');
     if (badge && state.currentGoogleUser) badge.textContent = state.currentGoogleUser.email || '';
@@ -3327,16 +3545,25 @@ function switchAppPage(viewName, pushToHistory = true) {
     }, 4000);
   } else if (viewName === 'dashboard' && appDashboard) {
     appDashboard.classList.remove('hidden');
-    if (mobileNav) mobileNav.classList.add('nav-visible');
+    if (mobileNav) {
+      mobileNav.classList.add('nav-visible');
+      mobileNav.style.display = 'flex';
+    }
     loadExpenses();
   } else if ((viewName === 'superadmin' || viewName === 'admin') && superAdminDashboard) {
     superAdminDashboard.classList.remove('hidden');
-    if (mobileNav) mobileNav.classList.remove('nav-visible');
+    if (mobileNav) {
+      mobileNav.classList.remove('nav-visible');
+      mobileNav.style.display = 'none';
+    }
     loadSuperAdminData();
     loadExpenses();
   } else {
     if (fullAuthPage) fullAuthPage.classList.remove('hidden');
-    if (mobileNav) mobileNav.classList.remove('nav-visible');
+    if (mobileNav) {
+      mobileNav.classList.remove('nav-visible');
+      mobileNav.style.display = 'none';
+    }
     toggleAuthPageView('signin');
     viewName = 'auth';
   }
@@ -3485,6 +3712,9 @@ async function loadSuperAdminData() {
         renderAdminAllExpensesTable(expensesData.expenses);
       }
     }
+
+    // Load and render user feedbacks & suggestions
+    loadAdminFeedbacks();
   } catch (err) {
     console.error('Super Admin Data load error:', err);
   }
@@ -5218,6 +5448,7 @@ function switchDashboardTab(tab) {
     if (navProfile) navProfile.classList.add('active');
 
     loadAccountProfileData();
+    loadUserFeedbacks();
   } else {
     if (accountTab) accountTab.classList.add('hidden');
     if (homeTab) homeTab.classList.remove('hidden');
@@ -5904,3 +6135,345 @@ async function handleDisconnectWhatsAppBot() {
     alert('Network error: ' + err.message);
   }
 }
+
+// ============================================================
+// 💬 USER FEEDBACK & SUGGESTIONS MODULE
+// ============================================================
+let currentFeedbackRating = 5;
+
+function openFeedbackModal() {
+  const modal = document.getElementById('feedbackModal');
+  if (!modal) return;
+  const user = state.currentGoogleUser || getStoredGoogleUser();
+  if (!user || !user.email) {
+    alert('Please sign in first to submit feedback.');
+    return;
+  }
+
+  const form = document.getElementById('feedbackForm');
+  if (form) form.reset();
+
+  // Reset category radio and chip styles
+  const defaultRadio = document.querySelector('input[name="feedbackType"][value="update"]');
+  if (defaultRadio) {
+    defaultRadio.checked = true;
+    handleFeedbackTypeChange(defaultRadio);
+  }
+
+  // Reset rating to 5
+  setFeedbackRating(5);
+
+  const subjectInput = document.getElementById('feedbackSubjectInput');
+  const messageInput = document.getElementById('feedbackMessageInput');
+  if (subjectInput) subjectInput.value = '';
+  if (messageInput) messageInput.value = '';
+
+  modal.style.display = 'flex';
+  modal.classList.add('active');
+  setTimeout(() => subjectInput?.focus(), 150);
+}
+
+function closeFeedbackModal() {
+  const modal = document.getElementById('feedbackModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
+}
+
+function handleFeedbackTypeChange(radio) {
+  const chips = document.querySelectorAll('.feedback-type-chip');
+  chips.forEach(chip => {
+    chip.style.borderColor = '#cbd5e1';
+    chip.style.background = '#f8fafc';
+    chip.style.color = '#475569';
+  });
+
+  const parent = radio.closest('.feedback-type-chip');
+  if (parent) {
+    parent.style.borderColor = '#4f46e5';
+    parent.style.background = '#eef2ff';
+    parent.style.color = '#4338ca';
+  }
+}
+
+function setFeedbackRating(stars) {
+  currentFeedbackRating = stars;
+  const input = document.getElementById('feedbackRatingInput');
+  if (input) input.value = stars;
+
+  const labels = {
+    1: '1 / 5 (Needs Big Improvement 😡)',
+    2: '2 / 5 (Below Average 😕)',
+    3: '3 / 5 (Average 🙂)',
+    4: '4 / 5 (Good 😊)',
+    5: '5 / 5 (Excellent 🤩)'
+  };
+  const labelEl = document.getElementById('feedbackRatingLabel');
+  if (labelEl) labelEl.textContent = labels[stars] || `${stars} / 5`;
+
+  const starElements = document.querySelectorAll('#feedbackStarRatingBox .star-btn');
+  starElements.forEach(star => {
+    const val = parseInt(star.getAttribute('data-rating'), 10);
+    if (val <= stars) {
+      star.style.color = '#f59e0b';
+    } else {
+      star.style.color = '#cbd5e1';
+    }
+  });
+}
+
+async function handleUserSubmitFeedback(e) {
+  e.preventDefault();
+  const user = state.currentGoogleUser || getStoredGoogleUser();
+  if (!user || !user.email) {
+    alert('Please sign in to submit feedback');
+    return;
+  }
+
+  const typeRadio = document.querySelector('input[name="feedbackType"]:checked');
+  const type = typeRadio ? typeRadio.value : 'update';
+  const rating = currentFeedbackRating || 5;
+  const subject = document.getElementById('feedbackSubjectInput')?.value.trim();
+  const message = document.getElementById('feedbackMessageInput')?.value.trim();
+  const submitBtn = document.getElementById('submitFeedbackBtn');
+
+  if (!subject) {
+    alert('Please enter a feedback topic/subject');
+    return;
+  }
+  if (!message) {
+    alert('Please write your feedback/message');
+    return;
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: user.id || '',
+        userName: user.name || user.email.split('@')[0],
+        userEmail: user.email,
+        type,
+        rating,
+        subject,
+        message
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to submit feedback');
+    }
+
+    closeFeedbackModal();
+    showToast('🎉 Aapka feedback Super Admin tak pahuch gaya hai! Thank you.');
+    if (typeof showCustomToast === 'function') {
+      showCustomToast('💬 Feedback submitted! Super Admin has been notified.');
+    }
+    loadUserFeedbacks();
+  } catch (err) {
+    alert('Error submitting feedback: ' + err.message);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Feedback';
+    }
+  }
+}
+
+// Render user's previous feedbacks in their Account profile
+async function loadUserFeedbacks() {
+  const user = state.currentGoogleUser || getStoredGoogleUser();
+  if (!user || !user.email) return;
+
+  const container = document.getElementById('userFeedbackListContainer');
+  const listEl = document.getElementById('userFeedbackList');
+  if (!container || !listEl) return;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/feedback?email=${encodeURIComponent(user.email)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const feedbacks = data.feedbacks || [];
+
+    if (feedbacks.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'block';
+    const typeBadges = {
+      update: '<span style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; font-size:0.72rem; padding:2px 8px; border-radius:12px; font-weight:700;">🚀 Update</span>',
+      missing: '<span style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:0.72rem; padding:2px 8px; border-radius:12px; font-weight:700;">📝 Kami</span>',
+      bug: '<span style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.72rem; padding:2px 8px; border-radius:12px; font-weight:700;">🐛 Bug</span>',
+      general: '<span style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; font-size:0.72rem; padding:2px 8px; border-radius:12px; font-weight:700;">⭐ General</span>'
+    };
+
+    listEl.innerHTML = feedbacks.map(fb => {
+      const dateStr = fb.createdAt ? new Date(fb.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+      const badge = typeBadges[fb.type] || fb.type;
+      const statusBadge = fb.status === 'reviewed'
+        ? '<span style="color:#059669; font-weight:700; font-size:0.72rem;"><i class="fa-solid fa-circle-check"></i> Reviewed by Admin</span>'
+        : '<span style="color:#f59e0b; font-weight:700; font-size:0.72rem;"><i class="fa-solid fa-clock"></i> Sent to Admin</span>';
+
+      return `
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 0.84rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; gap:8px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              ${badge}
+              <strong style="color:#0f172a;">${escapeHtml(fb.subject || '')}</strong>
+            </div>
+            <span style="font-size:0.75rem; color:#94a3b8;">${dateStr}</span>
+          </div>
+          <p style="margin: 0 0 6px 0; color:#475569; font-size:0.82rem; line-height:1.4;">${escapeHtml(fb.message || '')}</p>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:#f59e0b; font-size:0.75rem;">${'⭐'.repeat(fb.rating || 5)}</span>
+            ${statusBadge}
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.warn('Load user feedbacks error:', err);
+  }
+}
+
+// Render all feedbacks in Super Admin Dashboard
+async function loadAdminFeedbacks() {
+  const tableBody = document.getElementById('adminFeedbackTableBody');
+  const countBadge = document.getElementById('adminFeedbackCountBadge');
+  if (!tableBody) return;
+
+  try {
+    const user = state.currentGoogleUser || getStoredGoogleUser();
+    const res = await fetch(`${API_BASE_URL}/feedback?email=${encodeURIComponent(user?.email || 'subodhram3350@gmail.com')}&role=super_admin`);
+    if (!res.ok) throw new Error('Failed to fetch feedbacks');
+    const data = await res.json();
+    const feedbacks = data.feedbacks || [];
+
+    if (countBadge) countBadge.textContent = `${feedbacks.length} Feedbacks`;
+
+    if (feedbacks.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:#94a3b8; font-size:0.88rem;">No feedbacks received yet.</td></tr>`;
+      return;
+    }
+
+    const typeBadges = {
+      update: '<span class="badge" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; font-size:0.72rem; font-weight:700;">🚀 Update</span>',
+      missing: '<span class="badge" style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:0.72rem; font-weight:700;">📝 Kami Hai</span>',
+      bug: '<span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.72rem; font-weight:700;">🐛 Bug</span>',
+      general: '<span class="badge" style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; font-size:0.72rem; font-weight:700;">⭐ General</span>'
+    };
+
+    tableBody.innerHTML = feedbacks.map(fb => {
+      const dateStr = fb.createdAt ? new Date(fb.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+      const badge = typeBadges[fb.type] || `<span class="badge">${fb.type}</span>`;
+      const isReviewed = fb.status === 'reviewed';
+      const statusHtml = isReviewed
+        ? `<span style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; font-size:0.72rem; padding:3px 8px; border-radius:12px; font-weight:700;"><i class="fa-solid fa-check"></i> Reviewed</span>`
+        : `<span style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:0.72rem; padding:3px 8px; border-radius:12px; font-weight:700;"><i class="fa-solid fa-envelope"></i> New</span>`;
+
+      return `
+        <tr style="border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;">
+          <td style="padding: 10px 12px; color: #64748b; white-space: nowrap;">${dateStr}</td>
+          <td style="padding: 10px 12px;">
+            <strong style="color: #0f172a; display: block;">${escapeHtml(fb.userName || 'Member')}</strong>
+            <span style="color: #64748b; font-size: 0.76rem;">${escapeHtml(fb.userEmail || '')}</span>
+          </td>
+          <td style="padding: 10px 12px;">${badge}</td>
+          <td style="padding: 10px 12px; white-space: nowrap; color: #f59e0b; font-size: 0.85rem;">
+            ${'⭐'.repeat(fb.rating || 5)} <span style="color: #64748b; font-size: 0.75rem;">(${fb.rating || 5}/5)</span>
+          </td>
+          <td style="padding: 10px 12px; max-width: 300px;">
+            <strong style="color: #0f172a; display: block; margin-bottom: 3px;">${escapeHtml(fb.subject || '')}</strong>
+            <span style="color: #475569; font-size: 0.82rem; line-height: 1.4; display: block; white-space: pre-wrap;">${escapeHtml(fb.message || '')}</span>
+          </td>
+          <td style="padding: 10px 12px; white-space: nowrap;">${statusHtml}</td>
+          <td style="padding: 10px 12px; text-align: right; white-space: nowrap;">
+            <button type="button" onclick="adminToggleFeedbackStatus('${fb.id}', '${fb.status || 'new'}')" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; cursor: pointer; color: #334155; margin-right: 4px;" title="Toggle status">
+              <i class="fa-solid ${isReviewed ? 'fa-arrow-rotate-left' : 'fa-check'}"></i> ${isReviewed ? 'Mark New' : 'Done'}
+            </button>
+            <button type="button" onclick="adminDeleteFeedback('${fb.id}')" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; cursor: pointer; color: #dc2626;" title="Delete feedback">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('loadAdminFeedbacks error:', err);
+    tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:18px; color:#ef4444; font-size:0.85rem;">Error loading feedbacks: ${err.message}</td></tr>`;
+  }
+}
+
+async function adminToggleFeedbackStatus(id, currentStatus) {
+  try {
+    const nextStatus = currentStatus === 'reviewed' ? 'new' : 'reviewed';
+    const res = await fetch(`${API_BASE_URL}/feedback/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: nextStatus })
+    });
+    if (res.ok) {
+      loadAdminFeedbacks();
+    }
+  } catch (err) {
+    alert('Error updating status: ' + err.message);
+  }
+}
+
+async function adminDeleteFeedback(id) {
+  if (!confirm('Are you sure you want to delete this feedback?')) return;
+  try {
+    const res = await fetch(`${API_BASE_URL}/feedback/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('Feedback deleted');
+      loadAdminFeedbacks();
+    }
+  } catch (err) {
+    alert('Error deleting feedback: ' + err.message);
+  }
+}
+
+// Mobile Pull-to-Refresh: Pulling down at top of page reloads latest live data without reinstalling APK
+(function initPullToRefresh() {
+  if (typeof window === 'undefined') return;
+  let touchStartY = 0;
+  let touchDiff = 0;
+
+  window.addEventListener('touchstart', function(e) {
+    if (window.scrollY <= 0 && e.touches.length === 1) {
+      touchStartY = e.touches[0].clientY;
+    } else {
+      touchStartY = 0;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', function(e) {
+    if (touchStartY > 0 && e.touches.length === 1) {
+      touchDiff = e.touches[0].clientY - touchStartY;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', function() {
+    if (touchDiff > 140 && window.scrollY <= 0) {
+      touchDiff = 0;
+      touchStartY = 0;
+      if (typeof showToast === 'function') {
+        showToast('Refreshing latest live data...');
+      }
+      setTimeout(function() {
+        window.location.reload(true);
+      }, 350);
+    }
+    touchDiff = 0;
+    touchStartY = 0;
+  }, { passive: true });
+})();

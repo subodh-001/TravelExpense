@@ -31,6 +31,7 @@ const LOCAL_DB_FILE = path.join(DATA_DIR, 'expenses.json');
 const USERS_DB_FILE = path.join(DATA_DIR, 'users.json');
 const INVITES_DB_FILE = path.join(DATA_DIR, 'invites.json');
 const DELETED_USERS_FILE = path.join(DATA_DIR, 'deleted_users.json');
+const FEEDBACKS_DB_FILE = path.join(DATA_DIR, 'feedbacks.json');
 
 // ============================================================
 // 🔒 DATA PROTECTION LOCK
@@ -178,19 +179,32 @@ createDataBackup();
 // Serve local uploads statically
 app.use('/uploads', express.static(UPLOADS_DIR));
 
-// Explicit route for APK download
-app.get('/app-release.apk', (req, res) => {
-  const apkPath = path.join(__dirname, '../web/app-release.apk');
-  if (fs.existsSync(apkPath)) {
+// Explicit route for APK download (Both names supported)
+app.get(['/app-release.apk', '/FGTech-TravelExpense.apk'], (req, res) => {
+  const primaryApk = path.join(__dirname, '../FGTech-TravelExpense.apk');
+  const webApk = path.join(__dirname, '../web/app-release.apk');
+  const targetApk = fs.existsSync(primaryApk) ? primaryApk : (fs.existsSync(webApk) ? webApk : null);
+
+  if (targetApk) {
     res.setHeader('Content-Type', 'application/vnd.android.package-archive');
-    return res.download(apkPath, 'TravelExpense.apk');
+    return res.download(targetApk, 'FGTech-TravelExpense.apk');
   } else {
     return res.status(404).send('APK file not found');
   }
 });
 
-// Serve static web app if accessed directly
-app.use(express.static(path.join(__dirname, '../web')));
+// Serve static web app with no-cache on HTML to ensure instant online updates on mobile APK
+app.use(express.static(path.join(__dirname, '../web'), {
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 
 // ==================== FIREBASE INIT / FALLBACK ====================
 let useFirebase = false;
@@ -1404,14 +1418,19 @@ const findUserByEmail = (email) => {
   return null;
 };
 
-// Check if email already registered
+// Check if email already registered (Must be pre-created by Super Admin)
 app.post('/api/auth/check-email', (req, res) => {
   try {
     const { email } = req.body;
-    const user = findUserByEmail(email);
-    res.json({ exists: !!user, hasPassword: !!(user && user.passwordHash) });
+    const cleanEmail = email ? email.toLowerCase().trim() : '';
+    const user = findUserByEmail(cleanEmail);
+    res.json({
+      exists: !!user,
+      hasPassword: !!(user && user.passwordHash),
+      isCreatedByAdmin: !!user
+    });
   } catch (err) {
-    res.json({ exists: false, hasPassword: false });
+    res.json({ exists: false, hasPassword: false, isCreatedByAdmin: false });
   }
 });
 
@@ -1428,81 +1447,46 @@ app.post('/api/auth/register', async (req, res) => {
     const cleanEmail = email.toLowerCase().trim();
     const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
     
+    // Check if user exists — ONLY Super Admin can create accounts!
+    const existingUser = findUserByEmail(cleanEmail);
+
+    if (!existingUser) {
+      return res.status(403).json({
+        error: 'No account found for this email. Registration is restricted. Please contact your Super Admin (subodhram3350@gmail.com) to create your account first.'
+      });
+    }
+
+    if (existingUser && existingUser.passwordHash) {
+      return res.status(400).json({ error: 'An account with this email already exists and is active. Please Sign In.' });
+    }
+
     // Un-blacklist user if re-registering
     removeDeletedUser(cleanEmail);
     removeDeletedUser(userId);
 
-    const existingUser = findUserByEmail(cleanEmail);
-
-    if (existingUser && existingUser.passwordHash) {
-      return res.status(400).json({ error: 'An account with this email already exists. Please Sign In.' });
-    }
-
-    const cleanName = (name || cleanEmail.split('@')[0]).replace(/[\._]/g, ' ');
+    const cleanName = (name || existingUser.name || cleanEmail.split('@')[0]).replace(/[\._]/g, ' ');
     const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
     const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
     const users = getLocalUsers();
-    const picture = (existingUser && existingUser.picture) || users[userId]?.picture || '';
-
-    const isNewUser = !existingUser || !existingUser.id;
-
-    const isApproved = isNewUser ? false : isUserApproved(userId, cleanEmail, existingUser);
+    const picture = existingUser.picture || users[userId]?.picture || '';
 
     users[userId] = {
-      ...(existingUser || {}),
+      ...existingUser,
       id: userId,
       name: capitalizedName,
       email: cleanEmail,
       passwordHash,
       picture,
       verified: true,
-      // New users start as pending; existing users keep their approval status
-      approved: isApproved,
+      approved: existingUser.approved !== false,
       updatedAt: new Date().toISOString()
     };
     saveLocalUsers(users);
-    if (isNewUser) {
-      await saveUserApproval(userId, cleanEmail, false);
-    }
 
     const safeUser = { ...users[userId] };
     delete safeUser.passwordHash;
 
-    console.log(`👤 Registered new user account: ${cleanEmail} (approved: ${users[userId].approved})`);
-
-    // Send approval notification email to admin
-    if (users[userId].approved === false) {
-      const adminEmail = 'subodhram3350@gmail.com';
-      const dashboardUrl = `${process.env.FRONTEND_URL || 'https://fgtx.trexxitpro.net'}/#superadmin`;
-      sendEmailNotification({
-        to: adminEmail,
-        subject: `🔔 New User Signup — Approval Required: ${capitalizedName}`,
-        fromName: 'FGTech Travel System',
-        html: `
-          <div style="font-family:'Inter',Arial,sans-serif;max-width:540px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-            <div style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:32px;text-align:center;">
-              <div style="width:56px;height:56px;background:rgba(255,255,255,0.2);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;">🔔</div>
-              <h1 style="color:#ffffff;font-size:1.4rem;font-weight:800;margin:0;">New User — Approval Required</h1>
-            </div>
-            <div style="padding:32px;">
-              <p style="color:#475569;font-size:0.95rem;margin-bottom:20px;">A new user has registered and is waiting for your approval to access the system.</p>
-              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
-                <table style="width:100%;border-collapse:collapse;">
-                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;width:100px;">Name</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${capitalizedName}</td></tr>
-                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Email</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${cleanEmail}</td></tr>
-                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Signed up</td><td style="padding:6px 0;color:#0f172a;font-weight:700;">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST</td></tr>
-                  <tr><td style="padding:6px 0;color:#94a3b8;font-size:0.85rem;">Status</td><td style="padding:6px 0;"><span style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;padding:2px 10px;border-radius:6px;font-weight:700;font-size:0.8rem;">⏳ Pending Approval</span></td></tr>
-                </table>
-              </div>
-              <div style="text-align:center;">
-                <a href="${dashboardUrl}" style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:800;font-size:1rem;display:inline-block;">👤 Review in Admin Dashboard</a>
-              </div>
-              <p style="color:#94a3b8;font-size:0.8rem;text-align:center;margin-top:20px;">Go to Members tab → look for "Approval Pending" users → Approve or Reject.</p>
-            </div>
-          </div>
-        `
-      }).catch(e => console.warn('Admin notification email note:', e.message));
-    }
+    console.log(`👤 Activated account for pre-created user: ${cleanEmail} (approved: ${users[userId].approved})`);
 
     res.json({ success: true, user: safeUser });
   } catch (err) {
@@ -1543,14 +1527,34 @@ app.post('/api/auth/google', async (req, res) => {
     removeDeletedUser(userId);
 
     const users = getLocalUsers();
-    const existing = users[userId] || findUserByEmail(cleanEmail) || {};
+    let existing = users[userId] || findUserByEmail(cleanEmail);
+
+    if ((!existing || !existing.id) && useFirebase && db) {
+      try {
+        const snap = await db.collection('users').where('email', '==', cleanEmail).limit(1).get();
+        if (!snap.empty) {
+          const docData = snap.docs[0].data();
+          existing = { ...docData, id: snap.docs[0].id };
+          users[existing.id] = existing;
+          saveLocalUsers(users);
+        }
+      } catch (fbErr) {
+        console.warn('Firestore fallback user check note:', fbErr.message);
+      }
+    }
+
+    // ONLY allow Google sign in if user was already created by Super Admin!
+    if (!existing || !existing.id) {
+      console.warn(`🛑 Blocked Google sign in for non-registered email: ${cleanEmail}`);
+      return res.status(403).json({
+        error: 'Access Restricted: This email is not registered in our system. Only accounts created by the Super Admin can log in. Please contact your Super Admin (subodhram3350@gmail.com) to create your account first.'
+      });
+    }
 
     // Preserve custom uploaded picture (Cloudinary, custom URL) over Google OAuth picture, fallback to default avatar
     const hasCustomPic = existing.picture && typeof existing.picture === 'string' && (existing.picture.includes('cloudinary.com') || existing.picture.includes('profile_')) && !existing.picture.includes('googleusercontent.com');
     const googlePicIsReal = userPic && typeof userPic === 'string' && userPic.startsWith('http') && !userPic.includes('dicebear');
     const finalPic = hasCustomPic ? existing.picture : (googlePicIsReal ? userPic : (existing.picture && existing.picture.startsWith('http') ? existing.picture : DEFAULT_USER_AVATAR));
-
-    const isNewUser = !existing.id; // brand new user
 
     const userData = {
       ...existing,
@@ -1559,8 +1563,7 @@ app.post('/api/auth/google', async (req, res) => {
       email: cleanEmail,
       picture: finalPic,
       verified: true,
-      // New users (first time Google login) start as pending; existing users keep their approval
-      approved: isNewUser ? false : isUserApproved(userId, cleanEmail, existing),
+      approved: isUserApproved(userId, cleanEmail, existing),
       role: existing.role || 'user',
       updatedAt: new Date().toISOString()
     };
@@ -1630,7 +1633,7 @@ app.post('/api/auth/google', async (req, res) => {
 });
 
 // Password Login Route
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -1638,10 +1641,28 @@ app.post('/api/auth/login', (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    const user = findUserByEmail(cleanEmail);
+    let user = findUserByEmail(cleanEmail);
+
+    if (!user && useFirebase && db) {
+      try {
+        const snap = await db.collection('users').where('email', '==', cleanEmail).limit(1).get();
+        if (!snap.empty) {
+          const docData = snap.docs[0].data();
+          user = { ...docData, id: snap.docs[0].id };
+          const lUsers = getLocalUsers();
+          lUsers[user.id] = user;
+          saveLocalUsers(lUsers);
+        }
+      } catch (fbErr) {
+        console.warn('Firestore fallback user check note:', fbErr.message);
+      }
+    }
 
     if (!user) {
-      return res.status(401).json({ error: 'No account found with this email address. Please Sign Up.' });
+      console.warn(`🛑 Blocked password login for non-registered email: ${cleanEmail}`);
+      return res.status(403).json({
+        error: 'Access Restricted: This email is not registered in our system. Only accounts created by the Super Admin can log in. Please contact your Super Admin (subodhram3350@gmail.com) to add your email.'
+      });
     }
 
     // If account exists but passwordHash was not set yet (e.g. Google OTP account), set it on first password login
@@ -1740,11 +1761,37 @@ app.post('/api/auth/send-otp', async (req, res) => {
       return res.status(400).json({ error: 'Valid Google Email Address is required' });
     }
 
+    const cleanEmail = email.toLowerCase().trim();
+    let user = findUserByEmail(cleanEmail);
+
+    if (!user && useFirebase && db) {
+      try {
+        const snap = await db.collection('users').where('email', '==', cleanEmail).limit(1).get();
+        if (!snap.empty) {
+          const docData = snap.docs[0].data();
+          user = { ...docData, id: snap.docs[0].id };
+          const lUsers = getLocalUsers();
+          lUsers[user.id] = user;
+          saveLocalUsers(lUsers);
+        }
+      } catch (fbErr) {
+        console.warn('Firestore fallback user check note:', fbErr.message);
+      }
+    }
+
+    // Only allow sending OTP if email was pre-created by Super Admin in the system!
+    if (!user) {
+      console.warn(`🛑 Blocked OTP request for non-registered email: ${cleanEmail}`);
+      return res.status(403).json({
+        error: 'Access Restricted: This email is not registered in our system. Only accounts created by the Super Admin can log in. Please contact your Super Admin (subodhram3350@gmail.com) to add your email first. No OTP sent.'
+      });
+    }
+
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    otpStore.set(email.toLowerCase(), { otp, expiresAt, name });
-    console.log(`🔑 Generated 6-Digit OTP for ${email}: [ ${otp} ]`);
+    otpStore.set(cleanEmail, { otp, expiresAt, name });
+    console.log(`🔑 Generated 6-Digit OTP for ${cleanEmail}: [ ${otp} ]`);
 
     // Trigger Real Email via Nodemailer Gmail SMTP (Fast Promise Race so HTTP response returns instantly)
     const emailPromise = sendEmailNotification({
@@ -2073,6 +2120,196 @@ app.get('/api/user/profile/:userId', async (req, res) => {
     res.json({ success: true, user: safeUser });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// 💬 USER FEEDBACK & SUGGESTIONS SYSTEM
+// ============================================================
+const getLocalFeedbacks = () => {
+  try {
+    if (fs.existsSync(FEEDBACKS_DB_FILE)) {
+      const raw = fs.readFileSync(FEEDBACKS_DB_FILE, 'utf8');
+      const parsed = JSON.parse(raw || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    }
+  } catch (e) {
+    console.warn('Feedback read error:', e.message);
+  }
+  return [];
+};
+
+const saveLocalFeedbacks = (feedbacks) => {
+  try {
+    if (Array.isArray(feedbacks)) {
+      fs.writeFileSync(FEEDBACKS_DB_FILE, JSON.stringify(feedbacks, null, 2), 'utf8');
+    }
+  } catch (e) {
+    console.error('Feedback write error:', e.message);
+  }
+};
+
+// POST: Submit Feedback / Suggestion
+app.post('/api/feedback', async (req, res) => {
+  try {
+    const { userId, userName, userEmail, type, subject, message, rating } = req.body;
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: 'Feedback message is required' });
+    }
+    if (!userEmail) {
+      return res.status(400).json({ error: 'User email is required' });
+    }
+
+    const cleanEmail = userEmail.toLowerCase().trim();
+    const cleanName = (userName || cleanEmail.split('@')[0]).trim();
+    const cleanType = (type || 'update').toLowerCase(); // update, missing, bug, general
+    const ratingNum = Math.min(5, Math.max(1, parseInt(rating, 10) || 5));
+
+    const newFeedback = {
+      id: `fb_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      userId: userId || `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      userName: cleanName,
+      userEmail: cleanEmail,
+      type: cleanType,
+      rating: ratingNum,
+      subject: (subject || 'User Feedback').trim(),
+      message: message.trim(),
+      createdAt: new Date().toISOString(),
+      status: 'new' // 'new', 'reviewed'
+    };
+
+    const feedbacks = getLocalFeedbacks();
+    feedbacks.unshift(newFeedback); // newest first
+    saveLocalFeedbacks(feedbacks);
+
+    // Sync to Firestore if Firebase active
+    if (useFirebase && db) {
+      try {
+        await db.collection('feedbacks').doc(newFeedback.id).set(newFeedback);
+      } catch (fbErr) {
+        console.warn('Firestore feedback sync note:', fbErr.message);
+      }
+    }
+
+    console.log(`💬 New Feedback from ${cleanName} (${cleanEmail}) [${cleanType.toUpperCase()}]: ${newFeedback.subject}`);
+
+    // Real-time Notification Email to Super Admin (subodhram3350@gmail.com)
+    const typeLabels = {
+      update: '🚀 Feature / Update Suggestion',
+      missing: '📝 Kya Kami Hai / What is Missing',
+      bug: '🐛 Bug / Problem Report',
+      general: '⭐ General Feedback'
+    };
+    const typeLabel = typeLabels[cleanType] || cleanType;
+    const starStr = '⭐'.repeat(ratingNum);
+
+    sendEmailNotification({
+      to: 'subodhram3350@gmail.com',
+      subject: `💬 New Feedback from ${cleanName}: ${newFeedback.subject}`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff;">
+          <div style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); padding: 18px 22px; border-radius: 12px; margin-bottom: 20px; color: #ffffff;">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 800;">💬 New User Feedback & Suggestions</h2>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: #e0e7ff;">TravelExpense App User Suggestions</p>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 14px;">
+            <tr><td style="padding: 6px 0; color: #64748b; width: 120px;"><strong>User:</strong></td><td style="color: #0f172a; font-weight: 700;">${cleanName} (${cleanEmail})</td></tr>
+            <tr><td style="padding: 6px 0; color: #64748b;"><strong>Category:</strong></td><td style="color: #4f46e5; font-weight: 700;">${typeLabel}</td></tr>
+            <tr><td style="padding: 6px 0; color: #64748b;"><strong>Rating:</strong></td><td style="font-size: 16px;">${starStr} (${ratingNum}/5)</td></tr>
+            <tr><td style="padding: 6px 0; color: #64748b;"><strong>Subject:</strong></td><td style="color: #0f172a; font-weight: 700;">${newFeedback.subject}</td></tr>
+            <tr><td style="padding: 6px 0; color: #64748b;"><strong>Submitted:</strong></td><td style="color: #64748b;">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</td></tr>
+          </table>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+            <h4 style="margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; color: #475569;">Detailed Message / Kya kami hai & suggestions:</h4>
+            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #1e293b; white-space: pre-wrap;">${newFeedback.message}</p>
+          </div>
+          <p style="margin: 0; font-size: 12px; color: #94a3b8; text-align: center;">You can also review all user feedbacks directly in your Super Admin Control Panel.</p>
+        </div>
+      `
+    }).catch(mailErr => console.warn('Feedback mail delivery note:', mailErr.message));
+
+    return res.json({
+      success: true,
+      message: 'Aapka feedback Super Admin tak pahuch gaya hai! Thank you for helping us improve.',
+      feedback: newFeedback
+    });
+  } catch (err) {
+    console.error('Submit feedback error:', err);
+    return res.status(500).json({ error: 'Server error while submitting feedback' });
+  }
+});
+
+// GET: Retrieve Feedbacks (Admin gets all, user gets own by ?email=...)
+app.get('/api/feedback', async (req, res) => {
+  try {
+    const { email, role } = req.query;
+    let feedbacks = getLocalFeedbacks();
+
+    // Pull from Firestore if local is empty and Firestore is available
+    if (feedbacks.length === 0 && useFirebase && db) {
+      try {
+        const snap = await db.collection('feedbacks').orderBy('createdAt', 'desc').limit(100).get();
+        if (!snap.empty) {
+          feedbacks = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+          saveLocalFeedbacks(feedbacks);
+        }
+      } catch (fbErr) {
+        console.warn('Firestore feedbacks fetch note:', fbErr.message);
+      }
+    }
+
+    const cleanEmail = email ? email.toLowerCase().trim() : '';
+    const isSuperAdmin = role === 'super_admin' || cleanEmail === 'subodhram3350@gmail.com';
+
+    if (!isSuperAdmin && cleanEmail) {
+      feedbacks = feedbacks.filter(f => f.userEmail && f.userEmail.toLowerCase().trim() === cleanEmail);
+    }
+
+    return res.json({ success: true, feedbacks });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT: Update Feedback Status (mark reviewed or new)
+app.put('/api/feedback/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const feedbacks = getLocalFeedbacks();
+    const idx = feedbacks.findIndex(f => f.id === id);
+    if (idx === -1) {
+      return res.status(404).json({ error: 'Feedback not found' });
+    }
+    feedbacks[idx].status = status || 'reviewed';
+    feedbacks[idx].updatedAt = new Date().toISOString();
+    saveLocalFeedbacks(feedbacks);
+
+    if (useFirebase && db) {
+      db.collection('feedbacks').doc(id).set({ status: feedbacks[idx].status, updatedAt: feedbacks[idx].updatedAt }, { merge: true }).catch(() => {});
+    }
+
+    return res.json({ success: true, feedback: feedbacks[idx] });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE: Delete Feedback (Super Admin only)
+app.delete('/api/feedback/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let feedbacks = getLocalFeedbacks();
+    feedbacks = feedbacks.filter(f => f.id !== id);
+    saveLocalFeedbacks(feedbacks);
+
+    if (useFirebase && db) {
+      db.collection('feedbacks').doc(id).delete().catch(() => {});
+    }
+
+    return res.json({ success: true, message: 'Feedback deleted' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -3304,6 +3541,14 @@ app.post('/api/expenses', authenticate, async (req, res) => {
     }));
 
     const total = cleanEntries.reduce((sum, e) => sum + e.amount, 0);
+
+    // 50+ Rule: Either receipt photo or comment/notes must be filled
+    const hasReceipts = receipts && Array.isArray(receipts) && receipts.length > 0;
+    const hasComment = Boolean(notes && typeof notes === 'string' && notes.trim().length > 0);
+    if (total >= 50 && !hasReceipts && !hasComment) {
+      return res.status(400).json({ error: 'For expenses of ₹50 or more, either a receipt photo or a comment is required.' });
+    }
+
     const nowIso = new Date().toISOString();
 
     const expenseData = {
@@ -3381,6 +3626,25 @@ app.put('/api/expenses/:expenseId', authenticate, async (req, res) => {
     }));
 
     const total = cleanEntries.reduce((sum, e) => sum + e.amount, 0);
+
+    // 50+ Rule: Either receipt photo or comment/notes must be filled
+    let finalReceipts = receipts;
+    let finalNotes = notes;
+    if (finalReceipts === undefined || finalNotes === undefined) {
+      try {
+        const expenses = getLocalExpenses();
+        const existing = expenses.find(e => e.id === expenseId);
+        if (existing) {
+          if (finalReceipts === undefined) finalReceipts = existing.receipts;
+          if (finalNotes === undefined) finalNotes = existing.notes;
+        }
+      } catch (e) {}
+    }
+    const hasReceipts = finalReceipts && Array.isArray(finalReceipts) && finalReceipts.length > 0;
+    const hasComment = Boolean(finalNotes && typeof finalNotes === 'string' && finalNotes.trim().length > 0);
+    if (total >= 50 && !hasReceipts && !hasComment) {
+      return res.status(400).json({ error: 'For expenses of ₹50 or more, either a receipt photo or a comment is required.' });
+    }
 
     if (useSupabase && supabase) {
       const spUpdate = {

@@ -1076,7 +1076,7 @@ body {
 
 /* Mobile Bottom Navigation Bar */
 .mobile-nav-bar {
-  display: none;
+  display: none !important;
   position: fixed;
   bottom: 0;
   left: 0;
@@ -1090,7 +1090,7 @@ body {
   padding: 0 16px;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
 }
-/* Show nav only when user is logged in */
+/* Show nav only when user is logged in and on dashboard */
 .mobile-nav-bar.nav-visible {
   display: flex !important;
 }
@@ -1577,6 +1577,83 @@ img.landing-logo-img, img.auth-logo-img, .landing-logo img, .auth-brand-logo img
 .auth-btn-otp:hover {
   background: #e0e7ff;
   border-color: #6366f1;
+}
+
+/* Math Captcha for Bot Protection */
+.auth-captcha-box {
+  margin-top: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.auth-captcha-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.auth-captcha-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.captcha-refresh-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+.captcha-refresh-btn:hover {
+  color: #2563eb;
+  background: #e2e8f0;
+}
+.auth-captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.captcha-question-badge {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #0f172a;
+  min-width: 82px;
+  text-align: center;
+  letter-spacing: 1px;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.captcha-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f172a;
+  outline: none;
+  background: #ffffff;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  box-sizing: border-box;
+}
+.captcha-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
 }
 
 /* Remember me row */
@@ -2460,6 +2537,9 @@ img.landing-logo-img, img.auth-logo-img, .landing-logo img, .auth-brand-logo img
   }
 
   .mobile-nav-bar {
+    display: none !important;
+  }
+  .mobile-nav-bar.nav-visible {
     display: flex !important;
     position: fixed !important;
     bottom: 0 !important;
