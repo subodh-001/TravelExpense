@@ -1,3 +1,4 @@
+const path = require('path');
 let db = null;
 try {
   const Database = require('better-sqlite3');

@@ -15,7 +15,7 @@
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
-  <link rel="stylesheet" href="style.css?v=authentic_google_modal_v20" />
+  <link rel="stylesheet" href="style.css?v=20261123_captcha_row_v21" />
 </head>
 <body>
 
@@ -70,20 +70,20 @@
             </div>
 
             <!-- Math Captcha for Sign In -->
-            <div class="auth-captcha-box">
-              <div class="auth-captcha-header">
-                <label class="auth-captcha-label">
+            <div class="auth-captcha-box" style="margin-top: 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
+              <div class="auth-captcha-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label class="auth-captcha-label" style="font-size: 0.82rem; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px;">
                   <i class="fa-solid fa-shield-halved" style="color: #2563eb;"></i> Human Verification
                 </label>
-                <button type="button" class="captcha-refresh-btn" onclick="generateSignInCaptcha()" title="Get new question">
+                <button type="button" class="captcha-refresh-btn" onclick="generateSignInCaptcha()" title="Get new question" style="background: none; border: none; color: #64748b; cursor: pointer; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-weight: 600;">
                   <i class="fa-solid fa-rotate-right"></i> Refresh
                 </button>
               </div>
-              <div class="auth-captcha-row">
-                <div id="signInCaptchaQuestion" class="captcha-question-badge">
+              <div class="auth-captcha-row" style="display: flex !important; flex-direction: row !important; align-items: center !important; gap: 10px !important; width: 100% !important;">
+                <div id="signInCaptchaQuestion" class="captcha-question-badge" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 0 14px; font-weight: 800; font-size: 1.05rem; color: #0f172a; min-width: 90px; height: 44px; display: inline-flex; align-items: center; justify-content: center; letter-spacing: 1px; user-select: none; box-sizing: border-box; flex-shrink: 0;">
                   3 + 5 =
                 </div>
-                <input type="number" id="signInCaptchaAnswer" class="captcha-input" placeholder="Answer ?" required autocomplete="off" />
+                <input type="number" id="signInCaptchaAnswer" class="captcha-input" placeholder="Answer ?" required autocomplete="off" style="flex: 1 !important; min-width: 0 !important; width: auto !important; height: 44px !important; padding: 0 14px !important; border: 1.5px solid #cbd5e1 !important; border-radius: 8px !important; font-weight: 700 !important; font-size: 1rem !important; color: #0f172a !important; outline: none !important; background: #ffffff !important; box-sizing: border-box !important;" />
               </div>
               <p class="auth-field-error" id="signInCaptchaError" style="display:none;"></p>
             </div>
@@ -115,20 +115,20 @@
           </div>
 
           <!-- Math Captcha for Google OTP Flow -->
-          <div class="auth-captcha-box">
-            <div class="auth-captcha-header">
-              <label class="auth-captcha-label">
+          <div class="auth-captcha-box" style="margin-top: 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
+            <div class="auth-captcha-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label class="auth-captcha-label" style="font-size: 0.82rem; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px;">
                 <i class="fa-solid fa-shield-halved" style="color: #2563eb;"></i> Human Verification
               </label>
-              <button type="button" class="captcha-refresh-btn" onclick="generateGoogleOtpCaptcha()" title="Get new question">
+              <button type="button" class="captcha-refresh-btn" onclick="generateGoogleOtpCaptcha()" title="Get new question" style="background: none; border: none; color: #64748b; cursor: pointer; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-weight: 600;">
                 <i class="fa-solid fa-rotate-right"></i> Refresh
               </button>
             </div>
-            <div class="auth-captcha-row">
-              <div id="googleOtpCaptchaQuestion" class="captcha-question-badge">
+            <div class="auth-captcha-row" style="display: flex !important; flex-direction: row !important; align-items: center !important; gap: 10px !important; width: 100% !important;">
+              <div id="googleOtpCaptchaQuestion" class="captcha-question-badge" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 0 14px; font-weight: 800; font-size: 1.05rem; color: #0f172a; min-width: 90px; height: 44px; display: inline-flex; align-items: center; justify-content: center; letter-spacing: 1px; user-select: none; box-sizing: border-box; flex-shrink: 0;">
                 5 + 3 =
               </div>
-              <input type="number" id="googleOtpCaptchaAnswer" class="captcha-input" placeholder="Answer ?" required autocomplete="off" />
+              <input type="number" id="googleOtpCaptchaAnswer" class="captcha-input" placeholder="Answer ?" required autocomplete="off" style="flex: 1 !important; min-width: 0 !important; width: auto !important; height: 44px !important; padding: 0 14px !important; border: 1.5px solid #cbd5e1 !important; border-radius: 8px !important; font-weight: 700 !important; font-size: 1rem !important; color: #0f172a !important; outline: none !important; background: #ffffff !important; box-sizing: border-box !important;" />
             </div>
             <p class="auth-field-error" id="googleOtpCaptchaError" style="display:none;"></p>
           </div>
