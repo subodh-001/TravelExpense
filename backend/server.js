@@ -1250,6 +1250,17 @@ app.get('/api/events', (req, res) => {
   });
 });
 
+// Keep-alive heartbeat every 20 seconds to prevent Nginx and Cloudflare proxy timeout drops
+setInterval(() => {
+  if (sseClients.length > 0) {
+    sseClients.forEach(client => {
+      try {
+        client.res.write(': keepalive\n\n');
+      } catch (e) {}
+    });
+  }
+}, 20000);
+
 const nodemailer = require('nodemailer');
 
 // Setup Gmail SMTP Transporter for OTP Emails (Forcing IPv4 & Dual-Port Fallback for Render Cloud Containers)
