@@ -27,7 +27,7 @@ import java.io.File;
 
 public class MainActivity extends Activity {
 
-    public static final String APP_URL = "https://fgtx.trexxitpro.net";
+    public static final String APP_URL = "https://fgtravel.alwaystherevault.com";
     private static final int FILE_CHOOSER_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 2002;
 

@@ -204,10 +204,10 @@ app.get(['/app-release.apk', '/FGTech-TravelExpense.apk'], (req, res) => {
 // App Version Check Endpoint for In-App Auto Update
 app.get('/api/app-version', (req, res) => {
   res.json({
-    version: '1.1.0',
-    buildNumber: 110,
-    apkUrl: 'https://fgtx.trexxitpro.net/FGTech-TravelExpense.apk',
-    releaseNotes: 'Fixed launcher icon fit, live OTP verification, and auto-update support.',
+    version: '1.2.0',
+    buildNumber: 120,
+    apkUrl: 'https://fgtravel.alwaystherevault.com/FGTech-TravelExpense.apk',
+    releaseNotes: 'Configured with permanent fgtravel.alwaystherevault.com domain, zero timeouts, and real-time live sync.',
     mandatory: false
   });
 });
@@ -1653,7 +1653,7 @@ app.post('/api/auth/google', async (req, res) => {
     // Send admin notification for brand new Google users pending approval
     if (isNewUser && userData.approved === false) {
       const adminEmail = 'subodhram3350@gmail.com';
-      const dashboardUrl = `${process.env.FRONTEND_URL || 'https://fgtx.trexxitpro.net'}/#superadmin`;
+      const dashboardUrl = `${process.env.FRONTEND_URL || 'https://fgtravel.alwaystherevault.com'}/#superadmin`;
       sendEmailNotification({
         to: adminEmail,
         subject: `🔔 New User Signup — Approval Required: ${capitalizedName}`,
@@ -2032,7 +2032,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     // Send admin notification for brand new users pending approval
     if (isNewUser && users[userId].approved === false) {
       const adminEmail = 'subodhram3350@gmail.com';
-      const dashboardUrl = `${process.env.FRONTEND_URL || 'https://fgtx.trexxitpro.net'}/#superadmin`;
+      const dashboardUrl = `${process.env.FRONTEND_URL || 'https://fgtravel.alwaystherevault.com'}/#superadmin`;
       sendEmailNotification({
         to: adminEmail,
         subject: `🔔 New User Signup — Approval Required: ${capitalizedName}`,
@@ -2885,7 +2885,7 @@ app.post('/api/admin/approve-user', async (req, res) => {
     await saveUserApproval(user.id, user.email, true);
 
     // Send email notification to user informing them of approval
-    const frontendUrl = process.env.FRONTEND_URL || 'https://fgtx.trexxitpro.net';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://fgtravel.alwaystherevault.com';
     sendEmailNotification({
       to: user.email,
       subject: `🎉 Account Approved! Welcome to FGTech Travel System`,
