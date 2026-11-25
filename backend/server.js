@@ -2829,7 +2829,7 @@ app.get('/api/admin/accept-invite', (req, res) => {
 app.get('/api/admin/users', async (req, res) => {
   try {
     const { month } = req.query; // e.g., '2026-08' or 'all'
-    let usersObj = {};
+    let usersObj = { ...getLocalUsers() };
     let allExpenses = [];
 
     await loadUserApprovalsFromCloud();
@@ -2839,13 +2839,16 @@ app.get('/api/admin/users', async (req, res) => {
         const { data: spUsers } = await supabase.from('users').select('*');
         if (spUsers && Array.isArray(spUsers)) {
           spUsers.forEach(u => {
+            const loc = usersObj[u.id] || {};
             usersObj[u.id] = {
+              ...loc,
               ...u,
               id: u.id,
-              name: u.name,
-              email: u.email,
-              role: u.role || 'user',
-              picture: u.picture,
+              name: u.name || loc.name || 'User',
+              email: u.email || loc.email || '',
+              role: u.role || loc.role || 'user',
+              deactivated: typeof u.deactivated === 'boolean' ? u.deactivated : !!loc.deactivated,
+              picture: u.picture || loc.picture || '',
               phone: u.phone || '',
               whatsapp: u.whatsapp || '',
               createdAt: u.created_at,
