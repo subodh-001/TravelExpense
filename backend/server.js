@@ -1064,13 +1064,35 @@ const uploadToCloudinary = async (fileBuffer, mimeType, folder = 'expense_receip
   });
 };
 
+const isUserDeactivatedByLookup = (userId, email) => {
+  const allUsers = getLocalUsers();
+  const cleanEmail = (email || '').toString().toLowerCase().trim();
+  if (cleanEmail === 'subodhram3350@gmail.com' || userId === 'google_subodhram3350_gmail_com') return false;
+  const u = (userId && allUsers[userId]) || Object.values(allUsers).find(x =>
+    x && ((userId && x.id === userId) || (cleanEmail && x.email && x.email.toLowerCase() === cleanEmail))
+  );
+  return !!(u && u.deactivated === true);
+};
+
 const authenticate = (req, res, next) => {
   let userId = req.headers['user-id'] || req.query.userId;
+  let userEmail = (req.headers['user-email'] || '').toString().toLowerCase().trim();
   if (!userId || userId === 'user_123' || userId === 'google_user') {
     return res.status(401).json({ error: 'Unauthorized: Missing or invalid user-id header' });
   }
-  if (isUserDeleted(userId)) {
-    return res.status(401).json({ error: 'Unauthorized: Account deleted by Administrator' });
+  if (isUserDeleted(userId) || (userEmail && isUserDeleted(userEmail))) {
+    return res.status(401).json({ error: 'User does not exist. Your account was removed by Administrator.', accountDeleted: true });
+  }
+  if (isUserDeactivatedByLookup(userId, userEmail)) {
+    return res.status(401).json({ error: 'Your account has been deactivated by the Administrator.', accountDeactivated: true, accountDeleted: true });
+  }
+  const allUsers = getLocalUsers();
+  const isMaster = userId === 'google_subodhram3350_gmail_com' || userEmail === 'subodhram3350@gmail.com';
+  if (!isMaster && Object.keys(allUsers).length > 0) {
+    const exists = allUsers[userId] || Object.values(allUsers).some(u => u && (u.id === userId || (u.email && userEmail && u.email.toLowerCase() === userEmail)));
+    if (!exists) {
+      return res.status(401).json({ error: 'User does not exist. Your account was removed by Administrator.', accountDeleted: true });
+    }
   }
   req.userId = userId;
   next();
@@ -1561,9 +1583,14 @@ app.post('/api/auth/google', async (req, res) => {
     const cleanName = (userName || cleanEmail.split('@')[0]).replace(/[\._]/g, ' ');
     const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
 
-    // Un-blacklist user on sign in
-    removeDeletedUser(cleanEmail);
-    removeDeletedUser(userId);
+    // Block deleted users from signing back in
+    if (cleanEmail !== 'subodhram3350@gmail.com' && (isUserDeleted(cleanEmail) || isUserDeleted(userId))) {
+      console.warn(`🛑 Blocked Google sign in for deleted user: ${cleanEmail}`);
+      return res.status(403).json({
+        error: 'User does not exist. Your account was removed by the Administrator.',
+        accountDeleted: true
+      });
+    }
 
     const users = getLocalUsers();
     let existing = users[userId] || findUserByEmail(cleanEmail);
@@ -1601,6 +1628,14 @@ app.post('/api/auth/google', async (req, res) => {
       } catch (fbErr) {
         console.warn('Firestore fallback user check note:', fbErr.message);
       }
+    }
+
+    if (existing && existing.deactivated === true && cleanEmail !== 'subodhram3350@gmail.com') {
+      console.warn(`🚫 Blocked Google sign in for deactivated user: ${cleanEmail}`);
+      return res.status(403).json({
+        error: 'Your account has been deactivated by the Administrator. Contact admin for audit/reactivation.',
+        accountDeactivated: true
+      });
     }
 
     // ONLY allow Google sign in if user was already created by Super Admin!
@@ -1701,6 +1736,14 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const gIdLogin = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    if (cleanEmail !== 'subodhram3350@gmail.com' && (isUserDeleted(cleanEmail) || isUserDeleted(gIdLogin))) {
+      console.warn(`🛑 Blocked password login for deleted user: ${cleanEmail}`);
+      return res.status(403).json({
+        error: 'User does not exist. Your account was removed by the Administrator.',
+        accountDeleted: true
+      });
+    }
     let user = findUserByEmail(cleanEmail);
 
     if (!user && useSupabase && supabase) {
@@ -1738,6 +1781,14 @@ app.post('/api/auth/login', async (req, res) => {
       } catch (fbErr) {
         console.warn('Firestore fallback user check note:', fbErr.message);
       }
+    }
+
+    if (user && user.deactivated === true && cleanEmail !== 'subodhram3350@gmail.com') {
+      console.warn(`🚫 Blocked password login for deactivated user: ${cleanEmail}`);
+      return res.status(403).json({
+        error: 'Your account has been deactivated by the Administrator. Contact admin for audit/reactivation.',
+        accountDeactivated: true
+      });
     }
 
     if (!user) {
@@ -1844,6 +1895,14 @@ app.post('/api/auth/send-otp', async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const gIdOtp = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    if (cleanEmail !== 'subodhram3350@gmail.com' && (isUserDeleted(cleanEmail) || isUserDeleted(gIdOtp))) {
+      console.warn(`🛑 Blocked OTP request for deleted user: ${cleanEmail}`);
+      return res.status(403).json({
+        error: 'User does not exist. Your account was removed by the Administrator.',
+        accountDeleted: true
+      });
+    }
     let user = findUserByEmail(cleanEmail);
 
     if (!user && useSupabase && supabase) {
@@ -1881,6 +1940,14 @@ app.post('/api/auth/send-otp', async (req, res) => {
       } catch (fbErr) {
         console.warn('Firestore fallback user check note:', fbErr.message);
       }
+    }
+
+    if (user && user.deactivated === true && cleanEmail !== 'subodhram3350@gmail.com') {
+      console.warn(`🚫 Blocked OTP request for deactivated user: ${cleanEmail}`);
+      return res.status(403).json({
+        error: 'Your account has been deactivated by the Administrator. Contact admin for audit/reactivation.',
+        accountDeactivated: true
+      });
     }
 
     // Only allow sending OTP if email was pre-created by Super Admin in the system!
@@ -1971,9 +2038,16 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
     const userId = `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
-    // Un-blacklist user on OTP verification
-    removeDeletedUser(cleanEmail);
-    removeDeletedUser(userId);
+    // Block deleted users from verifying OTP / logging back in
+    if (cleanEmail !== 'subodhram3350@gmail.com' && (isUserDeleted(cleanEmail) || isUserDeleted(userId))) {
+      otpStore.delete(cleanEmail);
+      recentlyVerifiedStore.delete(cleanEmail);
+      console.warn(`🛑 Blocked OTP verify for deleted user: ${cleanEmail}`);
+      return res.status(403).json({
+        error: 'User does not exist. Your account was removed by the Administrator.',
+        accountDeleted: true
+      });
+    }
 
     const users = getLocalUsers();
     let existing = users[userId] || findUserByEmail(cleanEmail) || {};
@@ -1989,6 +2063,21 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     }
 
     const isMasterAdmin = cleanEmail === 'subodhram3350@gmail.com';
+    if (existing && existing.deactivated === true && !isMasterAdmin) {
+      otpStore.delete(cleanEmail);
+      recentlyVerifiedStore.delete(cleanEmail);
+      return res.status(403).json({
+        error: 'Your account has been deactivated by the Administrator. Contact admin for audit/reactivation.',
+        accountDeactivated: true
+      });
+    }
+    if ((!existing || !existing.id) && !isMasterAdmin) {
+      otpStore.delete(cleanEmail);
+      return res.status(403).json({
+        error: 'User does not exist. Please contact Super Admin to register your account.',
+        accountDeleted: true
+      });
+    }
     const isNewUser = !existing.id && !isMasterAdmin;
 
     const isApproved = isMasterAdmin ? true : (isNewUser ? false : isUserApproved(userId, cleanEmail, existing));
@@ -2802,6 +2891,8 @@ app.get('/api/admin/users', async (req, res) => {
         picture: user.picture,
         verified: !!user.verified,
         approved: isUserApproved(user.id, user.email, user),
+        deactivated: !!user.deactivated,
+        deactivatedAt: user.deactivatedAt || null,
         role,
         totalAmount: pendingAmount,
         pendingAmount,
@@ -2917,6 +3008,69 @@ app.post('/api/admin/approve-user', async (req, res) => {
   }
 });
 
+// ─── Admin: Deactivate / Reactivate User (Preserve Audit Data, Block Login) ──
+app.post('/api/admin/toggle-user-status', async (req, res) => {
+  try {
+    const { userId, deactivated } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+    const users = getLocalUsers();
+    let targetKey = users[userId] ? userId : null;
+    let user = users[userId];
+    if (!user) {
+      for (const [k, u] of Object.entries(users)) {
+        if (u && (u.id === userId || (u.email && u.email.toLowerCase() === userId.toLowerCase()))) {
+          targetKey = k;
+          user = u;
+          break;
+        }
+      }
+    }
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const cleanEmail = (user.email || '').toLowerCase().trim();
+    if (cleanEmail === 'subodhram3350@gmail.com') {
+      return res.status(403).json({ error: 'Master Super Admin account cannot be deactivated.' });
+    }
+
+    const nextDeactivated = typeof deactivated === 'boolean' ? deactivated : !user.deactivated;
+    users[targetKey] = {
+      ...user,
+      deactivated: nextDeactivated,
+      deactivatedAt: nextDeactivated ? new Date().toISOString() : null,
+      updatedAt: new Date().toISOString()
+    };
+    saveLocalUsers(users);
+
+    if (nextDeactivated && cleanEmail) {
+      otpStore.delete(cleanEmail);
+      recentlyVerifiedStore.delete(cleanEmail);
+    }
+
+    if (useFirebase && db) {
+      try {
+        await db.collection('users').doc(targetKey).set({
+          deactivated: nextDeactivated,
+          deactivatedAt: users[targetKey].deactivatedAt,
+          updatedAt: users[targetKey].updatedAt
+        }, { merge: true });
+      } catch (e) {}
+    }
+
+    console.log(`${nextDeactivated ? '🚫 Deactivated' : '✅ Reactivated'} user account (audit preserved): ${cleanEmail || targetKey}`);
+    res.json({
+      success: true,
+      userId: targetKey,
+      name: user.name,
+      email: user.email,
+      deactivated: nextDeactivated
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── User Side: Check Live Approval Status ────────────────────────────────────
 app.get('/api/auth/approval-status', async (req, res) => {
   try {
@@ -2924,9 +3078,26 @@ app.get('/api/auth/approval-status', async (req, res) => {
     if (!userId && !email) {
       return res.status(400).json({ error: 'userId or email is required' });
     }
+    const cleanEmail = (email || '').toString().toLowerCase().trim();
+    const isMaster = cleanEmail === 'subodhram3350@gmail.com' || userId === 'google_subodhram3350_gmail_com';
+
+    if (!isMaster) {
+      if ((userId && isUserDeleted(userId)) || (cleanEmail && isUserDeleted(cleanEmail))) {
+        return res.json({ success: true, exists: false, accountDeleted: true, approved: false, error: 'User does not exist. Your account was removed by Administrator.' });
+      }
+      const allUsers = getLocalUsers();
+      const exists = (userId && allUsers[userId]) || Object.values(allUsers).some(u => u && ((userId && u.id === userId) || (cleanEmail && u.email && u.email.toLowerCase() === cleanEmail)));
+      if (!exists) {
+        return res.json({ success: true, exists: false, accountDeleted: true, approved: false, error: 'User does not exist. Your account was removed by Administrator.' });
+      }
+      if (isUserDeactivatedByLookup(userId, cleanEmail)) {
+        return res.json({ success: true, exists: true, deactivated: true, accountDeactivated: true, accountDeleted: true, approved: false, error: 'Your account has been deactivated by the Administrator.' });
+      }
+    }
+
     await loadUserApprovalsFromCloud();
     const approved = isUserApproved(userId, email);
-    res.json({ success: true, approved, userId, email });
+    res.json({ success: true, exists: true, accountDeleted: false, approved, userId, email });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -3336,6 +3507,14 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
     const targetUser = users[userId];
 
     if (action === 'delete_user') {
+      try {
+        const uObj = getLocalUsers()[userId];
+        const em = (uObj?.email || '').toLowerCase().trim();
+        if (em) {
+          otpStore.delete(em);
+          recentlyVerifiedStore.delete(em);
+        }
+      } catch (e) {}
       const matchedTarget = users[userId] || Object.values(users).find(u => u.id === userId || u.email === userId);
       const userCleanId = (matchedTarget && matchedTarget.email) ? `google_${matchedTarget.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
 
@@ -3914,6 +4093,10 @@ app.get('/api/expenses', async (req, res) => {
       userId = req.headers['user-id'];
     }
 
+    const isAdminOrShareInspect = !!(req.query.userId || req.query.share);
+    if (!isAdminOrShareInspect && isUserDeactivatedByLookup(userId, req.headers['user-email'])) {
+      return res.status(401).json({ error: 'Your account has been deactivated by the Administrator.', accountDeactivated: true, accountDeleted: true });
+    }
     if (!userId || userId === 'user_123' || userId === 'google_user' || isUserDeleted(userId)) {
       return res.status(401).json({ error: 'Unauthorized: Account deleted or invalid' });
     }

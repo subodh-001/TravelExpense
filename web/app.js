@@ -1162,6 +1162,34 @@ async function checkHealth() {
   }
 }
 
+let _deletedLogoutTriggered = false;
+function forceLogoutDeletedUser(reason) {
+  if (_deletedLogoutTriggered) return;
+  _deletedLogoutTriggered = true;
+  const msg = reason || 'User does not exist. Your account was removed by the Administrator.';
+  console.warn('⚠️ ' + msg);
+  if (typeof pendingApprovalPollingTimer !== 'undefined' && pendingApprovalPollingTimer) {
+    clearInterval(pendingApprovalPollingTimer);
+    pendingApprovalPollingTimer = null;
+  }
+  if (typeof activeSessionHeartbeatTimer !== 'undefined' && activeSessionHeartbeatTimer) {
+    clearInterval(activeSessionHeartbeatTimer);
+    activeSessionHeartbeatTimer = null;
+  }
+  performSilentSignOut();
+  try {
+    const authErr = document.getElementById('authErrorMessage') || document.getElementById('signinError');
+    if (authErr) {
+      authErr.textContent = msg;
+      authErr.style.display = 'block';
+    }
+  } catch (e) {}
+  setTimeout(() => {
+    alert('⚠️ ' + msg);
+    _deletedLogoutTriggered = false;
+  }, 150);
+}
+
 async function fetchWithAuth(url, options = {}) {
   const user = state.currentGoogleUser || getStoredGoogleUser();
   if (!user || !user.id) {
@@ -1169,16 +1197,17 @@ async function fetchWithAuth(url, options = {}) {
   }
   const headers = {
     'user-id': user.id,
+    'user-email': user.email || '',
     ...(options.headers || {})
   };
   const res = await fetch(url, { ...options, headers });
-  if (res.status === 401) {
+  if (res.status === 401 || res.status === 403) {
     try {
       const clone = res.clone();
       const data = await clone.json();
-      if (data.error && data.error.toLowerCase().includes('deleted')) {
-        console.warn('⚠️ Account deleted by Administrator. Purging session...');
-        performSilentSignOut();
+      const errLower = (data.error || '').toLowerCase();
+      if (data.accountDeleted || errLower.includes('deleted') || errLower.includes('does not exist')) {
+        forceLogoutDeletedUser(data.error);
       }
     } catch (e) {}
   }
@@ -3638,6 +3667,7 @@ function switchAppPage(viewName, pushToHistory = true) {
       mobileNav.classList.add('nav-visible');
       mobileNav.style.display = 'flex';
     }
+    if (typeof startActiveSessionHeartbeat === 'function') startActiveSessionHeartbeat();
     loadExpenses();
   } else if ((viewName === 'superadmin' || viewName === 'admin') && superAdminDashboard) {
     superAdminDashboard.classList.remove('hidden');
@@ -3668,6 +3698,30 @@ function switchAppPage(viewName, pushToHistory = true) {
 // ─── Live Check User Approval Status (Polling & Manual Button) ───────────────
 let pendingApprovalPollingTimer = null;
 
+let activeSessionHeartbeatTimer = null;
+
+async function verifyActiveUserSession() {
+  const user = state.currentGoogleUser || getStoredGoogleUser();
+  if (!user || !user.email) return;
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/approval-status?userId=${encodeURIComponent(user.id || '')}&email=${encodeURIComponent(user.email || '')}`);
+    const data = await res.json();
+    if (data && (data.accountDeleted === true || data.exists === false)) {
+      forceLogoutDeletedUser(data.error || 'User does not exist. Your account was removed by the Administrator.');
+    }
+  } catch (e) {}
+}
+
+function startActiveSessionHeartbeat() {
+  if (activeSessionHeartbeatTimer) clearInterval(activeSessionHeartbeatTimer);
+  verifyActiveUserSession();
+  activeSessionHeartbeatTimer = setInterval(() => {
+    if (state.currentGoogleUser && state.currentGoogleUser.email) {
+      verifyActiveUserSession();
+    }
+  }, 8000);
+}
+
 async function checkUserApprovalStatus(isManual = false) {
   const user = state.currentGoogleUser;
   if (!user || !user.email) return;
@@ -3679,6 +3733,11 @@ async function checkUserApprovalStatus(isManual = false) {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/approval-status?userId=${encodeURIComponent(user.id || '')}&email=${encodeURIComponent(user.email || '')}`);
     const data = await res.json();
+
+    if (data && (data.accountDeleted === true || data.exists === false)) {
+      forceLogoutDeletedUser(data.error || 'User does not exist. Your account was removed by the Administrator.');
+      return;
+    }
 
     if (data && data.success && data.approved === true) {
       if (pendingApprovalPollingTimer) {
@@ -3961,7 +4020,7 @@ function renderAdminUsersTable(users) {
           <img src="${getUserAvatarUrl(user)}" alt="${user.name || 'Member'}" style="width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid #cbd5e1; object-fit: cover;" />
         </td>
         <td style="padding: 12px 16px; cursor: pointer;" onclick="inspectUserExpenses('${user.id}')" title="Click to view ${user.name}'s entries &amp; export Excel">
-          <strong style="color: #0f172a; font-size: 0.92rem; display: block;">${user.name || 'Member'}</strong>
+          <strong style="color: #0f172a; font-size: 0.92rem; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">${user.name || 'Member'}${user.deactivated ? '<span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;font-size:0.68rem;padding:2px 6px;border-radius:4px;font-weight:800;"><i class="fa-solid fa-user-slash"></i> Deactivated</span>' : ''}</strong>
           <span style="color: #64748b; font-size: 0.8rem;">${user.email || 'N/A'}</span>
         </td>
         <td style="padding: 12px 16px; font-weight: 800; color: #0f172a; font-size: 0.95rem;" class="col-numeric">
@@ -4900,6 +4959,82 @@ function filterAdminUserTable() {
 let currentInspectUserId = null;
 let currentInspectUserExpenses = [];
 
+function updateInspectDeactivateButton(user) {
+  const btn = document.getElementById('inspectToggleUserStatusBtn');
+  if (!btn) return;
+  const email = (user?.email || '').toLowerCase().trim();
+  if (!user || email === 'subodhram3350@gmail.com') {
+    btn.style.display = 'none';
+    return;
+  }
+  btn.style.display = 'inline-flex';
+  if (user.deactivated) {
+    btn.style.background = '#ecfdf5';
+    btn.style.color = '#059669';
+    btn.style.borderColor = '#a7f3d0';
+    btn.innerHTML = '<i class="fa-solid fa-user-check"></i> Reactivate User';
+    btn.title = 'Allow this user to log in and submit expenses again';
+  } else {
+    btn.style.background = '#fef2f2';
+    btn.style.color = '#dc2626';
+    btn.style.borderColor = '#fecaca';
+    btn.innerHTML = '<i class="fa-solid fa-user-slash"></i> Deactivate User';
+    btn.title = 'Keep all audit records, but block this user from logging in or adding entries';
+  }
+}
+
+async function toggleInspectUserDeactivated() {
+  if (!currentInspectUserId) return;
+  const user = (adminUsersCache && adminUsersCache.find(u => u.id === currentInspectUserId)) || { id: currentInspectUserId, name: 'Member', email: '', deactivated: false };
+  const nextDeactivated = !user.deactivated;
+  const userName = user.name || user.email || 'this user';
+
+  showConfirmModal({
+    title: nextDeactivated ? 'Deactivate User (Preserve Audit)' : 'Reactivate User Access',
+    message: nextDeactivated
+      ? `Deactivate ${userName}? All their expense entries and audit history will stay 100% intact, but they will be immediately logged out and blocked from logging in or adding/editing any entries.`
+      : `Reactivate ${userName}? They will be able to log in and submit expense entries again.`,
+    iconClass: nextDeactivated ? 'fa-user-slash' : 'fa-user-check',
+    btnText: nextDeactivated ? 'Yes, Deactivate User' : 'Yes, Reactivate User',
+    onConfirm: async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/admin/toggle-user-status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentInspectUserId, deactivated: nextDeactivated })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          user.deactivated = data.deactivated;
+          if (adminUsersCache) {
+            const idx = adminUsersCache.findIndex(u => u.id === currentInspectUserId);
+            if (idx !== -1) adminUsersCache[idx].deactivated = data.deactivated;
+          }
+          updateInspectDeactivateButton(user);
+          const title = document.getElementById('inspectUserNameTitle');
+          if (title) {
+            if (data.deactivated) {
+              title.innerHTML = `${user.name}'s Expense Entries <span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;font-size:0.7rem;padding:2px 8px;border-radius:6px;font-weight:800;margin-left:6px;vertical-align:middle;"><i class="fa-solid fa-user-slash"></i> Deactivated (Audit Only)</span>`;
+            } else {
+              title.textContent = `${user.name}'s Expense Entries`;
+            }
+          }
+          const msg = data.deactivated
+            ? `🚫 ${userName} deactivated — audit data preserved & login blocked!`
+            : `✅ ${userName} reactivated — login access restored!`;
+          if (typeof showCustomToast === 'function') showCustomToast(msg);
+          else if (typeof showToast === 'function') showToast(msg);
+          loadSuperAdminData();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to update user status'));
+        }
+      } catch (err) {
+        alert('Request failed: ' + err.message);
+      }
+    }
+  });
+}
+
 async function inspectUserExpenses(userId) {
   currentInspectUserId = userId;
   const user = (adminUsersCache && adminUsersCache.find(u => u.id === userId)) || { id: userId, name: 'Member', email: userId };
@@ -4909,8 +5044,15 @@ async function inspectUserExpenses(userId) {
   const emailSub = document.getElementById('inspectUserEmailSub');
 
   if (avatar) avatar.src = getUserAvatarUrl(user);
-  if (title) title.textContent = `${user.name}'s Expense Entries`;
+  if (title) {
+    if (user.deactivated) {
+      title.innerHTML = `${user.name}'s Expense Entries <span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;font-size:0.7rem;padding:2px 8px;border-radius:6px;font-weight:800;margin-left:6px;vertical-align:middle;"><i class="fa-solid fa-user-slash"></i> Deactivated (Audit Only)</span>`;
+    } else {
+      title.textContent = `${user.name}'s Expense Entries`;
+    }
+  }
   if (emailSub) emailSub.textContent = user.email || '';
+  updateInspectDeactivateButton(user);
 
   try {
     const res = await fetch(`${API_BASE_URL}/expenses?userId=${encodeURIComponent(userId)}`);

@@ -1439,10 +1439,13 @@
           </div>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 6px;">
             <i class="fa-solid fa-eye"></i> View Only Mode
           </span>
+          <button type="button" id="inspectToggleUserStatusBtn" onclick="toggleInspectUserDeactivated()" style="display: none; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 6px; cursor: pointer; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-user-slash"></i> Deactivate User
+          </button>
           <button type="button" onclick="closeModal(document.getElementById('inspectUserModal'))" style="border: none; background: none; font-size: 1.2rem; cursor: pointer; color: #64748b; padding: 4px;">
             <i class="fa-solid fa-xmark"></i>
           </button>
