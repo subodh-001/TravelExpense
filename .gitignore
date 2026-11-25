@@ -37,3 +37,7 @@ mobile-expo/.expo/
 *.tmp
 
 
+
+# Activity audit logs & VPS rolling backups
+backend/logs/
+backups/

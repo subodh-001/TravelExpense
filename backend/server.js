@@ -31,6 +31,84 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// ─── 15-Day Rotating Activity Audit Logger (backend/logs/activity_YYYY-MM-DD.log) ─
+const LOGS_DIR = path.join(__dirname, 'logs');
+if (!fs.existsSync(LOGS_DIR)) fs.mkdirSync(LOGS_DIR, { recursive: true });
+
+function getIstDateTimeParts() {
+  const now = new Date();
+  const istStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD HH:mm:ss
+  return {
+    dateStr: istStr.slice(0, 10),
+    timeStr: istStr + ' IST'
+  };
+}
+
+function logActivity(category, action, details = '') {
+  try {
+    if (!fs.existsSync(LOGS_DIR)) fs.mkdirSync(LOGS_DIR, { recursive: true });
+    const { dateStr, timeStr } = getIstDateTimeParts();
+    const logFile = path.join(LOGS_DIR, `activity_${dateStr}.log`);
+    const line = `[${timeStr}] [${category}] [${action}]${details ? ' ' + details : ''}\n`;
+    fs.appendFileSync(logFile, line, 'utf8');
+  } catch (e) {}
+}
+
+function cleanupOldActivityLogs(retentionDays = 15) {
+  try {
+    if (!fs.existsSync(LOGS_DIR)) return;
+    const cutoffMs = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+    const files = fs.readdirSync(LOGS_DIR);
+    for (const f of files) {
+      if (!f.startsWith('activity_') || !f.endsWith('.log')) continue;
+      const fp = path.join(LOGS_DIR, f);
+      const stat = fs.statSync(fp);
+      if (stat.mtimeMs < cutoffMs) {
+        fs.unlinkSync(fp);
+        console.log(`🧹 Deleted old activity log (>15 days): ${f}`);
+      }
+    }
+  } catch (e) {}
+}
+
+cleanupOldActivityLogs(15);
+setInterval(() => cleanupOldActivityLogs(15), 6 * 60 * 60 * 1000);
+
+app.use('/api', (req, res, next) => {
+  const method = req.method;
+  const p = req.path || '';
+  const isTracked =
+    (p.startsWith('/auth/') && method === 'POST') ||
+    (p.startsWith('/expenses') && ['POST', 'PUT', 'DELETE'].includes(method)) ||
+    (p.startsWith('/admin/') && ['POST', 'PUT', 'DELETE'].includes(method));
+
+  if (!isTracked) return next();
+
+  res.on('finish', () => {
+    try {
+      const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
+      const actorId = req.headers['user-id'] || '';
+      const actorEmail = req.headers['user-email'] || req.body?.email || '';
+      const category = p.startsWith('/auth/') ? 'AUTH' : p.startsWith('/admin/') ? 'ADMIN' : 'EXPENSE';
+      const parts = [
+        `status=${res.statusCode}`,
+        actorEmail ? `email=${actorEmail}` : '',
+        actorId ? `userId=${actorId}` : '',
+        req.body?.userId && req.body.userId !== actorId ? `targetUser=${req.body.userId}` : '',
+        req.body?.date ? `date=${req.body.date}` : '',
+        (req.body?.total !== undefined || req.body?.amount !== undefined) ? `total=₹${req.body.total ?? req.body.amount}` : '',
+        req.body?.location ? `location="${String(req.body.location).slice(0, 40)}"` : '',
+        req.body?.action ? `action=${req.body.action}` : '',
+        typeof req.body?.deactivated === 'boolean' ? `deactivated=${req.body.deactivated}` : '',
+        req.body?.role ? `role=${req.body.role}` : '',
+        ip ? `ip=${ip}` : ''
+      ].filter(Boolean).join(' | ');
+      logActivity(category, `${method} /api${p}`, parts);
+    } catch (e) {}
+  });
+  next();
+});
+
 // Ensure local directories exist for fallback storage
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const DATA_DIR = path.join(__dirname, 'data');
