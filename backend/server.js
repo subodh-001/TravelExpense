@@ -556,7 +556,7 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
             batch.set(db.collection('users').doc(uid), {
               id: u.id || uid, name: u.name || '', email: u.email || '',
               role: u.role || 'user', verified: !!u.verified,
-              picture: u.picture || '', paymentBillUrl: u.paymentBillUrl || '',
+              picture: u.picture || (localUsers[u.id] ? localUsers[u.id].picture : '') || '', paymentBillUrl: u.paymentBillUrl || '',
               phone: u.phone || u.whatsapp || '',
               whatsapp: u.whatsapp || u.phone || '',
               whatsappVerified: !!u.whatsappVerified,

@@ -3798,7 +3798,7 @@ function populateAdminMonthFilter() {
   const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const isFirstInit = monthSelect.options.length <= 1;
   const currentVal = monthSelect.value; // preserve user's current selection if already set
-  const selected = isFirstInit ? 'all' : (currentVal || 'all');
+  const selected = isFirstInit ? currentYM : (currentVal || currentYM);
 
   // Generate months starting from project launch (August 2026 = '2026-08') up to current/future month
   const months = [];
