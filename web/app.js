@@ -386,6 +386,11 @@ document.addEventListener('DOMContentLoaded', () => {
       switchAppPage('pending-approval', false);
       // Immediately verify with backend in background in case admin already approved
       if (typeof checkUserApprovalStatus === 'function') checkUserApprovalStatus(false);
+    } else if (window.location.hash === '#feedbacks' && !state.sharedMode && u) {
+      feedbackPageState.mode = isSuperAdmin ? 'admin' : 'mine';
+      feedbackPageState.returnTo = isSuperAdmin ? 'superadmin' : 'dashboard';
+      feedbackPageState.returnTab = isSuperAdmin ? 'home' : 'account';
+      switchAppPage('feedbacks', false);
     } else if (isSuperAdmin && !state.sharedMode && u) {
       switchAppPage('superadmin', false);
     } else {
@@ -3617,12 +3622,14 @@ function switchAppPage(viewName, pushToHistory = true) {
   const fullAuthPage = document.getElementById('fullAuthPage');
   const appDashboard = document.getElementById('appDashboard');
   const superAdminDashboard = document.getElementById('superAdminDashboard');
+  const feedbacksPage = document.getElementById('feedbacksPage');
   const pendingApprovalPage = document.getElementById('pendingApprovalPage');
   const mobileNav = document.querySelector('.mobile-nav-bar');
 
   if (fullAuthPage) fullAuthPage.classList.add('hidden');
   if (appDashboard) appDashboard.classList.add('hidden');
   if (superAdminDashboard) superAdminDashboard.classList.add('hidden');
+  if (feedbacksPage) feedbacksPage.classList.add('hidden');
   if (pendingApprovalPage) pendingApprovalPage.classList.add('hidden');
 
   // Stop polling if moving away from pending-approval page
@@ -3635,6 +3642,8 @@ function switchAppPage(viewName, pushToHistory = true) {
   if (!state.currentGoogleUser) {
     viewName = 'auth';
   }
+
+  state.currentPage = viewName;
 
   if (viewName === 'auth' || viewName === 'landing') {
     if (fullAuthPage) fullAuthPage.classList.remove('hidden');
@@ -3677,6 +3686,13 @@ function switchAppPage(viewName, pushToHistory = true) {
     }
     loadSuperAdminData();
     loadExpenses();
+  } else if (viewName === 'feedbacks' && feedbacksPage) {
+    feedbacksPage.classList.remove('hidden');
+    if (mobileNav) {
+      mobileNav.classList.remove('nav-visible');
+      mobileNav.style.display = 'none';
+    }
+    loadFeedbacksPageData();
   } else {
     if (fullAuthPage) fullAuthPage.classList.remove('hidden');
     if (mobileNav) {
@@ -3686,6 +3702,7 @@ function switchAppPage(viewName, pushToHistory = true) {
     toggleAuthPageView('signin');
     viewName = 'auth';
   }
+  state.currentPage = viewName;
   window.scrollTo(0, 0);
 
   if (pushToHistory && window.history && window.history.pushState) {
@@ -3778,7 +3795,7 @@ window.addEventListener('popstate', (e) => {
     switchAppPage(e.state.page, false);
   } else if (state.currentGoogleUser) {
     const hash = (window.location.hash || '').replace('#', '');
-    if (hash === 'superadmin' || hash === 'dashboard') {
+    if (hash === 'superadmin' || hash === 'dashboard' || hash === 'feedbacks') {
       switchAppPage(hash, false);
     } else {
       switchAppPage('dashboard', false);
@@ -5808,6 +5825,10 @@ function loadAccountProfileData() {
       roleBadge.style.display = 'none';
     }
   }
+  const accountAdminFbBtn = document.getElementById('accountAdminSeeAllFeedbackBtn');
+  if (accountAdminFbBtn) {
+    accountAdminFbBtn.style.display = isMasterAdmin ? 'inline-flex' : 'none';
+  }
 
   populateAccountMonthSelector();
   renderAccountExpenseHistory();
@@ -6551,6 +6572,9 @@ async function handleUserSubmitFeedback(e) {
       showCustomToast('💬 Feedback submitted! Super Admin has been notified.');
     }
     loadUserFeedbacks();
+    if (state.currentPage === 'feedbacks' || window.location.hash === '#feedbacks') {
+      loadFeedbacksPageData();
+    }
   } catch (err) {
     alert('Error submitting feedback: ' + err.message);
   } finally {
@@ -6561,68 +6585,99 @@ async function handleUserSubmitFeedback(e) {
   }
 }
 
-// Render user's previous feedbacks in their Account profile
+const feedbackPageState = {
+  mode: 'admin',
+  returnTo: 'superadmin',
+  returnTab: 'account',
+  allFeedbacks: [],
+  page: 1,
+  pageSize: 20
+};
+
+function isCurrentUserAdmin() {
+  const user = state.currentGoogleUser || getStoredGoogleUser();
+  if (!user) return false;
+  const email = (user.email || '').toLowerCase().trim();
+  return user.role === 'super_admin' || user.role === 'admin' || email === 'subodhram3350@gmail.com';
+}
+
+function openFeedbacksPage(requestedMode = 'auto') {
+  const isAdmin = isCurrentUserAdmin();
+  const prevPage = state.currentPage || ((window.location.hash || '').replace('#', '') || (isAdmin ? 'superadmin' : 'dashboard'));
+
+  if (prevPage === 'superadmin' || prevPage === 'admin') {
+    feedbackPageState.returnTo = 'superadmin';
+    feedbackPageState.returnTab = 'home';
+  } else {
+    feedbackPageState.returnTo = 'dashboard';
+    const accTab = document.getElementById('dashboardAccountTab');
+    feedbackPageState.returnTab = (accTab && !accTab.classList.contains('hidden')) ? 'account' : 'home';
+  }
+
+  if (requestedMode === 'admin' && isAdmin) {
+    feedbackPageState.mode = 'admin';
+  } else if (requestedMode === 'mine') {
+    feedbackPageState.mode = 'mine';
+  } else {
+    feedbackPageState.mode = isAdmin ? 'admin' : 'mine';
+  }
+  feedbackPageState.page = 1;
+  switchAppPage('feedbacks');
+}
+
+function goBackFromFeedbacksPage() {
+  const isAdmin = isCurrentUserAdmin();
+  const target = feedbackPageState.returnTo || (isAdmin ? 'superadmin' : 'dashboard');
+  const tab = feedbackPageState.returnTab || 'home';
+  switchAppPage(target);
+  if (target === 'dashboard' && tab === 'account' && typeof switchDashboardTab === 'function') {
+    switchDashboardTab('account');
+  }
+}
+
+function setFeedbackPageScope(scope) {
+  if (!isCurrentUserAdmin()) {
+    feedbackPageState.mode = 'mine';
+  } else {
+    feedbackPageState.mode = scope === 'mine' ? 'mine' : 'admin';
+  }
+  feedbackPageState.page = 1;
+  loadFeedbacksPageData();
+}
+
+function resetFeedbackPageAndRender() {
+  feedbackPageState.page = 1;
+  renderFeedbacksPage();
+}
+
+function changeFeedbackPage(delta) {
+  feedbackPageState.page = Math.max(1, feedbackPageState.page + delta);
+  renderFeedbacksPage();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Update user's feedback count badge in Account profile (no inline list expansion)
 async function loadUserFeedbacks() {
   const user = state.currentGoogleUser || getStoredGoogleUser();
   if (!user || !user.email) return;
 
-  const container = document.getElementById('userFeedbackListContainer');
-  const listEl = document.getElementById('userFeedbackList');
-  if (!container || !listEl) return;
-
+  const countBadge = document.getElementById('accountFeedbackCountBadge');
   try {
     const res = await fetch(`${API_BASE_URL}/feedback?email=${encodeURIComponent(user.email)}`);
     if (!res.ok) return;
     const data = await res.json();
     const feedbacks = data.feedbacks || [];
-
-    if (feedbacks.length === 0) {
-      container.style.display = 'none';
-      return;
-    }
-
-    container.style.display = 'block';
-    const typeBadges = {
-      update: '<span style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; font-size:0.72rem; padding:2px 8px; border-radius:12px; font-weight:700;">🚀 Update</span>',
-      missing: '<span style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:0.72rem; padding:2px 8px; border-radius:12px; font-weight:700;">📝 Kami</span>',
-      bug: '<span style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.72rem; padding:2px 8px; border-radius:12px; font-weight:700;">🐛 Bug</span>',
-      general: '<span style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; font-size:0.72rem; padding:2px 8px; border-radius:12px; font-weight:700;">⭐ General</span>'
-    };
-
-    listEl.innerHTML = feedbacks.map(fb => {
-      const dateStr = fb.createdAt ? new Date(fb.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
-      const badge = typeBadges[fb.type] || fb.type;
-      const statusBadge = fb.status === 'reviewed'
-        ? '<span style="color:#059669; font-weight:700; font-size:0.72rem;"><i class="fa-solid fa-circle-check"></i> Reviewed by Admin</span>'
-        : '<span style="color:#f59e0b; font-weight:700; font-size:0.72rem;"><i class="fa-solid fa-clock"></i> Sent to Admin</span>';
-
-      return `
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 0.84rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; gap:8px;">
-            <div style="display:flex; align-items:center; gap:6px;">
-              ${badge}
-              <strong style="color:#0f172a;">${escapeHtml(fb.subject || '')}</strong>
-            </div>
-            <span style="font-size:0.75rem; color:#94a3b8;">${dateStr}</span>
-          </div>
-          <p style="margin: 0 0 6px 0; color:#475569; font-size:0.82rem; line-height:1.4;">${escapeHtml(fb.message || '')}</p>
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="color:#f59e0b; font-size:0.75rem;">${'⭐'.repeat(fb.rating || 5)}</span>
-            ${statusBadge}
-          </div>
-        </div>
-      `;
-    }).join('');
+    if (countBadge) countBadge.textContent = String(feedbacks.length);
   } catch (err) {
     console.warn('Load user feedbacks error:', err);
   }
 }
 
-// Render all feedbacks in Super Admin Dashboard
+// Update compact feedback counts on Super Admin dashboard header & card
 async function loadAdminFeedbacks() {
-  const tableBody = document.getElementById('adminFeedbackTableBody');
   const countBadge = document.getElementById('adminFeedbackCountBadge');
-  if (!tableBody) return;
+  const headerBadge = document.getElementById('adminHeaderFeedbackBadge');
+  const newBadge = document.getElementById('adminFeedbackNewBadge');
 
   try {
     const user = state.currentGoogleUser || getStoredGoogleUser();
@@ -6630,59 +6685,190 @@ async function loadAdminFeedbacks() {
     if (!res.ok) throw new Error('Failed to fetch feedbacks');
     const data = await res.json();
     const feedbacks = data.feedbacks || [];
+    const newCount = feedbacks.filter(fb => (fb.status || 'new') !== 'reviewed').length;
 
     if (countBadge) countBadge.textContent = `${feedbacks.length} Feedbacks`;
-
-    if (feedbacks.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:#94a3b8; font-size:0.88rem;">No feedbacks received yet.</td></tr>`;
-      return;
+    if (headerBadge) headerBadge.textContent = String(feedbacks.length);
+    if (newBadge) {
+      if (newCount > 0) {
+        newBadge.style.display = 'inline-flex';
+        newBadge.textContent = `${newCount} New`;
+      } else {
+        newBadge.style.display = 'none';
+      }
     }
-
-    const typeBadges = {
-      update: '<span class="badge" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; font-size:0.72rem; font-weight:700;">🚀 Update</span>',
-      missing: '<span class="badge" style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:0.72rem; font-weight:700;">📝 Kami Hai</span>',
-      bug: '<span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.72rem; font-weight:700;">🐛 Bug</span>',
-      general: '<span class="badge" style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; font-size:0.72rem; font-weight:700;">⭐ General</span>'
-    };
-
-    tableBody.innerHTML = feedbacks.map(fb => {
-      const dateStr = fb.createdAt ? new Date(fb.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-      const badge = typeBadges[fb.type] || `<span class="badge">${fb.type}</span>`;
-      const isReviewed = fb.status === 'reviewed';
-      const statusHtml = isReviewed
-        ? `<span style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; font-size:0.72rem; padding:3px 8px; border-radius:12px; font-weight:700;"><i class="fa-solid fa-check"></i> Reviewed</span>`
-        : `<span style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:0.72rem; padding:3px 8px; border-radius:12px; font-weight:700;"><i class="fa-solid fa-envelope"></i> New</span>`;
-
-      return `
-        <tr style="border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;">
-          <td style="padding: 10px 12px; color: #64748b; white-space: nowrap;">${dateStr}</td>
-          <td style="padding: 10px 12px;">
-            <strong style="color: #0f172a; display: block;">${escapeHtml(fb.userName || 'Member')}</strong>
-            <span style="color: #64748b; font-size: 0.76rem;">${escapeHtml(fb.userEmail || '')}</span>
-          </td>
-          <td style="padding: 10px 12px;">${badge}</td>
-          <td style="padding: 10px 12px; white-space: nowrap; color: #f59e0b; font-size: 0.85rem;">
-            ${'⭐'.repeat(fb.rating || 5)} <span style="color: #64748b; font-size: 0.75rem;">(${fb.rating || 5}/5)</span>
-          </td>
-          <td style="padding: 10px 12px; max-width: 300px;">
-            <strong style="color: #0f172a; display: block; margin-bottom: 3px;">${escapeHtml(fb.subject || '')}</strong>
-            <span style="color: #475569; font-size: 0.82rem; line-height: 1.4; display: block; white-space: pre-wrap;">${escapeHtml(fb.message || '')}</span>
-          </td>
-          <td style="padding: 10px 12px; white-space: nowrap;">${statusHtml}</td>
-          <td style="padding: 10px 12px; text-align: right; white-space: nowrap;">
-            <button type="button" onclick="adminToggleFeedbackStatus('${fb.id}', '${fb.status || 'new'}')" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; cursor: pointer; color: #334155; margin-right: 4px;" title="Toggle status">
-              <i class="fa-solid ${isReviewed ? 'fa-arrow-rotate-left' : 'fa-check'}"></i> ${isReviewed ? 'Mark New' : 'Done'}
-            </button>
-            <button type="button" onclick="adminDeleteFeedback('${fb.id}')" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; cursor: pointer; color: #dc2626;" title="Delete feedback">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
   } catch (err) {
     console.error('loadAdminFeedbacks error:', err);
-    tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:18px; color:#ef4444; font-size:0.85rem;">Error loading feedbacks: ${err.message}</td></tr>`;
+  }
+}
+
+async function loadFeedbacksPageData() {
+  const container = document.getElementById('feedbacksPageListContainer');
+  const titleEl = document.getElementById('feedbacksPageTitle');
+  const subEl = document.getElementById('feedbacksPageSubtitle');
+  const backTextEl = document.getElementById('feedbacksBackBtnText');
+  const scopeGroup = document.getElementById('feedbackPageScopeGroup');
+  const scopeAdminBtn = document.getElementById('fbScopeAdminBtn');
+  const scopeMineBtn = document.getElementById('fbScopeMineBtn');
+
+  const user = state.currentGoogleUser || getStoredGoogleUser();
+  const isAdmin = isCurrentUserAdmin();
+  if (!isAdmin) feedbackPageState.mode = 'mine';
+
+  const isAdminMode = isAdmin && feedbackPageState.mode === 'admin';
+  if (titleEl) titleEl.textContent = isAdminMode ? 'User Feedbacks & Suggestions' : 'My Submitted Feedbacks';
+  if (subEl) subEl.textContent = isAdminMode ? 'All feedback received from app users' : 'Track your submitted suggestions & admin review status';
+  if (backTextEl) backTextEl.textContent = feedbackPageState.returnTo === 'superadmin' ? 'Back to Admin' : 'Back to Account';
+
+  if (scopeGroup) {
+    scopeGroup.style.display = isAdmin ? 'inline-flex' : 'none';
+  }
+  if (scopeAdminBtn && scopeMineBtn) {
+    scopeAdminBtn.style.background = isAdminMode ? '#0f172a' : 'transparent';
+    scopeAdminBtn.style.color = isAdminMode ? '#ffffff' : '#475569';
+    scopeMineBtn.style.background = !isAdminMode ? '#0f172a' : 'transparent';
+    scopeMineBtn.style.color = !isAdminMode ? '#ffffff' : '#475569';
+  }
+
+  if (!user || !user.email) return;
+  if (container) {
+    container.innerHTML = `<div style="text-align: center; padding: 36px; color: #64748b; font-size: 0.9rem;"><i class="fa-solid fa-spinner fa-spin"></i> Loading feedbacks...</div>`;
+  }
+
+  try {
+    const queryUrl = isAdminMode
+      ? `${API_BASE_URL}/feedback?email=${encodeURIComponent(user.email)}&role=super_admin`
+      : `${API_BASE_URL}/feedback?email=${encodeURIComponent(user.email)}`;
+    const res = await fetch(queryUrl);
+    if (!res.ok) throw new Error('Failed to fetch feedbacks');
+    const data = await res.json();
+    feedbackPageState.allFeedbacks = Array.isArray(data.feedbacks) ? data.feedbacks : [];
+    renderFeedbacksPage();
+  } catch (err) {
+    console.error('loadFeedbacksPageData error:', err);
+    if (container) {
+      container.innerHTML = `<div style="text-align: center; padding: 28px; color: #ef4444; font-size: 0.9rem;">Error loading feedbacks: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+}
+
+function renderFeedbacksPage() {
+  const container = document.getElementById('feedbacksPageListContainer');
+  const paginationEl = document.getElementById('feedbacksPagePagination');
+  const paginationInfoEl = document.getElementById('feedbacksPagePaginationInfo');
+  const pageLabelEl = document.getElementById('fbPageNumberLabel');
+  const prevBtn = document.getElementById('fbPrevPageBtn');
+  const nextBtn = document.getElementById('fbNextPageBtn');
+  const statTotalEl = document.getElementById('fbPageStatTotal');
+  const statNewEl = document.getElementById('fbPageStatNew');
+  const statReviewedEl = document.getElementById('fbPageStatReviewed');
+
+  if (!container) return;
+
+  const all = feedbackPageState.allFeedbacks || [];
+  const totalCount = all.length;
+  const reviewedCount = all.filter(f => f.status === 'reviewed').length;
+  const newCount = totalCount - reviewedCount;
+
+  if (statTotalEl) statTotalEl.textContent = String(totalCount);
+  if (statNewEl) statNewEl.textContent = String(newCount);
+  if (statReviewedEl) statReviewedEl.textContent = String(reviewedCount);
+
+  const searchQ = (document.getElementById('feedbackPageSearchInput')?.value || '').trim().toLowerCase();
+  const statusFilter = document.getElementById('feedbackPageStatusFilter')?.value || 'all';
+  const categoryFilter = document.getElementById('feedbackPageCategoryFilter')?.value || 'all';
+
+  const filtered = all.filter(fb => {
+    const fbStatus = fb.status === 'reviewed' ? 'reviewed' : 'new';
+    if (statusFilter !== 'all' && fbStatus !== statusFilter) return false;
+    if (categoryFilter !== 'all' && (fb.type || 'update') !== categoryFilter) return false;
+    if (searchQ) {
+      const hay = `${fb.userName || ''} ${fb.userEmail || ''} ${fb.subject || ''} ${fb.message || ''}`.toLowerCase();
+      if (!hay.includes(searchQ)) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px 16px; color: #94a3b8;">
+        <i class="fa-solid fa-comment-slash" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+        <p style="margin: 0; font-size: 0.92rem; font-weight: 600;">No feedbacks match your current filter.</p>
+      </div>
+    `;
+    if (paginationEl) paginationEl.style.display = 'none';
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / feedbackPageState.pageSize));
+  if (feedbackPageState.page > totalPages) feedbackPageState.page = totalPages;
+  const startIdx = (feedbackPageState.page - 1) * feedbackPageState.pageSize;
+  const pageItems = filtered.slice(startIdx, startIdx + feedbackPageState.pageSize);
+
+  const isAdminMode = isCurrentUserAdmin() && feedbackPageState.mode === 'admin';
+  const typeBadges = {
+    update: '<span class="badge" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; font-size:0.74rem; font-weight:700;">🚀 Update</span>',
+    missing: '<span class="badge" style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:0.74rem; font-weight:700;">📝 Kami Hai</span>',
+    bug: '<span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.74rem; font-weight:700;">🐛 Bug</span>',
+    general: '<span class="badge" style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; font-size:0.74rem; font-weight:700;">⭐ General</span>'
+  };
+
+  container.innerHTML = pageItems.map(fb => {
+    const dateStr = fb.createdAt ? new Date(fb.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    const badge = typeBadges[fb.type] || `<span class="badge">${escapeHtml(fb.type || '')}</span>`;
+    const isReviewed = fb.status === 'reviewed';
+    const statusHtml = isReviewed
+      ? '<span style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; font-size:0.74rem; padding:3px 10px; border-radius:999px; font-weight:700;"><i class="fa-solid fa-check"></i> Reviewed</span>'
+      : '<span style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:0.74rem; padding:3px 10px; border-radius:999px; font-weight:700;"><i class="fa-solid fa-clock"></i> New</span>';
+
+    const adminActionsHtml = isAdminMode ? `
+      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <button type="button" onclick="adminToggleFeedbackStatus('${fb.id}', '${fb.status || 'new'}')" style="padding: 6px 10px; font-size: 0.78rem; font-weight: 700; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; cursor: pointer; color: #334155;">
+          <i class="fa-solid ${isReviewed ? 'fa-arrow-rotate-left' : 'fa-check'}"></i> ${isReviewed ? 'Mark New' : 'Mark Reviewed'}
+        </button>
+        <button type="button" onclick="adminDeleteFeedback('${fb.id}')" style="padding: 6px 10px; font-size: 0.78rem; font-weight: 700; border-radius: 8px; border: 1px solid #fecaca; background: #fef2f2; cursor: pointer; color: #dc2626;" title="Delete feedback">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    ` : '';
+
+    return `
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            ${badge}
+            <strong style="color: #0f172a; font-size: 0.96rem;">${escapeHtml(fb.subject || 'Feedback')}</strong>
+            ${statusHtml}
+          </div>
+          <span style="font-size: 0.78rem; color: #64748b; font-weight: 600;">${dateStr}</span>
+        </div>
+
+        ${isAdminMode ? `
+          <div style="font-size: 0.8rem; color: #475569; margin-bottom: 8px; font-weight: 600;">
+            <i class="fa-solid fa-user" style="color: #6366f1;"></i> ${escapeHtml(fb.userName || 'Member')}
+            <span style="color: #94a3b8;">(${escapeHtml(fb.userEmail || '')})</span>
+          </div>
+        ` : ''}
+
+        <p style="margin: 0 0 10px 0; color: #334155; font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(fb.message || '')}</p>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">
+          <span style="color: #f59e0b; font-size: 0.84rem;">${'⭐'.repeat(fb.rating || 5)} <span style="color: #64748b; font-size: 0.76rem; font-weight: 700;">(${fb.rating || 5}/5)</span></span>
+          ${adminActionsHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (paginationEl) {
+    paginationEl.style.display = filtered.length > feedbackPageState.pageSize ? 'flex' : 'none';
+    if (paginationInfoEl) {
+      const endIdx = Math.min(startIdx + pageItems.length, filtered.length);
+      paginationInfoEl.textContent = `Showing ${startIdx + 1}–${endIdx} of ${filtered.length}`;
+    }
+    if (pageLabelEl) pageLabelEl.textContent = `Page ${feedbackPageState.page} / ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = feedbackPageState.page <= 1;
+    if (nextBtn) nextBtn.disabled = feedbackPageState.page >= totalPages;
   }
 }
 
@@ -6696,6 +6882,9 @@ async function adminToggleFeedbackStatus(id, currentStatus) {
     });
     if (res.ok) {
       loadAdminFeedbacks();
+      if (state.currentPage === 'feedbacks' || window.location.hash === '#feedbacks') {
+        loadFeedbacksPageData();
+      }
     }
   } catch (err) {
     alert('Error updating status: ' + err.message);
@@ -6709,6 +6898,9 @@ async function adminDeleteFeedback(id) {
     if (res.ok) {
       showToast('Feedback deleted');
       loadAdminFeedbacks();
+      if (state.currentPage === 'feedbacks' || window.location.hash === '#feedbacks') {
+        loadFeedbacksPageData();
+      }
     }
   } catch (err) {
     alert('Error deleting feedback: ' + err.message);
