@@ -41,3 +41,4 @@ mobile-expo/.expo/
 # Activity audit logs & VPS rolling backups
 backend/logs/
 backups/
+backend/data/

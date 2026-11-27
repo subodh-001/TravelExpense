@@ -17,6 +17,15 @@ const crypto = require('crypto');
 const dns = require('dns');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { db: sqliteDb, syncJSONToSQLite } = require('./database');
+const {
+  isRealProfilePic,
+  isCustomUploadedProfilePic,
+  pickBestProfilePic,
+  loadProfilePhotosRegistry,
+  getProfilePhotoRecord,
+  upsertProfilePhotoRecord,
+  removeProfilePhotoRecord
+} = require('./profile-photos');
 
 if (dns.setDefaultResultOrder) {
   try {
@@ -32,7 +41,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // ─── 15-Day Rotating Activity Audit Logger (backend/logs/activity_YYYY-MM-DD.log) ─
-const LOGS_DIR = path.join(__dirname, 'logs');
+const LOGS_DIR = process.env.LOGS_DIR || path.join(__dirname, 'logs');
 if (!fs.existsSync(LOGS_DIR)) fs.mkdirSync(LOGS_DIR, { recursive: true });
 
 function getIstDateTimeParts() {
@@ -110,14 +119,15 @@ app.use('/api', (req, res, next) => {
 });
 
 // Ensure local directories exist for fallback storage
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
-const DATA_DIR = path.join(__dirname, 'data');
+const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(__dirname, 'uploads');
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const LOCAL_DB_FILE = path.join(DATA_DIR, 'expenses.json');
 const USERS_DB_FILE = path.join(DATA_DIR, 'users.json');
 const INVITES_DB_FILE = path.join(DATA_DIR, 'invites.json');
 const DELETED_USERS_FILE = path.join(DATA_DIR, 'deleted_users.json');
 const FEEDBACKS_DB_FILE = path.join(DATA_DIR, 'feedbacks.json');
+const PROFILE_PHOTOS_FILE = path.join(DATA_DIR, 'profile_photos.json');
 
 // ============================================================
 // 🔒 DATA PROTECTION LOCK
@@ -526,6 +536,37 @@ const getLocalUsers = () => {
   return users;
 };
 
+function readRawLocalUsersSafe() {
+  try {
+    if (!fs.existsSync(USERS_DB_FILE)) return {};
+    const raw = fs.readFileSync(USERS_DB_FILE, 'utf8');
+    const parsed = JSON.parse(raw || '{}');
+    return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function syncSupabaseUserPictureIfNeeded(userId, picture, email = '') {
+  if (!useSupabase || !supabase || !isRealProfilePic(picture)) return;
+  const targetId = userId || (email ? `google_${email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_')}` : '');
+  if (!targetId) return;
+  Promise.resolve(
+    supabase.from('users').update({
+      picture: picture.trim(),
+      updated_at: new Date().toISOString()
+    }).eq('id', targetId)
+  ).catch(spErr => console.warn('Supabase profile photo auto-heal note:', spErr.message));
+}
+
+function resolveUserPictureWithRegistry({ userId = '', email = '', name = '', candidates = [], registry = null, fallback = '' } = {}) {
+  const regEntry = getProfilePhotoRecord({ userId, email }, registry, PROFILE_PHOTOS_FILE);
+  const regPic = regEntry ? regEntry.picture : '';
+  const best = pickBestProfilePic(regPic, ...candidates);
+  if (best) return best;
+  return fallback;
+}
+
 const saveLocalUsers = (users, triggerBroadcast = true) => {
   try {
     // 🔒 DATA PROTECTION: Never write null/undefined — only valid objects
@@ -538,8 +579,37 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
       console.warn('⚠️ DATA PROTECTION: saveLocalUsers called with empty object — skipping to preserve data');
       return;
     }
+
+    // 🛡️ Profile Photo Protection: never let SVG/dicebear/empty overwrite a real URL in users.json or Supabase
+    const prevUsers = readRawLocalUsersSafe();
+    let registry = loadProfilePhotosRegistry(PROFILE_PHOTOS_FILE);
+    const sanitizedUsers = {};
+    for (const [uid, rawU] of Object.entries(users)) {
+      if (!uid || !rawU || typeof rawU !== 'object') continue;
+      const prevU = prevUsers[uid] || prevUsers[rawU.id] || {};
+      const regEntry = getProfilePhotoRecord({ userId: rawU.id || uid, email: rawU.email }, registry, PROFILE_PHOTOS_FILE);
+      const bestPic = pickBestProfilePic(regEntry ? regEntry.picture : '', rawU.picture, prevU.picture);
+      const finalPic = bestPic || (typeof rawU.picture === 'string' ? rawU.picture : '');
+      sanitizedUsers[uid] = { ...rawU, picture: finalPic };
+
+      // Backfill registry if a user has a real photo not yet stored in profile_photos.json
+      if (isRealProfilePic(finalPic) && (!regEntry || (!isCustomUploadedProfilePic(regEntry.picture) && isCustomUploadedProfilePic(finalPic)))) {
+        const resReg = upsertProfilePhotoRecord(
+          {
+            userId: rawU.id || uid,
+            email: rawU.email || '',
+            name: rawU.name || '',
+            picture: finalPic,
+            updatedAt: rawU.updatedAt || new Date().toISOString()
+          },
+          { registry, filePath: PROFILE_PHOTOS_FILE, persist: true }
+        );
+        registry = resReg.registry;
+      }
+    }
+
     const tempPath = `${USERS_DB_FILE}.tmp`;
-    fs.writeFileSync(tempPath, JSON.stringify(users, null, 2));
+    fs.writeFileSync(tempPath, JSON.stringify(sanitizedUsers, null, 2));
     fs.renameSync(tempPath, USERS_DB_FILE);
     createDataBackup();
     try { syncJSONToSQLite(); } catch (sqErr) {}
@@ -547,16 +617,16 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
       broadcastEvent('USERS_UPDATED');
     }
     // 🔥 Auto-sync to Firestore in background
-    if (useFirebase && db && users && typeof users === 'object') {
+    if (useFirebase && db && sanitizedUsers && typeof sanitizedUsers === 'object') {
       setImmediate(async () => {
         try {
           const batch = db.batch();
-          Object.entries(users).forEach(([uid, u]) => {
+          Object.entries(sanitizedUsers).forEach(([uid, u]) => {
             if (!uid) return;
             batch.set(db.collection('users').doc(uid), {
               id: u.id || uid, name: u.name || '', email: u.email || '',
               role: u.role || 'user', verified: !!u.verified,
-              picture: u.picture || (localUsers[u.id] ? localUsers[u.id].picture : '') || '', paymentBillUrl: u.paymentBillUrl || '',
+              picture: u.picture || '', paymentBillUrl: u.paymentBillUrl || '',
               phone: u.phone || u.whatsapp || '',
               whatsapp: u.whatsapp || u.phone || '',
               whatsappVerified: !!u.whatsappVerified,
@@ -571,10 +641,10 @@ const saveLocalUsers = (users, triggerBroadcast = true) => {
     }
 
     // ⚡ Auto-sync Users to Supabase Cloud PostgreSQL in background
-    if (useSupabase && supabase && users && typeof users === 'object') {
+    if (useSupabase && supabase && sanitizedUsers && typeof sanitizedUsers === 'object') {
       setImmediate(async () => {
         try {
-          const rows = Object.entries(users).map(([uid, u]) => {
+          const rows = Object.entries(sanitizedUsers).map(([uid, u]) => {
             if (!uid || !u) return null;
             return {
               id: u.id || uid,
@@ -706,11 +776,15 @@ const syncFromFirebaseCloud = async () => {
     const usersSnapshot = await db.collection('users').get();
     if (!usersSnapshot.empty) {
       const cloudUsers = getLocalUsers();
+      const registry = loadProfilePhotosRegistry(PROFILE_PHOTOS_FILE);
       usersSnapshot.forEach(doc => {
         const uData = doc.data();
         const uid = doc.id;
         if (uid && uData) {
-          cloudUsers[uid] = { ...(cloudUsers[uid] || {}), ...uData, id: uid };
+          const existing = cloudUsers[uid] || {};
+          const regEntry = getProfilePhotoRecord({ userId: uid, email: uData.email || existing.email }, registry, PROFILE_PHOTOS_FILE);
+          const bestPic = pickBestProfilePic(regEntry ? regEntry.picture : '', existing.picture, uData.picture);
+          cloudUsers[uid] = { ...existing, ...uData, id: uid, picture: bestPic || existing.picture || uData.picture || '' };
         }
       });
       saveLocalUsers(cloudUsers, false);
@@ -794,36 +868,95 @@ const syncFromSupabaseCloud = async () => {
   try {
     console.log('🔄 Pulling master database state from Supabase Cloud...');
 
-    // 1. Sync Users from Supabase into local cache
+    // 1. Sync Users from Supabase into local cache (protecting & auto-healing profile photos)
     const { data: cloudUsersData, error: uErr } = await supabase.from('users').select('*');
+    const localUsers = getLocalUsers();
+    let registry = loadProfilePhotosRegistry(PROFILE_PHOTOS_FILE);
+    let healedLocalCount = 0;
+
     if (!uErr && cloudUsersData && cloudUsersData.length > 0) {
-      const localUsers = getLocalUsers();
-      cloudUsersData.forEach(u => {
-        if (u.id) {
-          localUsers[u.id] = {
-            ...(localUsers[u.id] || {}),
-            id: u.id,
-            name: u.name || 'User',
-            email: u.email || '',
-            role: u.role || 'user',
-            verified: u.verified !== false,
-            picture: u.picture || '',
-            passwordHash: u.password_hash || (localUsers[u.id] ? localUsers[u.id].passwordHash : ''),
-            lastActive: u.last_active,
-            whatsapp: u.whatsapp || '',
-            whatsappVerified: Boolean(u.whatsapp_verified),
-            phone: u.phone || '',
-            telegramChatId: u.telegram_chat_id || '',
-            telegramUsername: u.telegram_username || '',
-            telegramVerified: Boolean(u.telegram_verified),
-            paymentBillUrl: u.payment_bill_url || '',
-            createdAt: u.created_at || new Date().toISOString(),
-            updatedAt: u.updated_at || new Date().toISOString()
-          };
+      for (const u of cloudUsersData) {
+        if (!u.id) continue;
+        const loc = localUsers[u.id] || {};
+        const regEntry = getProfilePhotoRecord({ userId: u.id, email: u.email || loc.email }, registry, PROFILE_PHOTOS_FILE);
+
+        // If Supabase has a newer custom uploaded photo than registry, adopt it
+        let bestPic = '';
+        const cloudIsCustom = isCustomUploadedProfilePic(u.picture);
+        const cloudUpdated = u.updated_at ? new Date(u.updated_at).getTime() : 0;
+        const regUpdated = regEntry && regEntry.updatedAt ? new Date(regEntry.updatedAt).getTime() : 0;
+        if (cloudIsCustom && (!regEntry || (cloudUpdated > regUpdated && u.picture.trim() !== regEntry.picture))) {
+          bestPic = u.picture.trim();
+          const upRes = upsertProfilePhotoRecord(
+            { userId: u.id, email: u.email || loc.email || '', name: u.name || loc.name || '', picture: bestPic, updatedAt: u.updated_at || new Date().toISOString() },
+            { registry, filePath: PROFILE_PHOTOS_FILE, persist: true }
+          );
+          registry = upRes.registry;
+          if (upRes.changed) {
+            logActivity('PROFILE', 'PHOTO_SYNCED_FROM_CLOUD', `userId=${u.id} | email=${u.email || ''} | picture="${bestPic}"`);
+          }
+        } else {
+          bestPic = pickBestProfilePic(regEntry ? regEntry.picture : '', loc.picture, u.picture);
         }
-      });
+
+        // Auto-heal Supabase if cloud had placeholder SVG/dicebear/empty while we have a real photo
+        if (!isRealProfilePic(u.picture) && isRealProfilePic(bestPic)) {
+          syncSupabaseUserPictureIfNeeded(u.id, bestPic, u.email || loc.email);
+          logActivity('PROFILE', 'AUTO_HEAL_SUPABASE', `userId=${u.id} | email=${u.email || loc.email || ''} | restoredPicture="${bestPic}"`);
+        }
+        if (!isRealProfilePic(loc.picture) && isRealProfilePic(bestPic)) {
+          healedLocalCount++;
+          logActivity('PROFILE', 'AUTO_HEAL_LOCAL', `userId=${u.id} | email=${u.email || loc.email || ''} | restoredPicture="${bestPic}"`);
+        }
+
+        localUsers[u.id] = {
+          ...loc,
+          id: u.id,
+          name: u.name || loc.name || 'User',
+          email: u.email || loc.email || '',
+          role: u.role || loc.role || 'user',
+          verified: u.verified !== false,
+          picture: bestPic || loc.picture || u.picture || '',
+          passwordHash: u.password_hash || loc.passwordHash || '',
+          lastActive: u.last_active,
+          whatsapp: u.whatsapp || '',
+          whatsappVerified: Boolean(u.whatsapp_verified),
+          phone: u.phone || '',
+          telegramChatId: u.telegram_chat_id || '',
+          telegramUsername: u.telegram_username || '',
+          telegramVerified: Boolean(u.telegram_verified),
+          paymentBillUrl: u.payment_bill_url || '',
+          createdAt: u.created_at || new Date().toISOString(),
+          updatedAt: u.updated_at || new Date().toISOString()
+        };
+      }
+
+      // Also heal any remaining localUsers from profile_photos.json if needed
+      for (const [uid, loc] of Object.entries(localUsers)) {
+        if (!loc || typeof loc !== 'object') continue;
+        const regEntry = getProfilePhotoRecord({ userId: loc.id || uid, email: loc.email }, registry, PROFILE_PHOTOS_FILE);
+        if (regEntry && !isRealProfilePic(loc.picture)) {
+          loc.picture = regEntry.picture;
+          healedLocalCount++;
+          syncSupabaseUserPictureIfNeeded(loc.id || uid, regEntry.picture, loc.email);
+        }
+      }
+
       saveLocalUsers(localUsers, false);
-      console.log(`⚡ Synced ${cloudUsersData.length} active users from Supabase Cloud`);
+      console.log(`⚡ Synced ${cloudUsersData.length} active users from Supabase Cloud${healedLocalCount > 0 ? ` (healed ${healedLocalCount} profile photo(s))` : ''}`);
+    } else {
+      // Even if Supabase users query returned empty/error, heal local users.json from profile_photos.json
+      let localHealed = false;
+      for (const [uid, loc] of Object.entries(localUsers)) {
+        if (!loc || typeof loc !== 'object') continue;
+        const regEntry = getProfilePhotoRecord({ userId: loc.id || uid, email: loc.email }, registry, PROFILE_PHOTOS_FILE);
+        if (regEntry && !isRealProfilePic(loc.picture)) {
+          loc.picture = regEntry.picture;
+          localHealed = true;
+          syncSupabaseUserPictureIfNeeded(loc.id || uid, regEntry.picture, loc.email);
+        }
+      }
+      if (localHealed) saveLocalUsers(localUsers, false);
     }
 
     // 2. Sync Expenses from Supabase into local cache (Supabase is Master DB)
@@ -924,13 +1057,22 @@ const seedMasterSuperAdmin = () => {
     const masterUserId = `google_${masterEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
     const passwordHash = crypto.createHash('sha256').update('nothing05').digest('hex');
 
+    const existingMaster = users[masterUserId] || {};
+    const protectedMasterPic = resolveUserPictureWithRegistry({
+      userId: masterUserId,
+      email: masterEmail,
+      candidates: [existingMaster.picture],
+      fallback: existingMaster.picture || ''
+    });
+
     users[masterUserId] = {
-      ...(users[masterUserId] || {}),
+      ...existingMaster,
       id: masterUserId,
       name: 'Subodh Ram',
       email: masterEmail,
       passwordHash,
       role: 'super_admin',
+      picture: protectedMasterPic,
       verified: true,
       updatedAt: new Date().toISOString()
     };
@@ -1007,7 +1149,13 @@ const triggerCloudSync = async () => {
             const eClean = (u && u.email) ? u.email.toLowerCase().trim() : '';
             if (!activeBlacklist.includes(kClean) && !activeBlacklist.includes(eClean)) {
               if (!lUsers[uid]) {
-                lUsers[uid] = data.users[uid];
+                const bestPic = resolveUserPictureWithRegistry({
+                  userId: uid,
+                  email: eClean,
+                  candidates: [u && u.picture],
+                  fallback: (u && u.picture) || ''
+                });
+                lUsers[uid] = { ...u, picture: bestPic };
                 usersChanged = true;
               }
             }
@@ -1286,7 +1434,13 @@ app.post('/api/sync/import', (req, res) => {
         const eClean = (u && u.email) ? u.email.toLowerCase().trim() : '';
         if (!activeBlacklist.includes(kClean) && !activeBlacklist.includes(eClean)) {
           if (!lUsers[uid]) {
-            lUsers[uid] = users[uid];
+            const bestPic = resolveUserPictureWithRegistry({
+              userId: uid,
+              email: eClean,
+              candidates: [u && u.picture],
+              fallback: (u && u.picture) || ''
+            });
+            lUsers[uid] = { ...u, picture: bestPic };
             usersChanged = true;
           }
         }
@@ -1607,7 +1761,12 @@ app.post('/api/auth/register', async (req, res) => {
     const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
     const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
     const users = getLocalUsers();
-    const picture = existingUser.picture || users[userId]?.picture || '';
+    const picture = resolveUserPictureWithRegistry({
+      userId,
+      email: cleanEmail,
+      candidates: [existingUser.picture, users[userId]?.picture],
+      fallback: ''
+    });
 
     users[userId] = {
       ...existingUser,
@@ -1677,6 +1836,15 @@ app.post('/api/auth/google', async (req, res) => {
       try {
         const { data: spUser, error: spErr } = await supabase.from('users').select('*').or(`email.ilike.${cleanEmail},id.eq.${userId}`).maybeSingle();
         if (!spErr && spUser) {
+          const spBestPic = resolveUserPictureWithRegistry({
+            userId: spUser.id,
+            email: spUser.email || cleanEmail,
+            candidates: [spUser.picture],
+            fallback: DEFAULT_USER_AVATAR
+          });
+          if (!isRealProfilePic(spUser.picture) && isRealProfilePic(spBestPic)) {
+            syncSupabaseUserPictureIfNeeded(spUser.id, spBestPic, spUser.email || cleanEmail);
+          }
           existing = {
             id: spUser.id,
             name: spUser.name,
@@ -1684,7 +1852,7 @@ app.post('/api/auth/google', async (req, res) => {
             passwordHash: spUser.password_hash || spUser.passwordHash,
             role: spUser.role || 'user',
             approved: isUserApproved(spUser.id, spUser.email, spUser),
-            picture: spUser.picture || DEFAULT_USER_AVATAR
+            picture: spBestPic
           };
           users[existing.id] = existing;
           saveLocalUsers(users);
@@ -1724,10 +1892,23 @@ app.post('/api/auth/google', async (req, res) => {
       });
     }
 
-    // Preserve custom uploaded picture (Cloudinary, custom URL) over Google OAuth picture, fallback to default avatar
-    const hasCustomPic = existing.picture && typeof existing.picture === 'string' && (existing.picture.includes('cloudinary.com') || existing.picture.includes('profile_')) && !existing.picture.includes('googleusercontent.com');
-    const googlePicIsReal = userPic && typeof userPic === 'string' && userPic.startsWith('http') && !userPic.includes('dicebear');
-    const finalPic = hasCustomPic ? existing.picture : (googlePicIsReal ? userPic : (existing.picture && existing.picture.startsWith('http') ? existing.picture : DEFAULT_USER_AVATAR));
+    // Preserve custom uploaded picture (Cloudinary / registry / custom URL) over Google OAuth picture, fallback to default avatar
+    const isNewUser = false;
+    const regEntry = getProfilePhotoRecord({ userId, email: cleanEmail }, null, PROFILE_PHOTOS_FILE);
+    const googlePicCandidate = isRealProfilePic(userPic) ? userPic.trim() : '';
+    const finalPic = pickBestProfilePic(
+      regEntry ? regEntry.picture : '',
+      existing.picture,
+      users[userId]?.picture,
+      googlePicCandidate
+    ) || DEFAULT_USER_AVATAR;
+
+    if (isRealProfilePic(finalPic) && (!regEntry || (!isCustomUploadedProfilePic(regEntry.picture) && isCustomUploadedProfilePic(finalPic)))) {
+      upsertProfilePhotoRecord(
+        { userId, email: cleanEmail, name: existing.name || capitalizedName, picture: finalPic },
+        { filePath: PROFILE_PHOTOS_FILE, persist: true }
+      );
+    }
 
     const userData = {
       ...existing,
@@ -1828,6 +2009,15 @@ app.post('/api/auth/login', async (req, res) => {
       try {
         const { data: spUser, error: spErr } = await supabase.from('users').select('*').or(`email.ilike.${cleanEmail},id.eq.google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`).maybeSingle();
         if (!spErr && spUser) {
+          const spBestPic = resolveUserPictureWithRegistry({
+            userId: spUser.id,
+            email: spUser.email || cleanEmail,
+            candidates: [spUser.picture],
+            fallback: DEFAULT_USER_AVATAR
+          });
+          if (!isRealProfilePic(spUser.picture) && isRealProfilePic(spBestPic)) {
+            syncSupabaseUserPictureIfNeeded(spUser.id, spBestPic, spUser.email || cleanEmail);
+          }
           user = {
             id: spUser.id,
             name: spUser.name,
@@ -1835,7 +2025,7 @@ app.post('/api/auth/login', async (req, res) => {
             passwordHash: spUser.password_hash || spUser.passwordHash,
             role: spUser.role || 'user',
             approved: isUserApproved(spUser.id, spUser.email, spUser),
-            picture: spUser.picture || DEFAULT_USER_AVATAR
+            picture: spBestPic
           };
           const lUsers = getLocalUsers();
           lUsers[user.id] = user;
@@ -1882,14 +2072,21 @@ app.post('/api/auth/login', async (req, res) => {
         const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
         const users = getLocalUsers();
         const userId = user.id || `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        const protectedFirstPic = resolveUserPictureWithRegistry({
+          userId,
+          email: cleanEmail,
+          candidates: [users[userId]?.picture, user.picture],
+          fallback: user.picture || DEFAULT_USER_AVATAR
+        });
         users[userId] = {
           ...user,
+          picture: protectedFirstPic,
           passwordHash,
           updatedAt: new Date().toISOString()
         };
         saveLocalUsers(users);
 
-        const safeUser = { ...users[userId] };
+        const safeUser = { ...users[userId], picture: protectedFirstPic };
         delete safeUser.passwordHash;
         console.log(`🔑 Set & Saved Password for account: ${cleanEmail}`);
         return res.json({ success: true, user: safeUser });
@@ -1903,7 +2100,21 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Incorrect password. Please check your password and try again.' });
     }
 
-    const safeUser = { ...user };
+    const protectedLoginPic = resolveUserPictureWithRegistry({
+      userId: user.id || gIdLogin,
+      email: user.email || cleanEmail,
+      candidates: [user.picture],
+      fallback: user.picture || DEFAULT_USER_AVATAR
+    });
+    if (protectedLoginPic !== user.picture && isRealProfilePic(protectedLoginPic)) {
+      user = { ...user, picture: protectedLoginPic };
+      const lUsers = getLocalUsers();
+      lUsers[user.id || gIdLogin] = { ...(lUsers[user.id || gIdLogin] || {}), ...user };
+      saveLocalUsers(lUsers, false);
+      syncSupabaseUserPictureIfNeeded(user.id || gIdLogin, protectedLoginPic, user.email || cleanEmail);
+    }
+
+    const safeUser = { ...user, picture: protectedLoginPic };
     delete safeUser.passwordHash;
 
     // Check approval status before allowing login
@@ -1987,6 +2198,15 @@ app.post('/api/auth/send-otp', async (req, res) => {
       try {
         const { data: spUser, error: spErr } = await supabase.from('users').select('*').or(`email.ilike.${cleanEmail},id.eq.google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`).maybeSingle();
         if (!spErr && spUser) {
+          const spBestPic = resolveUserPictureWithRegistry({
+            userId: spUser.id,
+            email: spUser.email || cleanEmail,
+            candidates: [spUser.picture],
+            fallback: DEFAULT_USER_AVATAR
+          });
+          if (!isRealProfilePic(spUser.picture) && isRealProfilePic(spBestPic)) {
+            syncSupabaseUserPictureIfNeeded(spUser.id, spBestPic, spUser.email || cleanEmail);
+          }
           user = {
             id: spUser.id,
             name: spUser.name,
@@ -1994,7 +2214,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
             passwordHash: spUser.password_hash || spUser.passwordHash,
             role: spUser.role || 'user',
             approved: isUserApproved(spUser.id, spUser.email, spUser),
-            picture: spUser.picture || DEFAULT_USER_AVATAR
+            picture: spBestPic
           };
           const lUsers = getLocalUsers();
           lUsers[user.id] = user;
@@ -2161,13 +2381,23 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     const isApproved = isMasterAdmin ? true : (isNewUser ? false : isUserApproved(userId, cleanEmail, existing));
     const role = isMasterAdmin ? 'super_admin' : (existing.role || 'user');
 
+    const protectedOtpPic = resolveUserPictureWithRegistry({
+      userId,
+      email: cleanEmail,
+      candidates: [users[userId]?.picture, existing.picture],
+      fallback: DEFAULT_USER_AVATAR
+    });
+    if (!isRealProfilePic(existing.picture) && isRealProfilePic(protectedOtpPic)) {
+      syncSupabaseUserPictureIfNeeded(userId, protectedOtpPic, cleanEmail);
+    }
+
     users[userId] = {
       ...existing,
       id: userId,
       name: existing.name || capitalizedName,
       email: cleanEmail,
       role: role,
-      picture: existing.picture && (existing.picture.startsWith('http') || existing.picture.startsWith('data:image')) ? existing.picture : DEFAULT_USER_AVATAR,
+      picture: protectedOtpPic,
       verified: true,
       approved: isApproved,
       updatedAt: new Date().toISOString()
@@ -2306,23 +2536,62 @@ app.post('/api/user/profile', async (req, res) => {
     }
 
     const cleanPhone = (phone || whatsapp || existingUser.phone || existingUser.whatsapp || '').replace(/[^0-9]/g, '');
+    const cleanEmail = (email || existingUser.email || 'user@example.com').toLowerCase().trim();
+    const nextName = name || existingUser.name || 'Traveler';
+    const nowIso = new Date().toISOString();
 
-    // Preserve Cloudinary/custom picture over default SVG blob
-    const incomingPic = (picture && typeof picture === 'string' && (picture.startsWith('http') || picture.startsWith('data:image'))) ? picture : '';
-    const finalPicture = incomingPic || existingUser.picture || '';
+    // 🛡️ Profile Photo Protection & Audit:
+    // - Placeholder SVG / dicebear / empty never overwrites a real HTTP/Cloudinary URL.
+    // - Legitimate new real photo updates profile_photos.json, users.json, Supabase, and activity log.
+    const regEntry = getProfilePhotoRecord({ userId: id, email: cleanEmail }, null, PROFILE_PHOTOS_FILE);
+    const existingBestPic = pickBestProfilePic(regEntry ? regEntry.picture : '', existingUser.picture);
+    const rawIncoming = (typeof picture === 'string') ? picture.trim() : '';
+
+    let finalPicture = existingBestPic || '';
+    let photoChanged = false;
+    if (isRealProfilePic(rawIncoming)) {
+      if (isCustomUploadedProfilePic(existingBestPic) && !isCustomUploadedProfilePic(rawIncoming)) {
+        finalPicture = existingBestPic;
+      } else {
+        finalPicture = rawIncoming;
+        if (finalPicture !== existingBestPic) {
+          photoChanged = true;
+        }
+      }
+    }
+
+    if (isRealProfilePic(finalPicture)) {
+      const upReg = upsertProfilePhotoRecord(
+        {
+          userId: id,
+          email: cleanEmail,
+          name: nextName,
+          picture: finalPicture,
+          updatedAt: nowIso
+        },
+        { filePath: PROFILE_PHOTOS_FILE, persist: true }
+      );
+      if (photoChanged || upReg.changed) {
+        logActivity(
+          'PROFILE',
+          'PHOTO_UPDATED',
+          `userId=${id} | email=${cleanEmail} | oldPicture="${existingBestPic || 'none'}" | newPicture="${finalPicture}"`
+        );
+      }
+    }
 
     const userData = {
       ...existingUser,
       id,
-      name: name || existingUser.name || 'Traveler',
-      email: email || existingUser.email || 'user@example.com',
+      name: nextName,
+      email: cleanEmail,
       picture: finalPicture,
       role: role || existingUser.role || 'user',
       phone: cleanPhone || existingUser.phone || '',
       whatsapp: cleanPhone || existingUser.whatsapp || '',
       passwordHash,
-      approved: isUserApproved(id, email, existingUser),
-      updatedAt: new Date().toISOString()
+      approved: isUserApproved(id, cleanEmail, existingUser),
+      updatedAt: nowIso
     };
 
     users[id] = userData;
@@ -2334,12 +2603,14 @@ app.post('/api/user/profile', async (req, res) => {
         const spUpdate = {
           name: userData.name,
           email: userData.email,
-          picture: userData.picture,
           role: userData.role,
           phone: userData.phone,
           whatsapp: userData.whatsapp,
           updated_at: userData.updatedAt
         };
+        if (isRealProfilePic(userData.picture)) {
+          spUpdate.picture = userData.picture;
+        }
         // Upsert so it works for both new and existing users
         await supabase.from('users').upsert({ id, ...spUpdate }, { onConflict: 'id' });
         console.log(`☁️ Supabase profile synced for ${id}`);
@@ -2367,6 +2638,8 @@ app.post('/api/user/profile', async (req, res) => {
 app.get('/api/user/profile/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    const localUsersMap = getLocalUsers();
+    const localMatch = localUsersMap[userId] || Object.values(localUsersMap).find(u => u && (u.id === userId || (u.email && u.email.toLowerCase() === userId.toLowerCase())));
 
     // 1. Try Supabase first
     if (useSupabase && supabase) {
@@ -2375,6 +2648,19 @@ app.get('/api/user/profile/:userId', async (req, res) => {
         if (!spErr && spUser) {
           delete spUser.password_hash;
           spUser.approved = isUserApproved(spUser.id, spUser.email, spUser);
+          const bestPic = resolveUserPictureWithRegistry({
+            userId: spUser.id || userId,
+            email: spUser.email || (localMatch && localMatch.email) || '',
+            candidates: [localMatch && localMatch.picture, spUser.picture],
+            fallback: spUser.picture || ''
+          });
+          if (!isRealProfilePic(spUser.picture) && isRealProfilePic(bestPic)) {
+            syncSupabaseUserPictureIfNeeded(spUser.id || userId, bestPic, spUser.email);
+            logActivity('PROFILE', 'AUTO_HEAL_SUPABASE', `userId=${spUser.id || userId} | email=${spUser.email || ''} | restoredPicture="${bestPic}"`);
+          }
+          if (isRealProfilePic(bestPic)) {
+            spUser.picture = bestPic;
+          }
           return res.json({ success: true, user: spUser });
         }
       } catch (spFetchErr) {
@@ -2389,6 +2675,12 @@ app.get('/api/user/profile/:userId', async (req, res) => {
           const uData = doc.data();
           delete uData.passwordHash;
           uData.approved = isUserApproved(userId, uData.email, uData);
+          uData.picture = resolveUserPictureWithRegistry({
+            userId,
+            email: uData.email || '',
+            candidates: [localMatch && localMatch.picture, uData.picture],
+            fallback: uData.picture || ''
+          });
           return res.json({ success: true, user: uData });
         }
       } catch (fbErr) {
@@ -2396,7 +2688,7 @@ app.get('/api/user/profile/:userId', async (req, res) => {
       }
     }
 
-    const users = getLocalUsers();
+    const users = localUsersMap;
     let user = users[userId];
 
     if (!user) {
@@ -2416,8 +2708,26 @@ app.get('/api/user/profile/:userId', async (req, res) => {
         id: userId,
         name: capName,
         email: cleanEmail,
-        picture: DEFAULT_USER_AVATAR
+        picture: resolveUserPictureWithRegistry({
+          userId,
+          email: cleanEmail,
+          candidates: [],
+          fallback: DEFAULT_USER_AVATAR
+        })
       };
+    } else {
+      const bestPic = resolveUserPictureWithRegistry({
+        userId: user.id || userId,
+        email: user.email || '',
+        candidates: [user.picture],
+        fallback: user.picture || DEFAULT_USER_AVATAR
+      });
+      if (bestPic !== user.picture && isRealProfilePic(bestPic)) {
+        user = { ...user, picture: bestPic };
+        users[user.id || userId] = user;
+        saveLocalUsers(users, false);
+        syncSupabaseUserPictureIfNeeded(user.id || userId, bestPic, user.email);
+      }
     }
 
     const safeUser = { ...user };
@@ -2691,7 +3001,12 @@ app.post('/api/admin/invite-admin', async (req, res) => {
       id: userId,
       name: users[userId]?.name || capitalizedName,
       email: cleanEmail,
-      picture: users[userId]?.picture || '',
+      picture: resolveUserPictureWithRegistry({
+        userId,
+        email: cleanEmail,
+        candidates: [users[userId]?.picture],
+        fallback: ''
+      }),
       role: targetRole,
       verified: true,
       createdAt: users[userId]?.createdAt || new Date().toISOString(),
@@ -2834,12 +3149,39 @@ app.get('/api/admin/users', async (req, res) => {
 
     await loadUserApprovalsFromCloud();
 
+    let registry = loadProfilePhotosRegistry(PROFILE_PHOTOS_FILE);
+    let healedUsersLocal = false;
+
     if (useSupabase && supabase) {
       try {
         const { data: spUsers } = await supabase.from('users').select('*');
         if (spUsers && Array.isArray(spUsers)) {
           spUsers.forEach(u => {
             const loc = usersObj[u.id] || {};
+            const regEntry = getProfilePhotoRecord({ userId: u.id, email: u.email || loc.email }, registry, PROFILE_PHOTOS_FILE);
+            let bestPic = '';
+            const cloudIsCustom = isCustomUploadedProfilePic(u.picture);
+            const cloudUpdated = u.updated_at ? new Date(u.updated_at).getTime() : 0;
+            const regUpdated = regEntry && regEntry.updatedAt ? new Date(regEntry.updatedAt).getTime() : 0;
+
+            if (cloudIsCustom && (!regEntry || (cloudUpdated > regUpdated && u.picture.trim() !== regEntry.picture))) {
+              bestPic = u.picture.trim();
+              const upRes = upsertProfilePhotoRecord(
+                { userId: u.id, email: u.email || loc.email || '', name: u.name || loc.name || '', picture: bestPic, updatedAt: u.updated_at || new Date().toISOString() },
+                { registry, filePath: PROFILE_PHOTOS_FILE, persist: true }
+              );
+              registry = upRes.registry;
+            } else {
+              bestPic = pickBestProfilePic(regEntry ? regEntry.picture : '', loc.picture, u.picture);
+            }
+
+            if (!isRealProfilePic(u.picture) && isRealProfilePic(bestPic)) {
+              syncSupabaseUserPictureIfNeeded(u.id, bestPic, u.email || loc.email);
+            }
+            if (!isRealProfilePic(loc.picture) && isRealProfilePic(bestPic)) {
+              healedUsersLocal = true;
+            }
+
             usersObj[u.id] = {
               ...loc,
               ...u,
@@ -2848,13 +3190,16 @@ app.get('/api/admin/users', async (req, res) => {
               email: u.email || loc.email || '',
               role: u.role || loc.role || 'user',
               deactivated: typeof u.deactivated === 'boolean' ? u.deactivated : !!loc.deactivated,
-              picture: u.picture || loc.picture || '',
+              picture: bestPic || loc.picture || u.picture || '',
               phone: u.phone || '',
               whatsapp: u.whatsapp || '',
               createdAt: u.created_at,
               updatedAt: u.updated_at
             };
           });
+          if (healedUsersLocal) {
+            saveLocalUsers(usersObj, false);
+          }
         }
 
         const { data: spExpenses } = await supabase.from('expenses').select('*').order('created_at', { ascending: false });
@@ -2903,13 +3248,16 @@ app.get('/api/admin/users', async (req, res) => {
             if (!uid) return;
             // Merge: local user data takes priority (especially approved field)
             const localUser = localUsers[uid] || {};
+            const regEntry = getProfilePhotoRecord({ userId: uid, email: localUser.email || fbUser.email }, registry, PROFILE_PHOTOS_FILE);
+            const bestFbPic = pickBestProfilePic(regEntry ? regEntry.picture : '', localUser.picture, fbUser.picture);
             usersObj[uid] = {
               ...fbUser,
               id: uid,
               // Local 'approved' field is authoritative — Firebase may not have it
               approved: localUser.approved !== undefined ? localUser.approved : fbUser.approved,
               // Keep other local overrides
-              ...(localUser.id ? { name: localUser.name || fbUser.name, picture: localUser.picture || fbUser.picture } : {})
+              ...(localUser.id ? { name: localUser.name || fbUser.name } : {}),
+              picture: bestFbPic || localUser.picture || fbUser.picture || ''
             };
           });
           console.log(`📋 Admin users: loaded ${Object.keys(usersObj).length} users (Firebase + local merged)`);
@@ -2965,11 +3313,14 @@ app.get('/api/admin/users', async (req, res) => {
       const paidExpWithBill = userExpenses.find(e => (e.paymentStatus === 'paid' || e.payment_status === 'paid') && e.paymentBillUrl && (!e.receipts || !e.receipts.includes(e.paymentBillUrl)));
       const paymentBillUrl = (user.paymentBillUrl && (!user.receipts || !user.receipts.includes(user.paymentBillUrl))) ? user.paymentBillUrl : (paidExpWithBill ? paidExpWithBill.paymentBillUrl : '');
 
+      const regEntry = getProfilePhotoRecord({ userId: user.id, email: user.email }, registry, PROFILE_PHOTOS_FILE);
+      const resolvedAdminPic = pickBestProfilePic(regEntry ? regEntry.picture : '', user.picture) || user.picture || '';
+
       return {
         id: user.id,
         name: user.name || 'User',
         email: user.email,
-        picture: user.picture,
+        picture: resolvedAdminPic,
         verified: !!user.verified,
         approved: isUserApproved(user.id, user.email, user),
         deactivated: !!user.deactivated,
@@ -3019,7 +3370,12 @@ app.post('/api/admin/approve-user', async (req, res) => {
             id: spUser.id,
             name: spUser.name,
             email: spUser.email,
-            picture: spUser.picture,
+            picture: resolveUserPictureWithRegistry({
+              userId: spUser.id,
+              email: spUser.email,
+              candidates: [spUser.picture],
+              fallback: spUser.picture || ''
+            }),
             role: spUser.role || 'user'
           };
         }
@@ -3033,6 +3389,7 @@ app.post('/api/admin/approve-user', async (req, res) => {
       const cleanEmail = user.email;
       delete users[cleanId];
       saveLocalUsers(users);
+      removeProfilePhotoRecord({ userId: cleanId, email: cleanEmail }, { filePath: PROFILE_PHOTOS_FILE });
       addDeletedUser(cleanEmail);
       addDeletedUser(cleanId);
       if (useSupabase && supabase) {
@@ -3207,7 +3564,12 @@ app.post('/api/admin/add-member', async (req, res) => {
       id: userId,
       name: capitalizedName,
       email: cleanEmail,
-      picture: users[userId]?.picture || '',
+      picture: resolveUserPictureWithRegistry({
+        userId,
+        email: cleanEmail,
+        candidates: [users[userId]?.picture],
+        fallback: ''
+      }),
       verified: true,
       role: role === 'admin' ? 'admin' : (users[userId]?.role || 'user'),
       createdAt: users[userId]?.createdAt || new Date().toISOString(),
@@ -3615,6 +3977,7 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
         if (isMatch) delete users[key];
       });
       saveLocalUsers(users);
+      removeProfilePhotoRecord({ userId, email: matchedTarget?.email }, { filePath: PROFILE_PHOTOS_FILE });
 
       // 3. Delete ALL expenses of this user from expenses.json
       let allExpenses = getLocalExpenses();
@@ -4642,7 +5005,12 @@ app.post('/api/admin/invite-member', async (req, res) => {
         id: userId,
         name: capitalizedName,
         email: cleanEmail,
-        picture: DEFAULT_USER_AVATAR,
+        picture: resolveUserPictureWithRegistry({
+          userId,
+          email: cleanEmail,
+          candidates: [],
+          fallback: DEFAULT_USER_AVATAR
+        }),
         verified: true,
         role: roleToSet,
         createdAt: new Date().toISOString(),
@@ -4751,15 +5119,22 @@ app.post('/api/admin/complete-invite', (req, res) => {
     const users = getLocalUsers();
     const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
 
+    const existingUser = users[userId] || {};
     const newUser = {
+      ...existingUser,
       id: userId,
-      name: inv.name || cleanEmail.split('@')[0],
+      name: existingUser.name || inv.name || cleanEmail.split('@')[0],
       email: cleanEmail,
-      role: inv.role || 'user',
-      picture: DEFAULT_USER_AVATAR,
+      role: inv.role || existingUser.role || 'user',
+      picture: resolveUserPictureWithRegistry({
+        userId,
+        email: cleanEmail,
+        candidates: [existingUser.picture],
+        fallback: DEFAULT_USER_AVATAR
+      }),
       passwordHash,
       verified: true,
-      createdAt: new Date().toISOString(),
+      createdAt: existingUser.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 

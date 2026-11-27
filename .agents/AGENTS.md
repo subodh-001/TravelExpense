@@ -23,9 +23,9 @@ These rules are **mandatory** for ALL AI agents working on this project.
    - `db.exec('DELETE FROM users')` or `db.exec('DELETE FROM expenses')`
    - Any script that wipes or resets these files
 
-3. **ALWAYS keep data JSON files tracked in git:**
-   - `backend/data/*.json` (`users.json`, `expenses.json`, `invites.json`, `deleted_users.json`) MUST stay committed in git.
-   - This ensures Render server always deploys with the full current database state and never wipes or resets to 0 entries.
+3. **NEVER commit or push `backend/data/` files to GitHub:**
+   - `backend/data/` (`users.json`, `expenses.json`, `invites.json`, `deleted_users.json`, `profile_photos.json`, `.sqlite*`) MUST stay gitignored on VPS & local machines so code pushes never overwrite or reset live production database state.
+   - Live VPS data is protected by `smart_backup.js` (cron rolling `.tar.gz`, `latest_snapshot/`, `diff_reports/`) and `backend/logs/activity_YYYY-MM-DD.log`.
 
 4. **NEVER modify `deleted_users.json` manually** unless the user explicitly says:
    > "delete [specific user] from deleted_users.json"
@@ -50,13 +50,14 @@ These rules are **mandatory** for ALL AI agents working on this project.
 
 | Storage | Location | Purpose |
 |---|---|---|
-| Primary | Firebase Firestore | Cloud master database |
-| Local fallback | `backend/data/users.json` | Local users cache |
-| Local fallback | `backend/data/expenses.json` | Local expenses cache |
-| SQLite mirror | `backend/data/travel_expense.sqlite` | Offline SQLite mirror |
-| Blacklist | `backend/data/deleted_users.json` | Deleted user IDs |
+| Primary | Supabase PostgreSQL | Cloud master database |
+| Local cache | `backend/data/users.json` | Local users cache (gitignored) |
+| Profile photo lock | `backend/data/profile_photos.json` | Permanent profile photo registry (gitignored) |
+| Local cache | `backend/data/expenses.json` | Local expenses cache (gitignored) |
+| SQLite mirror | `backend/data/travel_expense.sqlite` | Offline SQLite mirror (gitignored) |
+| Blacklist | `backend/data/deleted_users.json` | Deleted user IDs (gitignored) |
 
-**Rule**: Firebase is the source of truth. Local JSON files are a fallback cache. SQLite is a mirror. None of these should be reset by code changes.
+**Rule**: Supabase PostgreSQL is the cloud master database, `profile_photos.json` guards real profile photos against SVG placeholder overwrites, local JSON files are disk cache, and SQLite is a mirror. None of these should be reset by code changes.
 
 ---
 

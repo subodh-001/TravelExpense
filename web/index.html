@@ -243,10 +243,10 @@
   <div id="appDashboard" class="app-page-view hidden">
     <!-- User Dashboard Header -->
     <header class="app-header" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100;">
-      <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+      <div class="header-container dashboard-header-container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; width: 100%; box-sizing: border-box; padding: 12px 20px;">
         <!-- Left: Header Branding & Welcome -->
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="background: #ffffff; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 2px;">
+        <div class="dashboard-header-brand" style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+          <div style="background: #ffffff; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 2px; flex-shrink: 0;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" style="width: 28px; height: 28px;">
               <rect x="414" y="26" width="52" height="52" rx="4" fill="#0047ff" />
               <rect x="24" y="422" width="52" height="52" rx="4" fill="#0047ff" />
@@ -255,13 +255,13 @@
               <path d="M 247 218 H 414 V 284 H 247 Z" fill="#0047ff" />
             </svg>
           </div>
-          <div>
+          <div style="min-width: 0;">
             <h1 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0; line-height: 1.1;">Welcome, <span id="userWelcomeHeaderName">Traveler</span></h1>
           </div>
         </div>
 
         <!-- Right: Top-Right Total Amount Badge & Bot Buttons -->
-        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+        <div class="dashboard-header-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; min-width: 0;">
           <a id="headerAdminPanelBtn" href="#superadmin" onclick="switchAppPage('superadmin'); return false;" style="display: none; background: #0f172a; color: #ffffff; border: 1px solid #334155; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.85rem; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap; text-decoration: none; box-shadow: 0 2px 8px rgba(15,23,42,0.2);" title="Return to Admin Control Panel">
             <i class="fa-solid fa-user-shield" style="color: #38bdf8; font-size: 0.95rem;"></i> Admin Panel
           </a>

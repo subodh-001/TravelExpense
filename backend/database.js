@@ -1,8 +1,10 @@
+const fs = require('fs');
 const path = require('path');
 let db = null;
 try {
   const Database = require('better-sqlite3');
-  const dbPath = path.join(__dirname, 'data', 'travel_expense.sqlite');
+  const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
+  const dbPath = path.join(dataDir, 'travel_expense.sqlite');
   db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
 } catch (err) {
@@ -46,8 +48,9 @@ if (db) {
 function syncJSONToSQLite() {
   if (!db) return;
   try {
-    const usersPath = path.join(__dirname, 'data', 'users.json');
-    const expensesPath = path.join(__dirname, 'data', 'expenses.json');
+    const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
+    const usersPath = path.join(dataDir, 'users.json');
+    const expensesPath = path.join(dataDir, 'expenses.json');
 
     if (fs.existsSync(usersPath)) {
       const usersObj = JSON.parse(fs.readFileSync(usersPath, 'utf8') || '{}');
