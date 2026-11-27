@@ -1284,6 +1284,9 @@ const uploadToCloudinary = async (fileBuffer, mimeType, folder = 'expense_receip
         } catch (e) { reject(new Error('Cloudinary response parse error')); }
       });
     });
+    req.setTimeout(12000, () => {
+      req.destroy(new Error('Cloudinary upload timeout (12s)'));
+    });
     req.on('error', reject);
     req.write(fullBody);
     req.end();
@@ -1556,6 +1559,16 @@ const DEFAULT_USER_AVATAR = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL
 
 const DEFAULT_GMAIL_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxE4NPu_khaxKDdEkrleAcCbYH4WszPYV8QoIyJLjPXL2VXZBoIrICMTt2j4mvQuP86/exec';
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 4500) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Security' }) {
   if (!to) return { success: false, error: 'Recipient email address missing' };
   
@@ -1565,12 +1578,12 @@ async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Sec
   // Attempt 1: Google Apps Script HTTPS Webhook (Sends directly from subodhram3350@gmail.com to ALL recipients, bypasses cloud firewall)
   if (webhookUrl) {
     try {
-      const webhookRes = await fetch(webhookUrl, {
+      const webhookRes = await fetchWithTimeout(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to, subject, html, fromName }),
         redirect: 'follow'
-      });
+      }, 4500);
       const webhookData = await webhookRes.json();
       if (webhookRes.ok && webhookData.success) {
         console.log(`✉️ Email successfully sent to ${to} from subodhram3350@gmail.com via Google Webhook`);
@@ -1586,7 +1599,7 @@ async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Sec
   // Attempt 2: Resend HTTPS API (if RESEND_API_KEY set)
   if (process.env.RESEND_API_KEY) {
     try {
-      const resendRes = await fetch('https://api.resend.com/emails', {
+      const resendRes = await fetchWithTimeout('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
@@ -1598,7 +1611,7 @@ async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Sec
           subject,
           html
         })
-      });
+      }, 4500);
       const resendData = await resendRes.json();
       if (resendRes.ok && resendData.id) {
         console.log(`✉️ Email successfully sent to ${to} via Resend HTTP API: ${resendData.id}`);
@@ -1614,7 +1627,7 @@ async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Sec
   // Attempt 3: Brevo HTTPS API (if BREVO_API_KEY set)
   if (process.env.BREVO_API_KEY) {
     try {
-      const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+      const brevoRes = await fetchWithTimeout('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
           'api-key': process.env.BREVO_API_KEY,
@@ -1626,7 +1639,7 @@ async function sendEmailNotification({ to, subject, html, fromName = 'FGTech Sec
           subject,
           htmlContent: html
         })
-      });
+      }, 4500);
       if (brevoRes.ok) {
         const brevoData = await brevoRes.json();
         console.log(`✉️ Email successfully sent to ${to} via Brevo HTTP API: ${brevoData.messageId || 'OK'}`);
@@ -3742,7 +3755,7 @@ app.post('/api/admin/update-settlement-bill', upload.single('paymentProof'), asy
     saveLocalExpenses(allExpenses);
 
     if (action === 'update' && targetUser && targetUser.email && paymentBillUrl) {
-      await sendEmailNotification({
+      const emailPromise = sendEmailNotification({
         to: targetUser.email,
         fromName: 'FreeG TravelExpense Admin',
         subject: `⚡ Updated Reimbursement Payment Proof Bill - FreeG TravelExpense`,
@@ -3762,7 +3775,8 @@ app.post('/api/admin/update-settlement-bill', upload.single('paymentProof'), asy
             <p style="font-size: 0.8rem; color: #94a3b8; margin: 0;">FreeG Wifi Travel Expense Management System</p>
           </div>
         `
-      });
+      }).catch(e => console.warn('Update bill email note:', e.message));
+      await Promise.race([emailPromise, new Promise(resolve => setTimeout(resolve, 1500))]);
     }
 
     res.json({
@@ -3898,10 +3912,11 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
 
     saveLocalExpenses(allExpenses);
 
-    // Send Reimbursement Confirmation Email to User
+    // Send Reimbursement Confirmation Email to User (wait max 1.5s so UI responds immediately; finishes in background)
+    let emailQueued = false;
     if (targetUser && targetUser.email) {
       const monthLabel = month && month !== 'all' ? month : 'current month';
-      await sendEmailNotification({
+      const emailPromise = sendEmailNotification({
         to: targetUser.email,
         fromName: 'FreeG Wifi Accounts',
         subject: `✅ Reimbursement Paid: ₹${settledTotal.toLocaleString('en-IN')} for ${targetUser.name}`,
@@ -3926,7 +3941,12 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
             <p style="color: #94a3b8; font-size: 13px; margin: 0;">FreeG Wifi Expense Management System</p>
           </div>
         `
-      });
+      }).catch(e => console.warn('Settlement email note:', e.message));
+      const raceRes = await Promise.race([
+        emailPromise,
+        new Promise(resolve => setTimeout(() => resolve({ timedOut: true }), 1500))
+      ]);
+      emailQueued = !!(raceRes && raceRes.timedOut);
     }
 
     res.json({
@@ -3934,7 +3954,8 @@ app.post('/api/admin/settle-payment', upload.single('paymentProof'), async (req,
       message: `Successfully settled ₹${settledTotal} for ${targetUser.name}`,
       settledCount,
       settledTotal,
-      paymentBillUrl
+      paymentBillUrl,
+      emailQueued
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

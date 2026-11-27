@@ -4258,13 +4258,14 @@ async function handleAdminReuploadBillSelect(e) {
   formData.append('userId', userId);
   formData.append('month', selectedMonth);
   formData.append('action', 'update');
-  formData.append('paymentProof', file);
 
   try {
-    const res = await fetch(`${API_BASE_URL}/admin/update-settlement-bill`, {
+    const uploadFile = await prepareProofFileForUpload(file);
+    formData.append('paymentProof', uploadFile);
+    const res = await fetchWithClientTimeout(`${API_BASE_URL}/admin/update-settlement-bill`, {
       method: 'POST',
       body: formData
-    });
+    }, 25000);
     const data = await res.json();
     if (res.ok && data.success) {
       alert(`✅ Payment bill proof re-uploaded successfully!`);
@@ -4625,6 +4626,28 @@ async function openSettleModal(userId) {
   if (modal) openModal(modal);
 }
 
+async function prepareProofFileForUpload(file) {
+  if (!file) return null;
+  try {
+    if (file.type && file.type.startsWith('image/') && file.size > 350 * 1024 && typeof compressImage === 'function') {
+      return await compressImage(file, 1280, 0.82);
+    }
+  } catch (e) {
+    console.warn('Payment proof compression skipped:', e.message);
+  }
+  return file;
+}
+
+async function fetchWithClientTimeout(url, options = {}, timeoutMs = 25000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function handleSettlePaymentSubmit(e) {
   if (e) e.preventDefault();
   const userId = document.getElementById('settleUserId')?.value;
@@ -4634,36 +4657,45 @@ async function handleSettlePaymentSubmit(e) {
   const btn = document.getElementById('submitSettleBtn');
 
   if (!userId) return;
+  if (btn && btn.disabled) return;
 
-  const formData = new FormData();
-  formData.append('userId', userId);
-  formData.append('month', month);
-  formData.append('notes', notes || '');
-
-  if (proofInput && proofInput.files && proofInput.files[0]) {
-    formData.append('paymentProof', proofInput.files[0]);
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Settling & Sending Email...';
   }
 
-  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Settling & Sending Email...';
-
   try {
-    const res = await fetch(`${API_BASE_URL}/admin/settle-payment`, {
+    const formData = new FormData();
+    formData.append('userId', userId);
+    formData.append('month', month);
+    formData.append('notes', notes || '');
+
+    if (proofInput && proofInput.files && proofInput.files[0]) {
+      const uploadFile = await prepareProofFileForUpload(proofInput.files[0]);
+      formData.append('paymentProof', uploadFile);
+    }
+
+    const res = await fetchWithClientTimeout(`${API_BASE_URL}/admin/settle-payment`, {
       method: 'POST',
       body: formData
-    });
+    }, 25000);
     const data = await res.json();
 
     if (res.ok && data.success) {
-      alert(`✅ ${data.message}\n\nReimbursement receipt email sent to member!`);
+      alert(`✅ ${data.message}\n\n${data.emailQueued ? 'Reimbursement confirmation email is being sent in the background!' : 'Reimbursement receipt email sent to member!'}`);
       closeModal(document.getElementById('settlePaymentModal'));
       loadSuperAdminData();
     } else {
       alert(data.error || 'Failed to settle payment.');
     }
   } catch (err) {
-    alert('Error settling payment: ' + err.message);
+    const msg = err.name === 'AbortError' ? 'Request timed out (25s). Please check status and retry.' : err.message;
+    alert('Error settling payment: ' + msg);
   } finally {
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Settle & Email Receipt';
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Settle & Email Receipt';
+    }
   }
 }
 
@@ -5216,19 +5248,24 @@ async function confirmAndUpdateBillProof() {
 
   const selectedMonth = document.getElementById('inspectUserMonthFilter')?.value || 'all';
   const btn = document.getElementById('confirmUpdateBillBtn');
-  if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating & Sending Email...';
-
-  const formData = new FormData();
-  formData.append('userId', currentInspectUserId);
-  formData.append('month', selectedMonth);
-  formData.append('action', 'update');
-  formData.append('paymentProof', inspectSelectedNewBillFile);
+  if (btn && btn.disabled) return;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating & Sending Email...';
+  }
 
   try {
-    const res = await fetch(`${API_BASE_URL}/admin/update-settlement-bill`, {
+    const uploadFile = await prepareProofFileForUpload(inspectSelectedNewBillFile);
+    const formData = new FormData();
+    formData.append('userId', currentInspectUserId);
+    formData.append('month', selectedMonth);
+    formData.append('action', 'update');
+    formData.append('paymentProof', uploadFile);
+
+    const res = await fetchWithClientTimeout(`${API_BASE_URL}/admin/update-settlement-bill`, {
       method: 'POST',
       body: formData
-    });
+    }, 25000);
     const data = await res.json();
     if (res.ok && data.success) {
       inspectSelectedNewBillFile = null;
@@ -5240,12 +5277,16 @@ async function confirmAndUpdateBillProof() {
       loadSuperAdminData();
       inspectUserExpenses(currentInspectUserId);
     } else {
-      if (btn) btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Update & Send Bill to Member';
       alert(data.error || 'Failed to update bill');
     }
   } catch (err) {
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Update & Send Bill to Member';
-    alert('Error re-uploading bill: ' + err.message);
+    const msg = err.name === 'AbortError' ? 'Request timed out (25s). Please refresh and verify.' : err.message;
+    alert('Error re-uploading bill: ' + msg);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Update & Send Bill to Member';
+    }
   }
 }
 
