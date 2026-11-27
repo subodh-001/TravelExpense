@@ -4342,13 +4342,18 @@ async function deleteMemberFromEditModal() {
     onConfirm: async () => {
       closeModal(document.getElementById('editMemberAdminModal'));
       try {
+        const currentAdmin = state.currentGoogleUser || getStoredGoogleUser() || {};
         const res = await fetch(`${API_BASE_URL}/admin/delete-settlement`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'user-id': currentAdmin.id || '',
+            'user-email': currentAdmin.email || ''
+          },
           body: JSON.stringify({ userId, action: 'delete_user' })
         });
         const data = await res.json();
-        if (data.success) {
+        if (res.ok && data.success) {
           if (typeof showCustomToast === 'function') showCustomToast(`Member removed successfully`);
           else alert(`Member removed successfully.`);
           loadSuperAdminData();
@@ -4755,6 +4760,7 @@ async function executeMemberAction(action) {
       alert('Error resetting status: ' + err.message);
     }
   } else if (action === 'delete') {
+    const targetUserId = activeManageUserId;
     showConfirmModal({
       title: 'Delete Member Account?',
       message: `Are you sure you want to permanently delete member ${user ? user.name : 'this member'}? This action cannot be undone.`,
@@ -4762,13 +4768,18 @@ async function executeMemberAction(action) {
       btnText: 'Delete Member',
       onConfirm: async () => {
         try {
+          const currentAdmin = state.currentGoogleUser || getStoredGoogleUser() || {};
           const res = await fetch(`${API_BASE_URL}/admin/delete-settlement`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: activeManageUserId, action: 'delete_user' })
+            headers: {
+              'Content-Type': 'application/json',
+              'user-id': currentAdmin.id || '',
+              'user-email': currentAdmin.email || ''
+            },
+            body: JSON.stringify({ userId: targetUserId, action: 'delete_user' })
           });
           const data = await res.json();
-          if (data.success) {
+          if (res.ok && data.success) {
             if (typeof showCustomToast === 'function') showCustomToast(`Member removed successfully`);
             else alert(`Member removed successfully.`);
             loadSuperAdminData();

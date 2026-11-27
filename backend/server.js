@@ -149,10 +149,7 @@ if (!fs.existsSync(DELETED_USERS_FILE)) fs.writeFileSync(DELETED_USERS_FILE, JSO
 
 // User approvals cache (key: userId or cleanEmail -> boolean)
 // Tracks user approval state dynamically; false = waiting for admin approval, true = approved
-let userApprovalsCache = {
-  'nothingsubodh@gmail.com': false,
-  'google_nothingsubodh_gmail_com': false
-};
+let userApprovalsCache = {};
 
 // Helpers for persistent user deletion blacklist
 const getDeletedUsers = () => {
@@ -165,17 +162,32 @@ const getDeletedUsers = () => {
   }
 };
 
+const expandDeletedVariants = (str) => {
+  const variants = new Set();
+  if (!str) return [];
+  const clean = String(str).toLowerCase().trim();
+  if (!clean) return [];
+  variants.add(clean);
+  const base = clean.replace(/^(google_)+/, '');
+  if (base) {
+    variants.add(base);
+    variants.add(`google_${base}`);
+  }
+  const sanitized = base.replace(/[^a-z0-9]/g, '_');
+  if (sanitized) {
+    variants.add(sanitized);
+    variants.add(`google_${sanitized}`);
+  }
+  return Array.from(variants);
+};
+
 const addDeletedUser = (userOrId) => {
   try {
     const deleted = getDeletedUsers();
     const addIfNew = (str) => {
-      if (!str) return;
-      const clean = str.toLowerCase().trim();
-      // Strip any leading google_ prefixes to get the base key
-      const base = clean.replace(/^(google_)+/, '');
-      const googleKey = `google_${base}`;
-      if (!deleted.includes(base)) deleted.push(base);
-      if (!deleted.includes(googleKey)) deleted.push(googleKey);
+      for (const variant of expandDeletedVariants(str)) {
+        if (!deleted.includes(variant)) deleted.push(variant);
+      }
     };
 
     if (typeof userOrId === 'string') {
@@ -196,11 +208,9 @@ const removeDeletedUser = (userOrId) => {
     if (!deleted || !deleted.length) return;
     const toRemove = new Set();
     const addClean = (str) => {
-      if (!str) return;
-      const clean = str.toLowerCase().trim();
-      const base = clean.replace(/^(google_)+/, '');
-      toRemove.add(base);
-      toRemove.add(`google_${base}`);
+      for (const variant of expandDeletedVariants(str)) {
+        toRemove.add(variant);
+      }
     };
     if (typeof userOrId === 'string') addClean(userOrId);
     else if (userOrId && typeof userOrId === 'object') {
@@ -208,8 +218,8 @@ const removeDeletedUser = (userOrId) => {
       addClean(userOrId.email);
     }
     const filtered = deleted.filter(d => {
-      const dBase = (d || '').toLowerCase().trim().replace(/^(google_)+/, '');
-      return !toRemove.has(dBase) && !toRemove.has(`google_${dBase}`);
+      const variants = expandDeletedVariants(d);
+      return !variants.some(v => toRemove.has(v));
     });
     if (filtered.length !== deleted.length) {
       fs.writeFileSync(DELETED_USERS_FILE, JSON.stringify(filtered, null, 2));
@@ -221,12 +231,12 @@ const removeDeletedUser = (userOrId) => {
 
 const isUserDeleted = (userIdOrEmail) => {
   if (!userIdOrEmail) return false;
-  const clean = userIdOrEmail.toLowerCase().trim();
+  const clean = String(userIdOrEmail).toLowerCase().trim();
   const base = clean.replace(/^(google_)+/, '');
   const googleKey = `google_${base}`;
 
-  // If user is actively tracked in userApprovalsCache, they are NOT deleted
-  if (typeof userApprovalsCache !== 'undefined' && (userApprovalsCache[clean] !== undefined || userApprovalsCache[googleKey] !== undefined || userApprovalsCache[base] !== undefined)) {
+  // Master Super Admin can never be marked deleted
+  if (clean === 'subodhram3350@gmail.com' || googleKey === 'google_subodhram3350_gmail_com') {
     return false;
   }
 
@@ -244,7 +254,8 @@ const isUserDeleted = (userIdOrEmail) => {
   } catch (e) {}
 
   const deleted = getDeletedUsers();
-  return deleted.includes(base) || deleted.includes(googleKey) || deleted.includes(clean);
+  const variants = expandDeletedVariants(clean);
+  return variants.some(v => deleted.includes(v));
 };
 
 // Daily automated snapshot backup function
@@ -766,6 +777,33 @@ const saveUserApproval = async (userId, email, isApproved) => {
   });
 };
 
+const removeUserFromApprovalsCache = async (userId, email) => {
+  const cleanId = (userId || '').toLowerCase().trim();
+  const cleanEmail = (email || '').toLowerCase().trim();
+  const derivedGoogleId = cleanEmail ? `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+  const keysToRemove = [cleanId, cleanEmail, derivedGoogleId].filter(Boolean);
+
+  let changed = false;
+  for (const k of keysToRemove) {
+    if (userApprovalsCache[k] !== undefined) {
+      delete userApprovalsCache[k];
+      changed = true;
+    }
+  }
+
+  if (changed && useSupabase && supabase) {
+    try {
+      await supabase.from('whatsapp_auth').upsert({
+        key: 'system_user_approvals',
+        value: userApprovalsCache,
+        updated_at: new Date().toISOString()
+      });
+    } catch (spErr) {
+      console.warn('Supabase approvals cleanup note:', spErr.message);
+    }
+  }
+};
+
 // 🔥 Automatic Cloud Sync: Pulls master DB state directly from Firebase Firestore on server startup
 const syncFromFirebaseCloud = async () => {
   if (useSupabase || !useFirebase || !db) return;
@@ -781,6 +819,7 @@ const syncFromFirebaseCloud = async () => {
         const uData = doc.data();
         const uid = doc.id;
         if (uid && uData) {
+          if (isUserDeleted(uid) || (uData.email && isUserDeleted(uData.email))) return;
           const existing = cloudUsers[uid] || {};
           const regEntry = getProfilePhotoRecord({ userId: uid, email: uData.email || existing.email }, registry, PROFILE_PHOTOS_FILE);
           const bestPic = pickBestProfilePic(regEntry ? regEntry.picture : '', existing.picture, uData.picture);
@@ -799,6 +838,7 @@ const syncFromFirebaseCloud = async () => {
       expSnapshot.forEach(doc => {
         const eData = doc.data();
         if (eData && (eData.id || doc.id)) {
+          if (eData.userId && isUserDeleted(eData.userId)) return;
           let createdAtStr = eData.createdAt;
           if (eData.createdAt && typeof eData.createdAt.toDate === 'function') {
             createdAtStr = eData.createdAt.toDate().toISOString();
@@ -877,6 +917,7 @@ const syncFromSupabaseCloud = async () => {
     if (!uErr && cloudUsersData && cloudUsersData.length > 0) {
       for (const u of cloudUsersData) {
         if (!u.id) continue;
+        if (isUserDeleted(u.id) || (u.email && isUserDeleted(u.email))) continue;
         const loc = localUsers[u.id] || {};
         const regEntry = getProfilePhotoRecord({ userId: u.id, email: u.email || loc.email }, registry, PROFILE_PHOTOS_FILE);
 
@@ -962,7 +1003,9 @@ const syncFromSupabaseCloud = async () => {
     // 2. Sync Expenses from Supabase into local cache (Supabase is Master DB)
     const { data: cloudExpData, error: eErr } = await supabase.from('expenses').select('*');
     if (!eErr && Array.isArray(cloudExpData)) {
-      const formatted = cloudExpData.map(e => ({
+      const formatted = cloudExpData
+        .filter(e => e && !isUserDeleted(e.user_id))
+        .map(e => ({
         id: e.id,
         userId: e.user_id,
         date: e.date,
@@ -993,7 +1036,9 @@ async function runSupabaseAutoSyncWorker() {
     // Sync down from Supabase Cloud master to keep local cache exact match
     const { data: cloudExpData, error } = await supabase.from('expenses').select('*');
     if (!error && Array.isArray(cloudExpData)) {
-      const formatted = cloudExpData.map(e => ({
+      const formatted = cloudExpData
+        .filter(e => e && !isUserDeleted(e.user_id))
+        .map(e => ({
         id: e.id,
         userId: e.user_id,
         date: e.date,
@@ -3170,6 +3215,7 @@ app.get('/api/admin/users', async (req, res) => {
         const { data: spUsers } = await supabase.from('users').select('*');
         if (spUsers && Array.isArray(spUsers)) {
           spUsers.forEach(u => {
+            if (!u || !u.id || isUserDeleted(u.id) || (u.email && isUserDeleted(u.email))) return;
             const loc = usersObj[u.id] || {};
             const regEntry = getProfilePhotoRecord({ userId: u.id, email: u.email || loc.email }, registry, PROFILE_PHOTOS_FILE);
             let bestPic = '';
@@ -3259,6 +3305,7 @@ app.get('/api/admin/users', async (req, res) => {
             const fbUser = doc.data();
             const uid = fbUser.id || doc.id;
             if (!uid) return;
+            if (isUserDeleted(uid) || (fbUser.email && isUserDeleted(fbUser.email))) return;
             // Merge: local user data takes priority (especially approved field)
             const localUser = localUsers[uid] || {};
             const regEntry = getProfilePhotoRecord({ userId: uid, email: localUser.email || fbUser.email }, registry, PROFILE_PHOTOS_FILE);
@@ -3399,20 +3446,36 @@ app.post('/api/admin/approve-user', async (req, res) => {
 
     if (action === 'reject') {
       const cleanId = user.id;
-      const cleanEmail = user.email;
-      delete users[cleanId];
+      const cleanEmail = (user.email || '').toLowerCase().trim();
+      const derivedId = cleanEmail ? `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+      if (cleanEmail === 'subodhram3350@gmail.com' || cleanId === 'google_subodhram3350_gmail_com') {
+        return res.status(403).json({ error: 'Master Super Admin account cannot be rejected or removed.' });
+      }
+      const rejectAliases = getUserAliasIds(cleanId, users);
+      if (cleanId) rejectAliases.add(cleanId);
+      if (cleanEmail) rejectAliases.add(cleanEmail);
+      if (derivedId) rejectAliases.add(derivedId);
+      const rejectLower = new Set(Array.from(rejectAliases).map(x => String(x).toLowerCase().trim()));
+      Object.keys(users).forEach(k => {
+        const u = users[k];
+        if (rejectLower.has(k.toLowerCase().trim()) || (u && u.id && rejectLower.has(u.id.toLowerCase().trim())) || (u && u.email && rejectLower.has(u.email.toLowerCase().trim()))) {
+          delete users[k];
+        }
+      });
       saveLocalUsers(users);
       removeProfilePhotoRecord({ userId: cleanId, email: cleanEmail }, { filePath: PROFILE_PHOTOS_FILE });
+      addDeletedUser(user);
       addDeletedUser(cleanEmail);
       addDeletedUser(cleanId);
       if (useSupabase && supabase) {
-        try { await supabase.from('users').delete().eq('id', cleanId); } catch (e) {}
+        try {
+          const aliasList = Array.from(rejectAliases).filter(Boolean);
+          if (aliasList.length > 0) await supabase.from('users').delete().in('id', aliasList);
+          if (cleanEmail) await supabase.from('users').delete().ilike('email', cleanEmail);
+        } catch (e) {}
       }
-      if (typeof userApprovalsCache !== 'undefined') {
-        delete userApprovalsCache[cleanId.toLowerCase()];
-        delete userApprovalsCache[cleanEmail.toLowerCase()];
-        await saveUserApproval(cleanId, cleanEmail, false);
-      }
+      await removeUserFromApprovalsCache(cleanId, cleanEmail);
+      logActivity('ADMIN', 'REJECT_USER', `targetId=${cleanId} | email=${cleanEmail || 'unknown'}`);
       console.log(`🚫 Admin rejected & removed user: ${cleanEmail} (${cleanId})`);
       return res.json({ success: true, action: 'rejected', userId });
     }
@@ -3971,45 +4034,70 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
     const targetUser = users[userId];
 
     if (action === 'delete_user') {
+      let matchedTarget = users[userId] || Object.values(users).find(u => u && (u.id === userId || (u.email && u.email.toLowerCase() === String(userId).toLowerCase().trim())));
+
+      // Supabase fallback lookup so users only in Supabase can still be cleanly deleted
+      if (!matchedTarget && useSupabase && supabase) {
+        try {
+          const safeLookup = String(userId).trim();
+          const { data: spMatch } = await supabase.from('users').select('*').or(`id.eq.${safeLookup},email.ilike.${safeLookup}`).maybeSingle();
+          if (spMatch) matchedTarget = spMatch;
+        } catch (e) {}
+      }
+
+      const targetEmailClean = (matchedTarget && matchedTarget.email ? matchedTarget.email : (String(userId).includes('@') ? userId : '')).toLowerCase().trim();
+      const userCleanId = targetEmailClean ? `google_${targetEmailClean.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+
+      // Master Super Admin protection
+      if (
+        targetEmailClean === 'subodhram3350@gmail.com' ||
+        String(userId).toLowerCase().trim() === 'google_subodhram3350_gmail_com' ||
+        (matchedTarget && matchedTarget.id === 'google_subodhram3350_gmail_com')
+      ) {
+        return res.status(403).json({ error: 'Master Super Admin account cannot be deleted.' });
+      }
+
       try {
-        const uObj = getLocalUsers()[userId];
-        const em = (uObj?.email || '').toLowerCase().trim();
-        if (em) {
-          otpStore.delete(em);
-          recentlyVerifiedStore.delete(em);
+        if (targetEmailClean) {
+          otpStore.delete(targetEmailClean);
+          recentlyVerifiedStore.delete(targetEmailClean);
         }
       } catch (e) {}
-      const matchedTarget = users[userId] || Object.values(users).find(u => u.id === userId || u.email === userId);
-      const userCleanId = (matchedTarget && matchedTarget.email) ? `google_${matchedTarget.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
 
-      // 1. Add to permanent deletion blacklist
+      // Collect all alias IDs BEFORE deleting from users.json
+      const aliasIds = getUserAliasIds(matchedTarget ? matchedTarget.id : userId, users);
+      if (userId) aliasIds.add(userId);
+      if (matchedTarget && matchedTarget.id) aliasIds.add(matchedTarget.id);
+      if (targetEmailClean) aliasIds.add(targetEmailClean);
+      if (userCleanId) aliasIds.add(userCleanId);
+      const aliasList = Array.from(aliasIds).filter(Boolean);
+      const aliasLowerSet = new Set(aliasList.map(x => String(x).toLowerCase().trim()));
+
+      // 1. Add to permanent deletion blacklist & clear approvals cache
       addDeletedUser(userId);
       if (matchedTarget) addDeletedUser(matchedTarget);
       if (userCleanId) addDeletedUser(userCleanId);
+      await removeUserFromApprovalsCache(matchedTarget?.id || userId, targetEmailClean);
 
-      // 2. Delete ALL matching user keys from users.json
+      // 2. Delete ALL matching user keys from users.json & profile_photos.json
       Object.keys(users).forEach(key => {
         const u = users[key];
-        const isMatch = (
-          key.toLowerCase() === (userId || '').toLowerCase().trim() ||
-          (matchedTarget && (key.toLowerCase() === (matchedTarget.id || '').toLowerCase().trim() || (u && u.email && u.email.toLowerCase().trim() === (matchedTarget.email || '').toLowerCase().trim()))) ||
-          (userCleanId && key.toLowerCase() === userCleanId.toLowerCase())
-        );
-        if (isMatch) delete users[key];
+        const kLower = key.toLowerCase().trim();
+        const uIdLower = (u && u.id) ? u.id.toLowerCase().trim() : '';
+        const uEmailLower = (u && u.email) ? u.email.toLowerCase().trim() : '';
+        if (aliasLowerSet.has(kLower) || (uIdLower && aliasLowerSet.has(uIdLower)) || (uEmailLower && aliasLowerSet.has(uEmailLower))) {
+          delete users[key];
+        }
       });
       saveLocalUsers(users);
-      removeProfilePhotoRecord({ userId, email: matchedTarget?.email }, { filePath: PROFILE_PHOTOS_FILE });
+      removeProfilePhotoRecord({ userId: matchedTarget?.id || userId, email: targetEmailClean }, { filePath: PROFILE_PHOTOS_FILE });
 
       // 3. Delete ALL expenses of this user from expenses.json
       let allExpenses = getLocalExpenses();
       allExpenses = allExpenses.filter(e => {
+        if (!e) return false;
         const eUid = (e.userId || '').toLowerCase().trim();
-        const isTargetUser = (
-          eUid === (userId || '').toLowerCase().trim() ||
-          (matchedTarget && (eUid === (matchedTarget.id || '').toLowerCase().trim() || eUid === (matchedTarget.email || '').toLowerCase().trim())) ||
-          (userCleanId && eUid === userCleanId.toLowerCase())
-        );
-        return !isTargetUser;
+        return !aliasLowerSet.has(eUid);
       });
       saveLocalExpenses(allExpenses);
 
@@ -4025,12 +4113,12 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
                 if (bUsers && typeof bUsers === 'object') {
                   Object.keys(bUsers).forEach(k => {
                     const u = bUsers[k];
-                    const isMatch = (
-                      k.toLowerCase() === (userId || '').toLowerCase().trim() ||
-                      (matchedTarget && (k.toLowerCase() === (matchedTarget.id || '').toLowerCase().trim() || (u && u.email && u.email.toLowerCase().trim() === (matchedTarget.email || '').toLowerCase().trim()))) ||
-                      (userCleanId && k.toLowerCase() === userCleanId.toLowerCase())
-                    );
-                    if (isMatch) delete bUsers[k];
+                    const kLower = k.toLowerCase().trim();
+                    const uIdLower = (u && u.id) ? u.id.toLowerCase().trim() : '';
+                    const uEmailLower = (u && u.email) ? u.email.toLowerCase().trim() : '';
+                    if (aliasLowerSet.has(kLower) || (uIdLower && aliasLowerSet.has(uIdLower)) || (uEmailLower && aliasLowerSet.has(uEmailLower))) {
+                      delete bUsers[k];
+                    }
                   });
                   fs.writeFileSync(fPath, JSON.stringify(bUsers, null, 2));
                 }
@@ -4039,15 +4127,7 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
               try {
                 let bExp = JSON.parse(fs.readFileSync(fPath, 'utf8'));
                 if (Array.isArray(bExp)) {
-                  bExp = bExp.filter(e => {
-                    const eUid = (e.userId || '').toLowerCase().trim();
-                    const isTargetUser = (
-                      eUid === (userId || '').toLowerCase().trim() ||
-                      (matchedTarget && (eUid === (matchedTarget.id || '').toLowerCase().trim() || eUid === (matchedTarget.email || '').toLowerCase().trim())) ||
-                      (userCleanId && eUid === userCleanId.toLowerCase())
-                    );
-                    return !isTargetUser;
-                  });
+                  bExp = bExp.filter(e => e && !aliasLowerSet.has((e.userId || '').toLowerCase().trim()));
                   fs.writeFileSync(fPath, JSON.stringify(bExp, null, 2));
                 }
               } catch (e) {}
@@ -4123,17 +4203,18 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
         }
       }
 
-      // Delete from Supabase PostgreSQL if connected
+      // Delete from Supabase PostgreSQL if connected (expenses first by all aliases, then users)
       if (useSupabase && supabase) {
         try {
-          if (userId) await supabase.from('users').delete().eq('id', userId);
-          if (userCleanId) await supabase.from('users').delete().eq('id', userCleanId);
-          if (matchedTarget?.email) await supabase.from('users').delete().eq('email', matchedTarget.email);
+          if (aliasList.length > 0) {
+            await supabase.from('expenses').delete().in('user_id', aliasList);
+            await supabase.from('users').delete().in('id', aliasList);
+          }
+          if (targetEmailClean) {
+            await supabase.from('users').delete().ilike('email', targetEmailClean);
+          }
 
-          if (userId) await supabase.from('expenses').delete().eq('user_id', userId);
-          if (userCleanId) await supabase.from('expenses').delete().eq('user_id', userCleanId);
-
-          const archiveId = `deleted_${Date.now()}_${(matchedTarget?.email || userId).replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const archiveId = `deleted_${Date.now()}_${(targetEmailClean || userId).replace(/[^a-zA-Z0-9]/g, '_')}`;
           await supabase.from('deleted_users').upsert({ id: archiveId, deleted_at: new Date().toISOString() });
           console.log(`⚡ Member ${userId} deleted from Supabase PostgreSQL`);
         } catch (spErr) {
@@ -4144,19 +4225,18 @@ app.post('/api/admin/delete-settlement', async (req, res) => {
       // Delete from local SQLite database
       try {
         if (sqliteDb) {
-          sqliteDb.prepare('DELETE FROM users WHERE id = ? OR email = ?').run(userId, matchedTarget?.email || userId);
-          if (userCleanId) sqliteDb.prepare('DELETE FROM users WHERE id = ?').run(userCleanId);
-          sqliteDb.prepare('DELETE FROM expenses WHERE user_id = ? OR user_id = ?').run(userId, userCleanId || userId);
+          for (const aid of aliasList) {
+            sqliteDb.prepare('DELETE FROM expenses WHERE user_id = ?').run(aid);
+            sqliteDb.prepare('DELETE FROM users WHERE id = ? OR lower(email) = ?').run(aid, aid.toLowerCase());
+          }
         }
       } catch (sqDelErr) {
         console.warn('SQLite user deletion note:', sqDelErr.message);
       }
 
-      console.log(`🗑️ Permanently deleted member account: ${userId} (${matchedTarget?.email || ''})`);
-      
-      // ✅ AUTO-SYNC: Immediately broadcast deletion to Render Live Host
-      triggerCloudSync().catch(() => {});
-      
+      logActivity('ADMIN', 'DELETE_USER', `targetId=${matchedTarget?.id || userId} | email=${targetEmailClean || 'unknown'}`);
+      console.log(`🗑️ Permanently deleted member account: ${userId} (${targetEmailClean || ''})`);
+
       return res.json({ success: true, message: 'Member deleted permanently' });
 
     }
@@ -4249,7 +4329,11 @@ app.get('/api/admin/all-expenses', async (req, res) => {
       try {
         const { data: spUsers } = await supabase.from('users').select('*');
         if (spUsers && Array.isArray(spUsers)) {
-          spUsers.forEach(u => { usersObj[u.id] = u; });
+          spUsers.forEach(u => {
+            if (!u || !u.id) return;
+            if (isUserDeleted(u.id) || (u.email && isUserDeleted(u.email))) return;
+            usersObj[u.id] = u;
+          });
         }
 
         const { data: spExpenses } = await supabase.from('expenses').select('*').order('created_at', { ascending: false });
@@ -4295,11 +4379,19 @@ app.get('/api/admin/all-expenses', async (req, res) => {
       usersObj = getLocalUsers();
     }
 
-    const expensesWithUser = allExpenses.map(exp => ({
-      ...exp,
-      userName: usersObj[exp.userId]?.name || 'User',
-      userEmail: usersObj[exp.userId]?.email || exp.userId
-    }));
+    const expensesWithUser = allExpenses
+      .filter(exp => {
+        if (!exp) return false;
+        const expUser = usersObj[exp.userId];
+        if (exp.userId && isUserDeleted(exp.userId)) return false;
+        if (expUser && expUser.email && isUserDeleted(expUser.email)) return false;
+        return true;
+      })
+      .map(exp => ({
+        ...exp,
+        userName: usersObj[exp.userId]?.name || 'User',
+        userEmail: usersObj[exp.userId]?.email || exp.userId
+      }));
 
     res.json({ success: true, expenses: expensesWithUser });
   } catch (err) {
